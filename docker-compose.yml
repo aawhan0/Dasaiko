@@ -1,5 +1,21 @@
-version: "3.9"
-
 services:
   postgres:
-  redis:
+    image: pgvector/pgvector:pg17
+
+    container_name: dasaiko-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dasaiko
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
