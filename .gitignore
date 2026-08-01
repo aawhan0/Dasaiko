@@ -1,6 +1,7 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyc
 *.egg-info/
 .venv/
 venv/
@@ -28,3 +29,6 @@ Thumbs.db
 
 # Misc
 coverage/
+
+# Uploads
+backend/app/storage/uploads/

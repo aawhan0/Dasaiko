@@ -19,3 +19,13 @@ class DocumentResponse(BaseModel):
 class DocumentUpdate(BaseModel):
     title: str | None = None
     content: str | None = None
+
+
+#Schema 4
+class UploadedDocumentResponse(BaseModel):
+    id: int
+    title: str
+    source: str
+    file_name: str
+
+    model_config = ConfigDict(from_attributes=True)
