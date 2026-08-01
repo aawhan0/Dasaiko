@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 
-from app.schemas.document import UploadedDocumentResponse
-
 from app.db.dependencies import get_db
+
+from app.schemas.base import APIResponse
 from app.schemas.document import (
     DocumentCreate,
     DocumentResponse,
     DocumentUpdate,
+    UploadedDocumentResponse,
 )
+
 from app.services.document_service import DocumentService
 
 router = APIRouter(
@@ -19,116 +21,122 @@ router = APIRouter(
 
 @router.post(
     "",
-    response_model=DocumentResponse,
+    response_model=APIResponse[DocumentResponse],
 )
 def create_document(
     document: DocumentCreate,
     db: Session = Depends(get_db),
 ):
-    return DocumentService.create_document(
+    created_document = DocumentService.create_document(
         db,
         document,
     )
 
+    return APIResponse(
+        success=True,
+        message="Document created successfully.",
+        data=created_document,
+    )
 
 
-
-@router.get("",
-    response_model=list[DocumentResponse],
+@router.get(
+    "",
+    response_model=APIResponse[list[DocumentResponse]],
 )
 def get_documents(
     db: Session = Depends(get_db),
 ):
-    return DocumentService.get_documents(db)
+    documents = DocumentService.get_documents(db)
 
-
+    return APIResponse(
+        success=True,
+        message="Documents fetched successfully.",
+        data=documents,
+    )
 
 
 @router.get(
     "/{document_id}",
-    response_model=DocumentResponse,
+    response_model=APIResponse[DocumentResponse],
 )
 def get_document(
     document_id: int,
     db: Session = Depends(get_db),
 ):
-
     document = DocumentService.get_document_by_id(
         db,
         document_id,
     )
 
-    if document is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Document not found",
-        )
-
-    return document
-
+    return APIResponse(
+        success=True,
+        message="Document fetched successfully.",
+        data=document,
+    )
 
 
 @router.put(
     "/{document_id}",
-    response_model=DocumentResponse,
+    response_model=APIResponse[DocumentResponse],
 )
 def update_document(
     document_id: int,
     document: DocumentUpdate,
     db: Session = Depends(get_db),
 ):
-
-    updated = DocumentService.update_document(
+    updated_document = DocumentService.update_document(
         db,
         document_id,
         document,
     )
 
-    if updated is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Document not found",
-        )
-
-    return updated
-
-
+    return APIResponse(
+        success=True,
+        message="Document updated successfully.",
+        data=updated_document,
+    )
 
 
 @router.delete(
     "/{document_id}",
+    response_model=APIResponse[None],
 )
 def delete_document(
     document_id: int,
     db: Session = Depends(get_db),
 ):
-
-    deleted = DocumentService.delete_document(
+    DocumentService.delete_document(
         db,
         document_id,
     )
 
-    if not deleted:
-        raise HTTPException(
-            status_code=404,
-            detail="Document not found",
-        )
-
-    return {
-        "message": "Document deleted successfully"
-    }
+    return APIResponse(
+        success=True,
+        message="Document deleted successfully.",
+        data=None,
+    )
 
 
 @router.post(
     "/upload",
-    response_model=UploadedDocumentResponse,
+    response_model=APIResponse[UploadedDocumentResponse],
 )
 def upload_document(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
-    return DocumentService.upload_pdf(
+    document = DocumentService.upload_pdf(
         db,
         file,
     )
 
+    return APIResponse(
+        success=True,
+        message="Document uploaded successfully.",
+        data=UploadedDocumentResponse(
+            id=document.id,
+            title=document.title,
+            source=document.source,
+            file_name=document.file_name,
+        ),
+    )

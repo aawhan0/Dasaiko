@@ -26,10 +26,9 @@ class SearchService:
                 Embedding,
                 Chunk.id == Embedding.chunk_id,
             )
-            .join(
-                Chunk.document,
+            .order_by(
+                Embedding.embedding.cosine_distance(query_embedding)
             )
-            .order_by("distance")
             .limit(limit)
             .all()
         )
