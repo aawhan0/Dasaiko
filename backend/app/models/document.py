@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy.orm import relationship
+
 from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +14,13 @@ class Document(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255))
     content: Mapped[str] = mapped_column(Text)
+
+    chunks = relationship(
+    "Chunk",
+    back_populates="document",
+    cascade="all, delete-orphan",
+    )
+
     source: Mapped[str] = mapped_column(
         String(50),
         nullable=False,

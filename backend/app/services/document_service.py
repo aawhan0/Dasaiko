@@ -7,6 +7,10 @@ from fastapi import UploadFile
 from app.utils.pdf import extract_text_from_pdf
 
 
+from app.models.chunk import Chunk
+from app.utils.chunker import split_text
+
+
 from sqlalchemy.orm import Session
 
 from app.models.document import Document
@@ -127,5 +131,19 @@ class DocumentService:
         db.add(document)
         db.commit()
         db.refresh(document)
+
+        chunks = split_text(extracted_text)
+
+        for index, chunk in enumerate(chunks):
+            db.add(
+                Chunk(
+                    document_id=document.id,
+                    content=chunk,
+                    chunk_index=index,
+                    token_count=len(chunk.split()),
+                )
+            )
+
+        db.commit()
 
         return document
