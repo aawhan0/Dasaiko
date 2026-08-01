@@ -3,21 +3,19 @@ import shutil
 import uuid
 
 from fastapi import UploadFile
-
-from app.utils.pdf import extract_text_from_pdf
-
-
-from app.models.chunk import Chunk
-from app.utils.chunker import split_text
-
-
 from sqlalchemy.orm import Session
 
+from app.models.chunk import Chunk
 from app.models.document import Document
+from app.models.embedding import Embedding
 from app.schemas.document import (
     DocumentCreate,
     DocumentUpdate,
 )
+from app.services.embedding_service import generate_embedding
+from app.utils.chunker import split_text
+from app.utils.pdf import extract_text_from_pdf
+
 
 class DocumentService:
     @staticmethod
@@ -25,28 +23,28 @@ class DocumentService:
         db: Session,
         document: DocumentCreate,
     ) -> Document:
-        
 
-        #Create a new document.
         new_document = Document(
             title=document.title,
             content=document.content,
         )
+
         db.add(new_document)
         db.commit()
         db.refresh(new_document)
+
         return new_document
 
     @staticmethod
     def get_documents(db: Session) -> list[Document]:
         return db.query(Document).all()
 
-
     @staticmethod
     def get_document_by_id(
         db: Session,
         document_id: int,
     ) -> Document | None:
+
         return (
             db.query(Document)
             .filter(Document.id == document_id)
@@ -57,7 +55,7 @@ class DocumentService:
     def update_document(
         db: Session,
         document_id: int,
-        updated_document,
+        updated_document: DocumentUpdate,
     ) -> Document | None:
 
         document = (
@@ -106,44 +104,62 @@ class DocumentService:
         file: UploadFile,
     ) -> Document:
 
-        os.makedirs("app/storage/uploads", exist_ok=True)
+        try:
+            upload_dir = "app/storage/uploads"
+            os.makedirs(upload_dir, exist_ok=True)
 
-        unique_name = f"{uuid.uuid4()}.pdf"
+            unique_name = f"{uuid.uuid4()}.pdf"
 
-        file_path = os.path.join(
-            "app/storage/uploads",
-            unique_name,
-        )
+            file_path = os.path.join(
+                upload_dir,
+                unique_name,
+            )
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
 
-        extracted_text = extract_text_from_pdf(file_path)
+            file.file.close()
 
-        document = Document(
-            title=file.filename.replace(".pdf", ""),
-            content=extracted_text,
-            source="pdf",
-            file_name=file.filename,
-            file_path=file_path,
-        )
+            extracted_text = extract_text_from_pdf(file_path)
 
-        db.add(document)
-        db.commit()
-        db.refresh(document)
+            document = Document(
+                title=file.filename.replace(".pdf", ""),
+                content=extracted_text,
+                source="pdf",
+                file_name=file.filename,
+                file_path=file_path,
+            )
 
-        chunks = split_text(extracted_text)
+            db.add(document)
+            db.flush()
 
-        for index, chunk in enumerate(chunks):
-            db.add(
-                Chunk(
+            chunks = split_text(extracted_text)
+
+            for index, chunk in enumerate(chunks):
+
+                chunk_obj = Chunk(
                     document_id=document.id,
                     content=chunk,
                     chunk_index=index,
                     token_count=len(chunk.split()),
                 )
-            )
 
-        db.commit()
+                db.add(chunk_obj)
+                db.flush()
 
-        return document
+                embedding_obj = Embedding(
+                    chunk_id=chunk_obj.id,
+                    model_name="all-MiniLM-L6-v2",
+                    embedding=generate_embedding(chunk),
+                )
+
+                db.add(embedding_obj)
+
+            db.commit()
+            db.refresh(document)
+
+            return document
+
+        except Exception:
+            db.rollback()
+            raise

@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 
+from app.api.search import router as search_router
+
 from app.core.config import settings
 
 from app.api.documents import router as document_router
@@ -17,3 +19,5 @@ def root():
         "message": f"Welcome to {settings.app_name}",
         "environment": settings.environment,
     }
+
+app.include_router(search_router)

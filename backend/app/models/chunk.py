@@ -27,3 +27,10 @@ class Chunk(Base):
     )
 
     document = relationship("Document", back_populates="chunks")
+
+    embedding = relationship(
+        "Embedding",
+        back_populates="chunk",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
