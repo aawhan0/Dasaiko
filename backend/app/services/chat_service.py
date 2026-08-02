@@ -5,6 +5,9 @@ from app.core.config import settings
 from app.services.search_service import SearchService
 
 
+from app.services.conversation_service import ConversationService
+from app.services.message_service import MessageService
+
 client = Groq(
     api_key=settings.groq_api_key,
 )
@@ -15,8 +18,34 @@ class ChatService:
     @staticmethod
     def chat(
         db: Session,
+        conversation_id: int,
         query: str,
-    ) -> str:
+    ) -> tuple[str, list]:
+
+        conversation = ConversationService.get_conversation(
+            db,
+            conversation_id,
+        )
+
+        if conversation is None:
+            raise ValueError("Conversation not found")
+
+        messages = MessageService.get_messages(
+                db=db,
+                conversation_id=conversation_id,
+        )
+
+        conversation_history = "\n\n".join(
+            f"{message.role.capitalize()}: {message.content}"
+            for message in messages
+        )
+
+        MessageService.create_message(
+            db=db,
+            conversation_id=conversation_id,
+            role="user",
+            content=query,
+        )
 
         results = SearchService.search(
             db=db,
@@ -38,19 +67,22 @@ class ChatService:
         print("=" * 100 + "\n")
 
         prompt = f"""
-You are an expert research assistant.
+You are a helpful AI assistant.
 
-Use ONLY the context below to answer the user's question.
+Use the previous conversation to understand follow-up questions.
 
-If the answer can be inferred from the context, answer it clearly.
+Answer ONLY using the provided context.
 
-If the answer is truly missing from the context, reply exactly:
+If the answer is not contained in the context, say:
 "I don't have enough information in the uploaded documents."
+
+Previous Conversation:
+{conversation_history}
 
 Context:
 {context}
 
-Question:
+Current Question:
 {query}
 
 Answer:
@@ -76,9 +108,16 @@ Answer:
 
         answer = response.choices[0].message.content
 
+        MessageService.create_message(
+            db=db,
+            conversation_id=conversation_id,
+            role="assistant",
+            content=answer,
+        )
+
         print("\n" + "=" * 100)
         print("LLM ANSWER:")
         print(answer)
         print("=" * 100 + "\n")
 
-        return answer
+        return answer, results

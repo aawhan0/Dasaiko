@@ -9,6 +9,11 @@ from app.core.config import settings
 from app.core.error_handlers import register_exception_handlers
 
 
+from app.api.conversations import router as conversation_router
+from app.api.messages import router as message_router
+
+
+
 from app.api.documents import router as document_router
 
 app = FastAPI(
@@ -30,3 +35,6 @@ def root():
 app.include_router(search_router)
 
 app.include_router(chat_router)
+
+app.include_router(conversation_router)
+app.include_router(message_router)
