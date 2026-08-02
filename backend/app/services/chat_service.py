@@ -8,6 +8,9 @@ from app.services.search_service import SearchService
 from app.services.conversation_service import ConversationService
 from app.services.message_service import MessageService
 
+
+from app.services.prompt_service import PromptService
+
 client = Groq(
     api_key=settings.groq_api_key,
 )
@@ -35,8 +38,10 @@ class ChatService:
                 conversation_id=conversation_id,
         )
 
-        conversation_history = "\n\n".join(
-            f"{message.role.capitalize()}: {message.content}"
+        messages = messages[-10:]
+
+        conversation_history = "\n".join(
+            f"{message.role.upper()}: {message.content}"
             for message in messages
         )
 
@@ -66,28 +71,12 @@ class ChatService:
         print(context)
         print("=" * 100 + "\n")
 
-        prompt = f"""
-You are a helpful AI assistant.
 
-Use the previous conversation to understand follow-up questions.
-
-Answer ONLY using the provided context.
-
-If the answer is not contained in the context, say:
-"I don't have enough information in the uploaded documents."
-
-Previous Conversation:
-{conversation_history}
-
-Context:
-{context}
-
-Current Question:
-{query}
-
-Answer:
-"""
-
+        prompt = PromptService.build_prompt(
+        conversation_history=conversation_history,
+        context=context,
+        query=query,
+        )
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=[

@@ -12,6 +12,7 @@ from app.schemas.document import (
 )
 
 from app.services.document_service import DocumentService
+from backend.app.services.bm25_service import BM25Service
 
 router = APIRouter(
     prefix="/documents",
@@ -110,6 +111,8 @@ def delete_document(
         document_id,
     )
 
+    BM25Service.build_index(db)
+
     return APIResponse(
         success=True,
         message="Document deleted successfully.",
@@ -129,6 +132,8 @@ def upload_document(
         db,
         file,
     )
+
+    BM25Service.build_index(db)
 
     return APIResponse(
         success=True,

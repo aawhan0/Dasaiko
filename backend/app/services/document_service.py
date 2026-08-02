@@ -11,6 +11,9 @@ from app.core.exceptions import DocumentNotFoundException
 from app.db.transaction import transactional
 
 
+from app.services.bm25_service import BM25Service
+
+
 from app.models.chunk import Chunk
 from app.models.document import Document
 from app.models.embedding import Embedding
