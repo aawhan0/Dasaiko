@@ -12,7 +12,7 @@ from app.schemas.document import (
 )
 
 from app.services.document_service import DocumentService
-from backend.app.services.bm25_service import BM25Service
+from app.services.bm25_service import BM25Service
 
 router = APIRouter(
     prefix="/documents",

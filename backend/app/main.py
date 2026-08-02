@@ -6,6 +6,10 @@ from app.api.chat import router as chat_router
 
 from app.core.config import settings
 
+
+from fastapi.middleware.cors import CORSMiddleware
+
+
 from app.core.error_handlers import register_exception_handlers
 
 
@@ -23,7 +27,19 @@ app = FastAPI(
 
 register_exception_handlers(app)
 
+
 app.include_router(document_router)
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def root():
