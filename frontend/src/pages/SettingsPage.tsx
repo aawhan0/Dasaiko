@@ -1,46 +1,97 @@
-import { useState } from 'react';
-import { AppShell } from '@/components/layout/AppShell';
-import { Settings as SettingsIcon, Server, Database, Moon, Info } from 'lucide-react';
-import { defaultSettings } from '@/data/mockData';
+import { useState } from "react";
+import { AppShell } from "@/components/layout/AppShell";
+import { Server, Database, Shield } from "lucide-react";
+
+const DEFAULT_API_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 export function SettingsPage() {
-  const [apiUrl, setApiUrl] = useState(defaultSettings.apiBaseUrl);
+  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
 
   return (
     <AppShell>
-      <div className="flex-1 overflow-y-auto p-8 max-w-3xl mx-auto space-y-8">
+      <div className="mx-auto flex-1 max-w-3xl space-y-8 overflow-y-auto p-8">
+        {/* Header */}
         <div>
-          <h1 className="text-xl font-bold text-white mb-1">Settings</h1>
-          <p className="text-xs text-zinc-500">Manage API connections, storage, and application preferences.</p>
+          <h1 className="mb-1 text-xl font-bold text-white">
+            Settings
+          </h1>
+
+          <p className="text-xs text-zinc-500">
+            Configure your Dasaiko frontend and backend connection.
+          </p>
         </div>
 
-        {/* API Backend Config */}
-        <div className="p-6 rounded-2xl border border-white/[0.08] bg-surface space-y-4">
+        {/* Backend */}
+        <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-surface p-6">
           <div className="flex items-center gap-3">
-            <Server className="w-5 h-5 text-primary" />
+            <Server className="h-5 w-5 text-primary" />
+
             <div>
-              <h2 className="text-sm font-semibold text-white">FastAPI Backend Connection</h2>
-              <p className="text-xs text-zinc-500">Configure your local or production FastAPI base URL.</p>
+              <h2 className="text-sm font-semibold text-white">
+                FastAPI Backend
+              </h2>
+
+              <p className="text-xs text-zinc-500">
+                Base URL used by the frontend to communicate with the API.
+              </p>
             </div>
           </div>
+
           <div className="space-y-2">
-            <label className="text-xs font-mono text-zinc-400">Endpoint URL</label>
+            <label className="font-mono text-xs text-zinc-400">
+              API Base URL
+            </label>
+
             <input
               type="text"
               value={apiUrl}
               onChange={(e) => setApiUrl(e.target.value)}
-              className="w-full bg-base border border-white/[0.10] rounded-xl px-4 py-2.5 text-xs text-zinc-200 focus:outline-none focus:border-primary/50"
+              className="w-full rounded-xl border border-white/[0.10] bg-base px-4 py-2.5 text-xs text-zinc-200 outline-none focus:border-primary/50"
             />
+
+            <p className="text-[11px] text-zinc-600">
+              Default value comes from{" "}
+              <span className="font-mono">
+                VITE_API_BASE_URL
+              </span>
+              .
+            </p>
           </div>
         </div>
 
         {/* Storage */}
-        <div className="p-6 rounded-2xl border border-white/[0.08] bg-surface space-y-4">
+        <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-surface p-6">
           <div className="flex items-center gap-3">
-            <Database className="w-5 h-5 text-secondary" />
+            <Database className="h-5 w-5 text-secondary" />
+
             <div>
-              <h2 className="text-sm font-semibold text-white">Document Storage</h2>
-              <p className="text-xs text-zinc-500">All uploaded documents are processed client-side and sent directly to FastAPI.</p>
+              <h2 className="text-sm font-semibold text-white">
+                Document Storage
+              </h2>
+
+              <p className="text-xs text-zinc-500">
+                Uploaded documents are stored by your FastAPI backend and
+                indexed for hybrid retrieval.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Privacy */}
+        <div className="space-y-4 rounded-2xl border border-white/[0.08] bg-surface p-6">
+          <div className="flex items-center gap-3">
+            <Shield className="h-5 w-5 text-emerald-400" />
+
+            <div>
+              <h2 className="text-sm font-semibold text-white">
+                Privacy
+              </h2>
+
+              <p className="text-xs text-zinc-500">
+                All requests are sent only to your configured FastAPI backend.
+                No external services are contacted directly by the frontend.
+              </p>
             </div>
           </div>
         </div>

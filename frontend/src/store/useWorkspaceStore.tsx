@@ -12,33 +12,19 @@ import type {
   EvidenceChunk,
 } from "@/types";
 
-import {
-  mockMessages,
-  mockDocuments,
-  mockThreads,
-} from "@/data/mockData";
-
 interface WorkspaceState {
   activeConversationId: string | null;
-
   activeDocumentId: string | null;
-
   messages: ChatMessage[];
-
   documents: Document[];
-
   conversations: Conversation[];
-
   activeEvidence: EvidenceChunk[];
-
   isQuerying: boolean;
-
   sidebarOpen: boolean;
 }
 
 interface WorkspaceActions {
   setActiveConversation: (id: string | null) => void;
-
   setActiveDocument: (id: string | null) => void;
 
   addMessage: (msg: ChatMessage) => void;
@@ -48,6 +34,10 @@ interface WorkspaceActions {
       | ChatMessage[]
       | ((prev: ChatMessage[]) => ChatMessage[])
   ) => void;
+
+  setDocuments: (documents: Document[]) => void;
+
+  setConversations: (conversations: Conversation[]) => void;
 
   setActiveEvidence: (ev: EvidenceChunk[]) => void;
 
@@ -74,24 +64,22 @@ export function WorkspaceProvider({
   children: React.ReactNode;
 }) {
   const [activeConversationId, setActiveConversationId] =
-    useState<string | null>("conversation-1");
+    useState<string | null>(null);
 
   const [activeDocumentId, setActiveDocumentId] =
     useState<string | null>(null);
 
   const [messages, setMessagesState] =
-    useState<ChatMessage[]>(mockMessages);
+    useState<ChatMessage[]>([]);
 
-  const [documents, setDocuments] =
-    useState<Document[]>(mockDocuments);
+  const [documents, setDocumentsState] =
+    useState<Document[]>([]);
 
-  const [conversations] =
-    useState<Conversation[]>(mockThreads);
+  const [conversations, setConversationsState] =
+    useState<Conversation[]>([]);
 
   const [activeEvidence, setActiveEvidence] =
-    useState<EvidenceChunk[]>(
-      mockMessages[1]?.evidence ?? []
-    );
+    useState<EvidenceChunk[]>([]);
 
   const [isQuerying, setIsQuerying] =
     useState(false);
@@ -132,12 +120,35 @@ export function WorkspaceProvider({
     []
   );
 
+  const setDocuments = useCallback(
+    (documents: Document[]) => {
+      setDocumentsState(documents);
+    },
+    []
+  );
+
+  const setConversations = useCallback(
+    (conversations: Conversation[]) => {
+      setConversationsState(conversations);
+    },
+    []
+  );
+
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev);
   }, []);
 
+  // ✅ FIXED
   const addDocument = useCallback((doc: Document) => {
-    setDocuments((prev) => [doc, ...prev]);
+    console.log("========== DOCUMENT ADDED ==========");
+    console.log(doc);
+
+    setDocumentsState((prev) => {
+      console.log("========== PREVIOUS DOCUMENTS ==========");
+      console.log(prev);
+
+      return [doc, ...prev];
+    });
   }, []);
 
   const updateDocument = useCallback(
@@ -145,7 +156,7 @@ export function WorkspaceProvider({
       id: string,
       updates: Partial<Document>
     ) => {
-      setDocuments((prev) =>
+      setDocumentsState((prev) =>
         prev.map((doc) =>
           doc.id === id
             ? { ...doc, ...updates }
@@ -173,21 +184,20 @@ export function WorkspaceProvider({
         sidebarOpen,
 
         setActiveConversation,
-
         setActiveDocument,
 
         addMessage,
-
         setMessages,
 
-        setActiveEvidence,
+        setDocuments,
+        setConversations,
 
+        setActiveEvidence,
         setIsQuerying,
 
         toggleSidebar,
 
         addDocument,
-
         updateDocument,
       }}
     >

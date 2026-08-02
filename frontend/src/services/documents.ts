@@ -1,56 +1,128 @@
 /**
  * Documents Service
- * All functions currently return mock data.
- * Swap mock returns for api.* calls to connect to FastAPI.
+ * Connects the React frontend to the FastAPI backend.
  */
-import type { Document, PaginatedResponse } from '@/types';
-import { mockDocuments } from '@/data/mockData';
-// import api from './api'; // Uncomment when connecting to backend
 
-export async function listDocuments(page = 1, pageSize = 20): Promise<PaginatedResponse<Document>> {
-  // return (await api.get(`/documents?page=${page}&page_size=${pageSize}`)).data;
-  await delay(300);
-  return {
-    items: mockDocuments,
-    total: mockDocuments.length,
-    page,
-    pageSize,
-  };
+import api from "./api";
+
+import type {
+  Document,
+  DocumentResponse,
+} from "@/types";
+
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
 }
 
-export async function getDocument(id: string): Promise<Document> {
-  // return (await api.get(`/documents/${id}`)).data;
-  await delay(200);
-  const doc = mockDocuments.find((d) => d.id === id);
-  if (!doc) throw new Error(`Document ${id} not found`);
-  return doc;
-}
+/**
+ * GET /documents
+ */
+export async function listDocuments(): Promise<Document[]> {
+  const response =
+    await api.get<ApiResponse<DocumentResponse[]>>("/documents");
 
-export async function uploadDocument(file: File, collectionId?: string): Promise<Document> {
-  // const form = new FormData();
-  // form.append('file', file);
-  // if (collectionId) form.append('collection_id', collectionId);
-  // return (await api.post('/documents/upload', form, { headers: { 'Content-Type': 'multipart/form-data' } })).data;
-  await delay(1500);
-  const newDoc: Document = {
-    id: `doc-${Date.now()}`,
-    name: file.name,
-    type: 'pdf',
-    size: file.size,
+  return response.data.data.map((doc) => ({
+    id: String(doc.id),
+
+    name: doc.file_name ?? doc.title,
+
+    type: "pdf",
+
+    size: 0,
+
     pageCount: 0,
-    status: 'processing',
-    collectionId,
+
+    status: "ready",
+
     uploadedAt: new Date().toISOString(),
+
+    chunkCount: 0,
+  }));
+}
+
+/**
+ * GET /documents/{id}
+ */
+export async function getDocument(
+  id: string
+): Promise<Document> {
+  const response =
+    await api.get<ApiResponse<DocumentResponse>>(
+      `/documents/${id}`
+    );
+
+  const doc = response.data.data;
+
+  return {
+    id: String(doc.id),
+
+    name: doc.file_name ?? doc.title,
+
+    type: "pdf",
+
+    size: 0,
+
+    pageCount: 0,
+
+    status: "ready",
+
+    uploadedAt: new Date().toISOString(),
+
     chunkCount: 0,
   };
-  return newDoc;
 }
 
-export async function deleteDocument(id: string): Promise<void> {
-  // await api.delete(`/documents/${id}`);
-  await delay(300);
+/**
+ * POST /documents/upload
+ */
+export async function uploadDocument(
+  file: File
+): Promise<Document> {
+  const formData = new FormData();
+
+  formData.append("file", file);
+
+  const response =
+    await api.post<ApiResponse<DocumentResponse>>(
+      "/documents/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+  console.log("UPLOAD RESPONSE", response.data);
+
+  const doc = response.data.data;
+
+  return {
+    id: String(doc.id),
+
+    name: doc.file_name ?? doc.title,
+
+    type: "pdf",
+
+    size: file.size,
+
+    pageCount: 0,
+
+    status: "ready",
+
+    uploadedAt: new Date().toISOString(),
+
+    chunkCount: 0,
+  };
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * DELETE /documents/{id}
+ */
+export async function deleteDocument(
+  id: string
+): Promise<void> {
+  await api.delete(`/documents/${id}`);
 }

@@ -1,87 +1,175 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import type { UploadFile } from '@/types';
-import { isAcceptedFile, generateId } from '@/utils/fileHelpers';
-import { useUploadStore } from '@/store/useUploadStore';
-import { useWorkspaceStore } from '@/store/useWorkspaceStore';
-import { uploadDocument } from '@/services/documents';
+import { useState, useCallback, useEffect, useRef } from "react";
+
+import type { UploadFile } from "@/types";
+
+import { isAcceptedFile } from "@/utils/fileHelpers";
+
+import { useUploadStore } from "@/store/useUploadStore";
+import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+
+import { uploadDocument } from "@/services/documents";
 
 export function useUpload() {
-  const { addFiles, updateProgress, setStatus, queue } = useUploadStore();
-  const { addDocument } = useWorkspaceStore();
-  const [isDragOver, setIsDragOver] = useState(false);
-  const processingRef = useRef<Set<string>>(new Set());
+  const {
+    addFiles,
+    updateProgress,
+    setStatus,
+    queue,
+  } = useUploadStore();
 
-  // Simulate upload progress for any file in 'uploading' state
+  const { addDocument } = useWorkspaceStore();
+
+  const [isDragOver, setIsDragOver] =
+    useState(false);
+
+  const processingRef =
+    useRef<Set<string>>(new Set());
+
   useEffect(() => {
     const uploading = queue.filter(
-      (f) => f.status === 'uploading' && !processingRef.current.has(f.id),
+      (file) =>
+        file.status === "uploading" &&
+        !processingRef.current.has(file.id)
     );
 
     uploading.forEach((upload) => {
       processingRef.current.add(upload.id);
-      simulateUpload(upload, updateProgress, setStatus, addDocument).finally(() => {
+
+      simulateUpload(
+        upload,
+        updateProgress,
+        setStatus,
+        addDocument
+      ).finally(() => {
         processingRef.current.delete(upload.id);
       });
     });
-  }, [queue, updateProgress, setStatus, addDocument]);
+  }, [
+    queue,
+    updateProgress,
+    setStatus,
+    addDocument,
+  ]);
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
-      const valid = Array.from(files).filter(isAcceptedFile);
-      if (valid.length > 0) addFiles(valid);
+      const valid = Array.from(files).filter(
+        isAcceptedFile
+      );
+
+      if (valid.length > 0) {
+        addFiles(valid);
+      }
     },
-    [addFiles],
+    [addFiles]
   );
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
+
       setIsDragOver(false);
+
       handleFiles(e.dataTransfer.files);
     },
-    [handleFiles],
+    [handleFiles]
   );
 
-  const onDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
+  const onDragOver = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+
+      setIsDragOver(true);
+    },
+    []
+  );
+
+  const onDragLeave = useCallback(() => {
+    setIsDragOver(false);
   }, []);
 
-  const onDragLeave = useCallback(() => setIsDragOver(false), []);
-
   const onFileInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files) handleFiles(e.target.files);
+    (
+      e: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      if (e.target.files) {
+        handleFiles(e.target.files);
+      }
     },
-    [handleFiles],
+    [handleFiles]
   );
 
-  return { isDragOver, onDrop, onDragOver, onDragLeave, onFileInputChange, queue };
+  return {
+    isDragOver,
+    onDrop,
+    onDragOver,
+    onDragLeave,
+    onFileInputChange,
+    queue,
+  };
 }
 
-// Simulated upload flow (replace with real axios progress in service layer)
 async function simulateUpload(
   upload: UploadFile,
-  updateProgress: (id: string, p: number) => void,
-  setStatus: (id: string, s: UploadFile['status'], e?: string) => void,
-  addDocument: ReturnType<typeof useWorkspaceStore>['addDocument'],
+  updateProgress: (
+    id: string,
+    progress: number
+  ) => void,
+  setStatus: (
+    id: string,
+    status: UploadFile["status"],
+    error?: string
+  ) => void,
+  addDocument: (
+    doc: ReturnType<typeof uploadDocument> extends Promise<infer T>
+      ? T
+      : never
+  ) => void
 ) {
   try {
-    // Simulate progress
+    console.log("========== START UPLOAD ==========");
+    console.log(upload);
+
     for (let p = 10; p <= 90; p += 10) {
       await delay(150);
       updateProgress(upload.id, p);
     }
+
+    console.log("Calling backend...");
+
     const doc = await uploadDocument(upload.file);
+
+    console.log("Backend returned:");
+    console.log(doc);
+
     updateProgress(upload.id, 100);
+
+    console.log("Calling addDocument()");
+
     addDocument(doc);
+
+    console.log("addDocument() completed");
+
     await delay(500);
-    setStatus(upload.id, 'ready');
-  } catch {
-    setStatus(upload.id, 'error', 'Upload failed. Please try again.');
+
+    setStatus(upload.id, "ready");
+
+    console.log("Upload finished.");
+    console.log("========== END UPLOAD ==========");
+  } catch (error) {
+    console.error("UPLOAD FAILED");
+    console.error(error);
+
+    setStatus(
+      upload.id,
+      "error",
+      "Upload failed. Please try again."
+    );
   }
 }
 
 function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
+  return new Promise((resolve) =>
+    setTimeout(resolve, ms)
+  );
 }
