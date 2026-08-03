@@ -21,7 +21,9 @@ interface ApiResponse<T> {
  */
 export async function listDocuments(): Promise<Document[]> {
   const response =
-    await api.get<ApiResponse<DocumentResponse[]>>("/documents");
+    await api.get<ApiResponse<DocumentResponse[]>>(
+      "/documents"
+    );
 
   return response.data.data.map((doc) => ({
     id: String(doc.id),
@@ -36,7 +38,7 @@ export async function listDocuments(): Promise<Document[]> {
 
     status: "ready",
 
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: doc.created_at,
 
     chunkCount: 0,
   }));
@@ -68,7 +70,7 @@ export async function getDocument(
 
     status: "ready",
 
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: doc.created_at,
 
     chunkCount: 0,
   };
@@ -90,12 +92,16 @@ export async function uploadDocument(
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type":
+            "multipart/form-data",
         },
       }
     );
 
-  console.log("UPLOAD RESPONSE", response.data);
+  console.log(
+    "UPLOAD RESPONSE",
+    response.data
+  );
 
   const doc = response.data.data;
 
@@ -112,7 +118,7 @@ export async function uploadDocument(
 
     status: "ready",
 
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: doc.created_at,
 
     chunkCount: 0,
   };

@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useUpload } from "@/hooks/useUpload";
 import { motion } from "framer-motion";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 
@@ -15,6 +16,8 @@ export function MessageInput() {
   const [value, setValue] = useState("");
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { onFileInputChange } = useUpload();
 
   const {
     isQuerying,
@@ -128,6 +131,8 @@ export function MessageInput() {
         className="flex items-end gap-2 bg-surface border border-white/[0.10] rounded-2xl p-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all"
       >
         <button
+           type="button"
+           onClick={() => fileInputRef.current?.click()}
           className="p-2 rounded-lg text-zinc-600 hover:text-zinc-400 hover:bg-hover transition-colors flex-shrink-0"
         >
           <Paperclip className="w-4 h-4" />
@@ -162,6 +167,21 @@ export function MessageInput() {
             <Send className="w-4 h-4" />
           )}
         </motion.button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.txt,.md,.doc,.docx"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            onFileInputChange(e);
+
+            // Reset the input so cancelling or selecting
+            // the same file later still works.
+            e.target.value = "";
+          }}
+        />
       </motion.div>
 
       <p className="text-[10px] text-zinc-700 text-center mt-2">

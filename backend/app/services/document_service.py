@@ -54,7 +54,11 @@ class DocumentService:
         db: Session,
     ) -> list[Document]:
 
-        return db.query(Document).all()
+        return (
+            db.query(Document)
+                .order_by(Document.created_at.desc())
+                .all()
+        )
 
     @staticmethod
     def get_document_by_id(
