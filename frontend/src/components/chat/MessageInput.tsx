@@ -63,6 +63,8 @@ export function MessageInput() {
     setIsQuerying(true);
 
     try {
+      console.log("Conversation ID:", activeConversationId);
+      console.log("Question:", question);
       const response = await sendQuery({
         conversation_id: Number(activeConversationId),
         query: question,

@@ -15,37 +15,63 @@ import type {
 interface WorkspaceState {
   activeConversationId: string | null;
   activeDocumentId: string | null;
+
   messages: ChatMessage[];
   documents: Document[];
   conversations: Conversation[];
+
   activeEvidence: EvidenceChunk[];
+
   isQuerying: boolean;
   sidebarOpen: boolean;
 }
 
 interface WorkspaceActions {
-  setActiveConversation: (id: string | null) => void;
-  setActiveDocument: (id: string | null) => void;
+  setActiveConversation: (
+    id: string | null
+  ) => void;
 
-  addMessage: (msg: ChatMessage) => void;
+  setActiveDocument: (
+    id: string | null
+  ) => void;
+
+  addMessage: (
+    msg: ChatMessage
+  ) => void;
 
   setMessages: (
     updater:
       | ChatMessage[]
-      | ((prev: ChatMessage[]) => ChatMessage[])
+      | ((
+          prev: ChatMessage[]
+        ) => ChatMessage[])
   ) => void;
 
-  setDocuments: (documents: Document[]) => void;
+  setDocuments: (
+    documents: Document[]
+  ) => void;
 
-  setConversations: (conversations: Conversation[]) => void;
+  setConversations: (
+    conversations: Conversation[]
+  ) => void;
 
-  setActiveEvidence: (ev: EvidenceChunk[]) => void;
+  addConversation: (
+    conversation: Conversation
+  ) => void;
 
-  setIsQuerying: (v: boolean) => void;
+  setActiveEvidence: (
+    ev: EvidenceChunk[]
+  ) => void;
+
+  setIsQuerying: (
+    v: boolean
+  ) => void;
 
   toggleSidebar: () => void;
 
-  addDocument: (doc: Document) => void;
+  addDocument: (
+    doc: Document
+  ) => void;
 
   updateDocument: (
     id: string,
@@ -53,119 +79,183 @@ interface WorkspaceActions {
   ) => void;
 }
 
-type WorkspaceStore = WorkspaceState & WorkspaceActions;
+type WorkspaceStore =
+  WorkspaceState &
+  WorkspaceActions;
 
 const WorkspaceContext =
-  createContext<WorkspaceStore | null>(null);
+  createContext<WorkspaceStore | null>(
+    null
+  );
 
 export function WorkspaceProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [activeConversationId, setActiveConversationId] =
-    useState<string | null>(null);
+  const [
+    activeConversationId,
+    setActiveConversationId,
+  ] = useState<string | null>(null);
 
-  const [activeDocumentId, setActiveDocumentId] =
-    useState<string | null>(null);
+  const [
+    activeDocumentId,
+    setActiveDocumentId,
+  ] = useState<string | null>(null);
 
-  const [messages, setMessagesState] =
-    useState<ChatMessage[]>([]);
+  const [
+    messages,
+    setMessagesState,
+  ] = useState<ChatMessage[]>([]);
 
-  const [documents, setDocumentsState] =
-    useState<Document[]>([]);
+  const [
+    documents,
+    setDocumentsState,
+  ] = useState<Document[]>([]);
 
-  const [conversations, setConversationsState] =
-    useState<Conversation[]>([]);
+  const [
+    conversations,
+    setConversationsState,
+  ] = useState<Conversation[]>([]);
 
-  const [activeEvidence, setActiveEvidence] =
-    useState<EvidenceChunk[]>([]);
+  const [
+    activeEvidence,
+    setActiveEvidence,
+  ] = useState<EvidenceChunk[]>([]);
 
-  const [isQuerying, setIsQuerying] =
-    useState(false);
+  const [
+    isQuerying,
+    setIsQuerying,
+  ] = useState(false);
 
-  const [sidebarOpen, setSidebarOpen] =
-    useState(true);
+  const [
+    sidebarOpen,
+    setSidebarOpen,
+  ] = useState(true);
 
-  const setActiveConversation = useCallback(
-    (id: string | null) => {
-      setActiveConversationId(id);
-    },
-    []
-  );
+  const setActiveConversation =
+    useCallback(
+      (id: string | null) => {
+        setActiveConversationId(id);
+      },
+      []
+    );
 
-  const setActiveDocument = useCallback(
-    (id: string | null) => {
-      setActiveDocumentId(id);
-    },
-    []
-  );
+  const setActiveDocument =
+    useCallback(
+      (id: string | null) => {
+        setActiveDocumentId(id);
+      },
+      []
+    );
 
-  const addMessage = useCallback((msg: ChatMessage) => {
-    setMessagesState((prev) => [...prev, msg]);
-  }, []);
+  const addMessage =
+    useCallback((msg: ChatMessage) => {
+      setMessagesState((prev) => [
+        ...prev,
+        msg,
+      ]);
+    }, []);
 
-  const setMessages = useCallback(
-    (
-      updater:
-        | ChatMessage[]
-        | ((prev: ChatMessage[]) => ChatMessage[])
-    ) => {
-      if (typeof updater === "function") {
-        setMessagesState(updater);
-      } else {
-        setMessagesState(updater);
-      }
-    },
-    []
-  );
+  const setMessages =
+    useCallback(
+      (
+        updater:
+          | ChatMessage[]
+          | ((
+              prev: ChatMessage[]
+            ) => ChatMessage[])
+      ) => {
+        if (
+          typeof updater ===
+          "function"
+        ) {
+          setMessagesState(updater);
+        } else {
+          setMessagesState(updater);
+        }
+      },
+      []
+    );
 
-  const setDocuments = useCallback(
-    (documents: Document[]) => {
-      setDocumentsState(documents);
-    },
-    []
-  );
+  const setDocuments =
+    useCallback(
+      (documents: Document[]) => {
+        setDocumentsState(documents);
+      },
+      []
+    );
 
-  const setConversations = useCallback(
-    (conversations: Conversation[]) => {
-      setConversationsState(conversations);
-    },
-    []
-  );
+  const setConversations =
+    useCallback(
+      (
+        conversations: Conversation[]
+      ) => {
+        setConversationsState(
+          conversations
+        );
+      },
+      []
+    );
 
-  const toggleSidebar = useCallback(() => {
-    setSidebarOpen((prev) => !prev);
-  }, []);
+  const addConversation =
+    useCallback(
+      (
+        conversation: Conversation
+      ) => {
+        setConversationsState(
+          (prev) => [
+            conversation,
+            ...prev,
+          ]
+        );
+      },
+      []
+    );
 
-  // ✅ FIXED
-  const addDocument = useCallback((doc: Document) => {
-    console.log("========== DOCUMENT ADDED ==========");
-    console.log(doc);
-
-    setDocumentsState((prev) => {
-      console.log("========== PREVIOUS DOCUMENTS ==========");
-      console.log(prev);
-
-      return [doc, ...prev];
-    });
-  }, []);
-
-  const updateDocument = useCallback(
-    (
-      id: string,
-      updates: Partial<Document>
-    ) => {
-      setDocumentsState((prev) =>
-        prev.map((doc) =>
-          doc.id === id
-            ? { ...doc, ...updates }
-            : doc
-        )
+  const toggleSidebar =
+    useCallback(() => {
+      setSidebarOpen(
+        (prev) => !prev
       );
-    },
-    []
-  );
+    }, []);
+
+  const addDocument =
+    useCallback((doc: Document) => {
+      console.log(
+        "========== DOCUMENT ADDED =========="
+      );
+      console.log(doc);
+
+      setDocumentsState((prev) => {
+        console.log(
+          "========== PREVIOUS DOCUMENTS =========="
+        );
+        console.log(prev);
+
+        return [doc, ...prev];
+      });
+    }, []);
+
+  const updateDocument =
+    useCallback(
+      (
+        id: string,
+        updates: Partial<Document>
+      ) => {
+        setDocumentsState((prev) =>
+          prev.map((doc) =>
+            doc.id === id
+              ? {
+                  ...doc,
+                  ...updates,
+                }
+              : doc
+          )
+        );
+      },
+      []
+    );
 
   return (
     <WorkspaceContext.Provider
@@ -180,7 +270,6 @@ export function WorkspaceProvider({
         activeEvidence,
 
         isQuerying,
-
         sidebarOpen,
 
         setActiveConversation,
@@ -191,6 +280,7 @@ export function WorkspaceProvider({
 
         setDocuments,
         setConversations,
+        addConversation,
 
         setActiveEvidence,
         setIsQuerying,
@@ -207,7 +297,8 @@ export function WorkspaceProvider({
 }
 
 export function useWorkspaceStore(): WorkspaceStore {
-  const context = useContext(WorkspaceContext);
+  const context =
+    useContext(WorkspaceContext);
 
   if (!context) {
     throw new Error(

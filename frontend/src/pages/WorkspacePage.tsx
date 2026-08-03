@@ -5,27 +5,51 @@ import { ResearchWorkbench } from "@/components/chat/ResearchWorkbench";
 import { EvidenceVault } from "@/components/evidence/EvidenceVault";
 
 import { listDocuments } from "@/services/documents";
+import { listConversations } from "@/services/conversations";
+
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
 export function WorkspacePage() {
-  const { setDocuments } = useWorkspaceStore();
+  const {
+    setDocuments,
+    setConversations,
+    setActiveConversation,
+  } = useWorkspaceStore();
 
   useEffect(() => {
-    async function loadDocuments() {
+    async function loadWorkspace() {
       try {
+        // Load documents
         const docs = await listDocuments();
+        setDocuments(docs);
 
         console.log("Loaded documents:");
-        console.log(docs);
+        console.table(docs);
 
-        setDocuments(docs);
+        // Load conversations
+        const conversations = await listConversations();
+        setConversations(conversations);
+
+        console.log("Loaded conversations:");
+        console.table(conversations);
+
+        // Automatically select the newest conversation
+        if (conversations.length > 0) {
+          setActiveConversation(
+            String(conversations[0].id)
+          );
+        }
       } catch (err) {
-        console.error("Failed to load documents", err);
+        console.error("Failed to load workspace:", err);
       }
     }
 
-    loadDocuments();
-  }, [setDocuments]);
+    loadWorkspace();
+  }, [
+    setDocuments,
+    setConversations,
+    setActiveConversation,
+  ]);
 
   return (
     <AppShell>

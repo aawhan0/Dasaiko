@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class ConversationCreate(BaseModel):
-    title: str
+    title: str | None = None
 
 
 class ConversationResponse(BaseModel):

@@ -8,11 +8,11 @@ class ConversationService:
     @staticmethod
     def create_conversation(
         db: Session,
-        title: str,
+        title: str | None = None,
     ) -> Conversation:
 
         conversation = Conversation(
-            title=title,
+            title=title or "New Workspace",
         )
 
         db.add(conversation)
