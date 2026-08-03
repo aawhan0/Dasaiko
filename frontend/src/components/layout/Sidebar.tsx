@@ -17,6 +17,7 @@ import { KnowledgeLibrary } from "@/components/library/KnowledgeLibrary";
 import { PrivacyBadge } from "@/components/common/PrivacyBadge";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { createConversation } from "@/services/conversations";
+import { listMessages } from "@/services/messages";
 import { formatRelativeDate } from "@/utils/formatters";
 import { slideInLeft } from "@/utils/animations";
 
@@ -177,11 +178,18 @@ export function Sidebar() {
                         key={
                           conversation.id
                         }
-                        onClick={() =>
+                        onClick={async () => {
                           setActiveConversation(
                             conversation.id
-                          )
-                        }
+                          );
+                        
+                          const messages =
+                            await listMessages(
+                              conversation.id
+                            );
+                          
+                          setMessages(messages);
+                        }}
                         className={cn(
                           "w-full text-left px-3 py-2.5 rounded-lg transition-colors border",
                           activeConversationId ===

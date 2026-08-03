@@ -38,26 +38,29 @@ export const EvidenceCard = memo(function EvidenceCard({ chunk, index, isHighlig
             {displayName}
           </p>
         </div>
-        <SimilarityBadge score={chunk.similarityScore} className="flex-shrink-0" />
+        <SimilarityBadge
+          score={chunk.score}
+          className="flex-shrink-0"
+        />
       </div>
 
       <p className="text-[12px] text-zinc-500 leading-relaxed mb-3">
-        {truncate(chunk.previewText, 160)}
+        {truncate(chunk.preview, 160)}
       </p>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 text-[10px] text-zinc-600 font-mono">
             <span className="text-zinc-700">pg</span>
-            {chunk.pageNumber}
+            {chunk.page ?? "-"}
           </span>
           <span className="flex items-center gap-1 text-[10px] text-zinc-600 font-mono">
             <Hash className="w-3 h-3" />
-            {chunk.chunkNumber}
+            {chunk.chunkIndex}
           </span>
         </div>
         <button
-          aria-label={`Open page ${chunk.pageNumber} in ${displayName}`}
+          aria-label={`Open page ${chunk.chunkIndex} in ${displayName}`}
           className="flex items-center gap-1 text-[10px] text-zinc-600 hover:text-primary transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
         >
           <ExternalLink className="w-3 h-3" />
