@@ -15,15 +15,21 @@ class BM25Service:
         query: str,
         limit: int = 5,
     ):
+        # Build the BM25 index once
         if BM25Service.bm25 is None:
+            print("Building BM25 Index...")
             BM25Service.build_index(db)
+            print(
+                f"✓ Indexed {len(BM25Service.chunks)} chunks"
+            )
 
         query_tokens = query.split()
 
-        scores = BM25Service.bm25.get_scores(query_tokens)
+        print(f"BM25 Query Tokens: {query_tokens}")
 
-
-
+        scores = BM25Service.bm25.get_scores(
+            query_tokens
+        )
 
         ranked = sorted(
             zip(BM25Service.chunks, scores),
@@ -31,14 +37,22 @@ class BM25Service:
             reverse=True,
         )
 
-        return ranked[:limit]
+        print("\n========== BM25 TOP RESULTS ==========")
 
+        for index, result in enumerate(ranked[:limit]):
+            print(f"BM25 Result #{index}: {type(result)}")  
+
+        print("======================================\n")
+
+        return ranked[:limit]
 
     @staticmethod
     def build_index(
         db: Session,
     ):
-        BM25Service.chunks = db.query(Chunk).all()
+        BM25Service.chunks = (
+            db.query(Chunk).all()
+        )
 
         corpus = [
             chunk.content.split()

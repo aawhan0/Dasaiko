@@ -13,21 +13,38 @@ class RerankerService:
         results: list,
         limit: int = 5,
     ):
+        try:
+            print("Building pairs...")
 
-        pairs = [
-            (query, chunk.content)
-            for chunk, _ in results
-        ]
+            pairs = [
+                (query, chunk.content)
+                for chunk, _ in results
+            ]
 
-        scores = RerankerService.model.predict(pairs)
+            print(f"Built {len(pairs)} pairs")
 
-        reranked = sorted(
-            zip(results, scores),
-            key=lambda x: x[1],
-            reverse=True,
-        )
+            print("Calling CrossEncoder.predict()...")
 
-        return [
-            result
-            for result, _ in reranked[:limit]
-        ]
+            scores = RerankerService.model.predict(pairs)
+
+            print(f"Received {len(scores)} scores")
+
+            reranked = sorted(
+                zip(results, scores),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+
+            print("Sorting complete")
+
+            return [
+                result
+                for result, _ in reranked[:limit]
+            ]
+
+        except Exception as e:
+            print("\n========== RERANKER ERROR ==========")
+            import traceback
+            traceback.print_exc()
+            print("====================================\n")
+            raise
