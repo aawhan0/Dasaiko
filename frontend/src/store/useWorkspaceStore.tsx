@@ -59,6 +59,10 @@ interface WorkspaceActions {
     conversation: Conversation
   ) => void;
 
+  updateConversation: (
+    conversation: Conversation
+  ) => void;
+
   setActiveEvidence: (
     ev: EvidenceChunk[]
   ) => void;
@@ -213,6 +217,27 @@ export function WorkspaceProvider({
       []
     );
 
+  const updateConversation =
+    useCallback(
+      (
+        updatedConversation: Conversation
+      ) => {
+        setConversationsState(
+          (prev) =>
+            prev.map((conversation) =>
+              conversation.id ===
+              updatedConversation.id
+                ? {
+                    ...conversation,
+                    ...updatedConversation,
+                  }
+                : conversation
+            )
+        );
+      },
+      []
+    );
+
   const toggleSidebar =
     useCallback(() => {
       setSidebarOpen(
@@ -281,6 +306,7 @@ export function WorkspaceProvider({
         setDocuments,
         setConversations,
         addConversation,
+        updateConversation,
 
         setActiveEvidence,
         setIsQuerying,

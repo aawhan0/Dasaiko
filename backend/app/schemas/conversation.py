@@ -8,6 +8,7 @@ class ConversationCreate(BaseModel):
 class ConversationResponse(BaseModel):
     id: int
     title: str
+    is_pinned: bool
 
     model_config = {
         "from_attributes": True,

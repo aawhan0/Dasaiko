@@ -11,6 +11,7 @@ interface ApiResponse<T> {
 interface ConversationResponse {
   id: number;
   title: string;
+  is_pinned: boolean;
 }
 
 export async function listConversations(): Promise<Conversation[]> {
@@ -23,6 +24,8 @@ export async function listConversations(): Promise<Conversation[]> {
     id: String(conversation.id),
 
     title: conversation.title,
+
+    isPinned: conversation.is_pinned,
 
     documentIds: [],
 
@@ -45,6 +48,33 @@ export async function createConversation(): Promise<Conversation> {
     id: String(conversation.id),
 
     title: conversation.title,
+
+    isPinned: conversation.is_pinned,
+
+    documentIds: [],
+
+    messageCount: 0,
+
+    lastActivityAt: new Date().toISOString(),
+  };
+}
+
+export async function toggleConversationPin(
+  conversationId: string
+): Promise<Conversation> {
+  const response =
+    await api.patch<ApiResponse<ConversationResponse>>(
+      `/conversations/${conversationId}/pin`
+    );
+
+  const conversation = response.data.data;
+
+  return {
+    id: String(conversation.id),
+
+    title: conversation.title,
+
+    isPinned: conversation.is_pinned,
 
     documentIds: [],
 

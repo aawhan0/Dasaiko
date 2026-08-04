@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
-
+from sqlalchemy import Column, Integer, String, Boolean
 from app.db.base import Base
 
 
@@ -15,6 +15,12 @@ class Conversation(Base):
 
     title = Column(
         String(255),
+        nullable=False,
+    )
+
+    is_pinned = Column(
+        Boolean,
+        default=False,
         nullable=False,
     )
 

@@ -37,8 +37,6 @@ def create_conversation(
     )
 
 
-
-
 @router.get(
     "",
     response_model=APIResponse[list[ConversationResponse]],
@@ -54,4 +52,24 @@ def get_conversations(
         success=True,
         message="Conversations fetched successfully.",
         data=conversations,
+    )
+
+
+@router.patch(
+    "/{conversation_id}/pin",
+    response_model=APIResponse[ConversationResponse],
+)
+def toggle_pin(
+    conversation_id: int,
+    db: Session = Depends(get_db),
+):
+    conversation = ConversationService.toggle_pin(
+        db=db,
+        conversation_id=conversation_id,
+    )
+
+    return APIResponse(
+        success=True,
+        message="Conversation updated successfully.",
+        data=conversation,
     )
