@@ -59,6 +59,10 @@ interface WorkspaceActions {
     conversation: Conversation
   ) => void;
 
+  removeConversation: (
+    id: string
+  ) => void;
+
   updateConversation: (
     conversation: Conversation
   ) => void;
@@ -217,6 +221,18 @@ export function WorkspaceProvider({
       []
     );
 
+
+
+  const removeConversation =
+    useCallback((id: string) => {
+      setConversationsState((prev) =>
+        prev.filter(
+          (conversation) =>
+            conversation.id !== id
+        )
+      );
+    }, []);
+
   const updateConversation =
     useCallback(
       (
@@ -306,6 +322,7 @@ export function WorkspaceProvider({
         setDocuments,
         setConversations,
         addConversation,
+        removeConversation,
         updateConversation,
 
         setActiveEvidence,

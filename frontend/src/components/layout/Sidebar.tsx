@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
+import{ ConversationMenu } from "@/components/conversation/ConversationMenu";
 import {
   LayoutDashboard,
   Settings,
@@ -9,16 +10,24 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
-  Pin,
 } from "lucide-react";
 
 import { cn } from "@/utils/cn";
 import { KnowledgeLibrary } from "@/components/library/KnowledgeLibrary";
 import { PrivacyBadge } from "@/components/common/PrivacyBadge";
+import { ConversationItem } from "@/components/conversation/ConversationItem";
+
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
-import { createConversation, toggleConversationPin } from "@/services/conversations";
+
+import {
+  createConversation,
+  toggleConversationPin,
+  renameConversation,
+  deleteConversation,
+} from "@/services/conversations";
+
 import { listMessages } from "@/services/messages";
-import { formatRelativeDate } from "@/utils/formatters";
+
 import { slideInLeft } from "@/utils/animations";
 
 export function Sidebar() {
@@ -28,10 +37,14 @@ export function Sidebar() {
   const {
     conversations,
     activeConversationId,
+
     setActiveConversation,
+
     addConversation,
     updateConversation,
+    removeConversation,
     setMessages,
+
     sidebarOpen,
     toggleSidebar,
   } = useWorkspaceStore();
@@ -39,6 +52,23 @@ export function Sidebar() {
   const [activeTab, setActiveTab] = useState<
     "library" | "threads"
   >("library");
+
+  const [
+    editingConversationId,
+    setEditingConversationId,
+  ] = useState<string | null>(null);
+
+  const [
+    editingTitle,
+    setEditingTitle,
+  ] = useState("");
+
+  const [contextMenu, setContextMenu] =
+    useState<{
+      x: number;
+      y: number;
+      conversationId: string;
+    } | null>(null);
 
   const pinnedConversations =
     conversations.filter(
@@ -74,18 +104,30 @@ export function Sidebar() {
     }
   };
 
+  const handleOpenConversation =
+    async (conversationId: string) => {
+      setActiveConversation(
+        conversationId
+      );
+
+      const messages =
+        await listMessages(
+          conversationId
+        );
+
+      setMessages(messages);
+    };
+
   const handleTogglePin = async (
     conversationId: string
   ) => {
     try {
-      const updatedConversation =
+      const updated =
         await toggleConversationPin(
           conversationId
         );
 
-      updateConversation(
-        updatedConversation
-      );
+      updateConversation(updated);
     } catch (err) {
       console.error(
         "Failed to toggle pin",
@@ -94,7 +136,113 @@ export function Sidebar() {
     }
   };
 
-  return (
+  const startRename = (
+    conversationId: string
+  ) => {
+    const conversation =
+      conversations.find(
+        (conversation) =>
+          conversation.id ===
+          conversationId
+      );
+
+    if (!conversation) return;
+
+    setEditingConversationId(
+      conversation.id
+    );
+
+    setEditingTitle(
+      conversation.title
+    );
+  };
+
+  const cancelRename = () => {
+    setEditingConversationId(null);
+
+    setEditingTitle("");
+  };
+
+  const handleRename = async () => {
+    if (
+      !editingConversationId
+    ) {
+      return;
+    }
+
+    if (!editingTitle.trim()) {
+      cancelRename();
+      return;
+    }
+
+    try {
+      const updated =
+        await renameConversation(
+          editingConversationId,
+          editingTitle.trim()
+        );
+
+      updateConversation(updated);
+
+      cancelRename();
+    } catch (err) {
+      console.error(
+        "Rename failed",
+        err
+      );
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key !== "F2")
+        return;
+
+      if (!activeConversationId)
+        return;
+
+      event.preventDefault();
+
+      startRename(
+        activeConversationId
+      );
+    };
+
+    window.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    return () =>
+      window.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+  }, [
+    activeConversationId,
+    conversations,
+  ]);
+
+  useEffect(() => {
+    const handleClick = () => {
+      setContextMenu(null);
+    };
+
+    window.addEventListener(
+      "click",
+      handleClick
+    );
+  
+    return () =>
+      window.removeEventListener(
+        "click",
+        handleClick
+      );
+  }, []);
+
+    return (
     <AnimatePresence initial={false}>
       {sidebarOpen && (
         <motion.aside
@@ -198,13 +346,8 @@ export function Sidebar() {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="h-full py-2 px-2 space-y-1 overflow-y-auto"
+                  className="h-full py-2 px-2 overflow-y-auto"
                 >
-                  {(() => {
-                    console.table(conversations);
-                    return null;
-                  })()}
-
                   {pinnedConversations.length > 0 && (
                     <>
                       <div className="px-3 pb-2">
@@ -212,70 +355,59 @@ export function Sidebar() {
                           ⭐ Pinned
                         </p>
                       </div>
-                                    
-                      {pinnedConversations.map((conversation) => (
-                        <button
-                          key={conversation.id}
-                          onClick={async () => {
-                            setActiveConversation(conversation.id);
 
-                            const messages =
-                              await listMessages(
+                      <div className="space-y-1">
+                        {pinnedConversations.map(
+                          (conversation) => (
+                            <ConversationItem
+                              key={
                                 conversation.id
-                              );
-
-                            setMessages(messages);
-                         }}
-                          className={cn(
-                            "group w-full text-left px-3 py-2.5 rounded-lg transition-colors border",
-                            activeConversationId ===
-                              conversation.id
-                              ? "bg-primary/10 border-primary/20"
-                              : "border-transparent hover:bg-hover"
-                          )}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-start gap-2 min-w-0">
-                             <Pin className="w-3 h-3 text-yellow-400 mt-1 flex-shrink-0" />
-
-                             <p
-                               className={cn(
-                                 "text-[13px] font-medium truncate",
-                                  activeConversationId ===
-                                   conversation.id
-                                   ? "text-white"
-                                   : "text-zinc-300"
-                                )}
-                             >
-                                {conversation.title}
-                              </p>
-                           </div>
+                              }
+                              conversation={
+                                conversation
+                              }
+                              isActive={
+                                activeConversationId ===
+                                conversation.id
+                              }
+                              isEditing={
+                                editingConversationId ===
+                                conversation.id
+                              }
+                              editingTitle={
+                                editingTitle
+                              }
+                              onEditingTitleChange={
+                                setEditingTitle
+                              }
+                              onRename={
+                                handleRename
+                              }
+                              onCancelRename={
+                                cancelRename
+                              }
+                              onOpen={() =>
+                                handleOpenConversation(
+                                  conversation.id
+                                )
+                              }
+                              onTogglePin={() =>
+                                handleTogglePin(
+                                  conversation.id
+                                )
+                              }
                               
-                            <button
-                             onClick={async (e) => {
-                               e.stopPropagation();
-
-                                const updated =
-                                  await toggleConversationPin(
-                                    conversation.id
-                                  );
-                                
-                               updateConversation(updated);
-                             }}
-                              className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-yellow-400 transition"
-                            >
-                             <Pin className="w-3.5 h-3.5 fill-current" />
-                           </button>
-                         </div>
-                           
-                          <p className="text-[10px] text-zinc-600 mt-1 font-mono">
-                            {conversation.messageCount} msgs ·{" "}
-                           {formatRelativeDate(
-                              conversation.lastActivityAt
-                            )}
-                          </p>
-                        </button>
-                      ))}
+                              onContextMenu={(x,y) => {
+                                setContextMenu({
+                                  x,
+                                  y,
+                                  conversationId: conversation.id,
+                                });
+                              }}
+                            />
+                          )
+                        )}
+                      </div>
 
                       <div className="border-t border-white/[0.06] my-3" />
                     </>
@@ -283,74 +415,61 @@ export function Sidebar() {
 
                   <div className="px-3 pb-2">
                     <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
-    All Chats
+                      All Chats
                     </p>
                   </div>
 
-                  {otherConversations.map((conversation) => (
-                    <button
-                      key={conversation.id}
-                      onClick={async () => {
-                        setActiveConversation(conversation.id);
-                      
-                        const messages =
-                          await listMessages(
+                  <div className="space-y-1">
+                    {otherConversations.map(
+                      (conversation) => (
+                        <ConversationItem
+                          key={
                             conversation.id
-                          );
-                        
-                        setMessages(messages);
-                     }}
-                     className={cn(
-                       "group w-full text-left px-3 py-2.5 rounded-lg transition-colors border",
-                       activeConversationId ===
-                         conversation.id
-                         ? "bg-primary/10 border-primary/20"
-                         : "border-transparent hover:bg-hover"
-                     )}
-                   >
-                     <div className="flex items-start justify-between gap-2">
-                       <p
-                         className={cn(
-                           "text-[13px] font-medium truncate",
-                           activeConversationId ===
+                          }
+                          conversation={
+                            conversation
+                          }
+                          isActive={
+                            activeConversationId ===
+                            conversation.id
+                          }
+                          isEditing={
+                            editingConversationId ===
+                            conversation.id
+                          }
+                          editingTitle={
+                            editingTitle
+                          }
+                          onEditingTitleChange={
+                            setEditingTitle
+                          }
+                          onRename={
+                            handleRename
+                          }
+                          onCancelRename={
+                            cancelRename
+                          }
+                          onOpen={() =>
+                            handleOpenConversation(
                               conversation.id
-                              ? "text-white"
-                              : "text-zinc-300"
-                          )}
-                        >
-                          {conversation.title}
-                        </p>
-                        
-                       <button
-                         onClick={async (e) => {
-                           e.stopPropagation();
-                          
-                           const updated =
-                              await toggleConversationPin(
-                                conversation.id
-                             );
-                          
-                           updateConversation(updated);
-                        }}
-                          className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-yellow-400 transition"
-                        >
-                          <Pin className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                        
-                      <p className="text-[10px] text-zinc-600 mt-1 font-mono">
-                        {conversation.messageCount} msgs ·{" "}
-                       {formatRelativeDate(
-                          conversation.lastActivityAt
-                        )}
-                      </p>
-                    </button>
-                  ))}
-
-
-
-
-
+                            )
+                          }
+                          onTogglePin={() =>
+                            handleTogglePin(
+                              conversation.id
+                            )
+                          }
+                          onContextMenu={(x,y) => {
+                            setContextMenu({
+                              x,
+                              y,
+                              conversationId: conversation.id,
+                            });
+                          }}
+                        />
+                      )
+                    )}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -379,6 +498,62 @@ export function Sidebar() {
             </div>
           </div>
         </motion.aside>
+      )}
+
+      {contextMenu && (
+        <ConversationMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          isPinned={
+            conversations.find(
+              (c) =>
+                c.id ===
+                contextMenu.conversationId
+            )?.isPinned ?? false
+          }
+          onRename={() => {
+            startRename(
+              contextMenu.conversationId
+            );
+
+            setContextMenu(null);
+          }}
+          onTogglePin={() => {
+            handleTogglePin(
+              contextMenu.conversationId
+            );
+
+            setContextMenu(null);
+          }}
+          onDelete={async () => {
+            if (!contextMenu) return;
+
+            const conversationId =
+              contextMenu.conversationId;
+
+            try {
+              await deleteConversation(
+                conversationId
+              );
+
+              removeConversation(
+                conversationId
+              );
+
+              if (
+                activeConversationId ===
+                conversationId
+              ) {
+                setActiveConversation(null);
+                setMessages([]);
+              }
+            } catch (error) {
+              console.error("Error deleting conversation:", error);
+            }
+
+            setContextMenu(null);
+          }}
+        />
       )}
     </AnimatePresence>
   );

@@ -83,3 +83,40 @@ export async function toggleConversationPin(
     lastActivityAt: new Date().toISOString(),
   };
 }
+
+export async function renameConversation(
+  conversationId: string,
+  title: string
+): Promise<Conversation> {
+  const response =
+    await api.patch<ApiResponse<ConversationResponse>>(
+      `/conversations/${conversationId}/rename`,
+      {
+        title,
+      }
+    );
+
+  const conversation = response.data.data;
+
+  return {
+    id: String(conversation.id),
+
+    title: conversation.title,
+
+    isPinned: conversation.is_pinned,
+
+    documentIds: [],
+
+    messageCount: 0,
+
+    lastActivityAt: new Date().toISOString(),
+  };
+}
+
+export async function deleteConversation(
+  id: string
+): Promise<void> {
+  await api.delete(
+    `/conversations/${id}`
+  );
+}

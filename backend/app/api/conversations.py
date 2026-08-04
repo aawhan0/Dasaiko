@@ -6,6 +6,7 @@ from app.db.dependencies import get_db
 from app.schemas.base import APIResponse
 from app.schemas.conversation import (
     ConversationCreate,
+    ConversationRename,
     ConversationResponse,
 )
 
@@ -72,4 +73,55 @@ def toggle_pin(
         success=True,
         message="Conversation updated successfully.",
         data=conversation,
+    )
+
+
+@router.patch(
+    "/{conversation_id}/rename",
+    response_model=APIResponse[ConversationResponse],
+)
+def rename_conversation(
+    conversation_id: int,
+    request: ConversationRename,
+    db: Session = Depends(get_db),
+):
+    conversation = ConversationService.rename_conversation(
+        db=db,
+        conversation_id=conversation_id,
+        title=request.title,
+    )
+
+    return APIResponse(
+        success=True,
+        message="Conversation renamed successfully.",
+        data=conversation,
+    )
+
+
+@router.delete(
+    "/{conversation_id}",
+    response_model=APIResponse[None],
+)
+def delete_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db),
+):
+    deleted = (
+        ConversationService.delete_conversation(
+            db=db,
+            conversation_id=conversation_id,
+        )
+    )
+
+    if not deleted:
+        return APIResponse(
+            success=False,
+            message="Conversation not found.",
+            data=None,
+        )
+
+    return APIResponse(
+        success=True,
+        message="Conversation deleted successfully.",
+        data=None,
     )

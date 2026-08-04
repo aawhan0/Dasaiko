@@ -13,3 +13,6 @@ class ConversationResponse(BaseModel):
     model_config = {
         "from_attributes": True,
     }
+
+class ConversationRename(BaseModel):
+    title: str
