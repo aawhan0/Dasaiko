@@ -6,6 +6,7 @@ import { EvidenceVault } from "@/components/evidence/EvidenceVault";
 
 import { listDocuments } from "@/services/documents";
 import { listConversations } from "@/services/conversations";
+import { listMessages } from "@/services/messages";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
@@ -14,33 +15,58 @@ export function WorkspacePage() {
     setDocuments,
     setConversations,
     setActiveConversation,
+    setMessages,
   } = useWorkspaceStore();
 
   useEffect(() => {
     async function loadWorkspace() {
       try {
-        // Load documents
+        // -----------------------------
+        // Load Documents
+        // -----------------------------
         const docs = await listDocuments();
         setDocuments(docs);
 
         console.log("Loaded documents:");
         console.table(docs);
 
-        // Load conversations
-        const conversations = await listConversations();
+        // -----------------------------
+        // Load Conversations
+        // -----------------------------
+        const conversations =
+          await listConversations();
+
         setConversations(conversations);
 
         console.log("Loaded conversations:");
         console.table(conversations);
 
-        // Automatically select the newest conversation
+        // -----------------------------
+        // Restore latest conversation
+        // -----------------------------
         if (conversations.length > 0) {
+          const latestConversation =
+            conversations[0];
+
           setActiveConversation(
-            String(conversations[0].id)
+            latestConversation.id
           );
+
+          const messages =
+            await listMessages(
+              latestConversation.id
+            );
+
+          setMessages(messages);
+        } else {
+          setActiveConversation(null);
+          setMessages([]);
         }
       } catch (err) {
-        console.error("Failed to load workspace:", err);
+        console.error(
+          "Failed to load workspace:",
+          err
+        );
       }
     }
 
@@ -49,6 +75,7 @@ export function WorkspacePage() {
     setDocuments,
     setConversations,
     setActiveConversation,
+    setMessages,
   ]);
 
   return (

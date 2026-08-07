@@ -1,7 +1,11 @@
 import { useState, useRef } from "react";
 import { useUpload } from "@/hooks/useUpload";
 import { motion } from "framer-motion";
-import { Send, Paperclip, Loader2 } from "lucide-react";
+import {
+  Send,
+  Paperclip,
+  Loader2,
+} from "lucide-react";
 
 import { cn } from "@/utils/cn";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
@@ -13,11 +17,17 @@ import {
 } from "@/mappers/chatMapper";
 
 export function MessageInput() {
-  const [value, setValue] = useState("");
+  const [value, setValue] =
+    useState("");
 
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { onFileInputChange } = useUpload();
+  const textareaRef =
+    useRef<HTMLTextAreaElement>(null);
+
+  const fileInputRef =
+    useRef<HTMLInputElement>(null);
+
+  const { onFileInputChange } =
+    useUpload();
 
   const {
     isQuerying,
@@ -28,82 +38,149 @@ export function MessageInput() {
     activeConversationId,
   } = useWorkspaceStore();
 
-  const handleSubmit = async () => {
-    const question = value.trim();
+  const handleSubmit =
+    async () => {
+      const question =
+        value.trim();
 
-    if (!question || isQuerying) return;
+      if (
+        !question ||
+        isQuerying
+      )
+        return;
 
-    setValue("");
+      if (!activeConversationId) {
+        console.error(
+          "No active conversation selected."
+        );
+        return;
+      }
 
-    // -----------------------------
-    // User Message
-    // -----------------------------
-    const userMessage = {
-      id: `user-${Date.now()}`,
-      role: "user" as const,
-      content: question,
-      timestamp: new Date().toISOString(),
-    };
+      const conversationId =
+        Number(activeConversationId);
 
-    addMessage(userMessage);
+      if (
+        Number.isNaN(
+          conversationId
+        )
+      ) {
+        console.error(
+          "Invalid conversation id:",
+          activeConversationId
+        );
+        return;
+      }
 
-    // -----------------------------
-    // Temporary Streaming Message
-    // -----------------------------
-    const streamingMessage = {
-      id: `stream-${Date.now()}`,
-      role: "assistant" as const,
-      content: "",
-      timestamp: new Date().toISOString(),
-      isStreaming: true,
-    };
+      console.log(
+        "================================="
+      );
+      console.log(
+        "ACTIVE:",
+        activeConversationId
+      );
+      console.log(
+        "NUMERIC:",
+        conversationId
+      );
+      console.log(
+        "QUESTION:",
+        question
+      );
+      console.log(
+        "================================="
+      );
 
-    addMessage(streamingMessage);
+      setValue("");
 
-    setIsQuerying(true);
+      // -----------------------------
+      // User Message
+      // -----------------------------
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        role: "user" as const,
+        content: question,
+        timestamp:
+          new Date().toISOString(),
+      };
 
-    try {
-      console.log("Conversation ID:", activeConversationId);
-      console.log("Question:", question);
-      const response = await sendQuery({
-        conversation_id: Number(activeConversationId),
-        query: question,
-      });
+      addMessage(userMessage);
 
-      // Convert backend -> UI
-      const assistantMessage = mapChatResponse(response);
+      // -----------------------------
+      // Streaming Placeholder
+      // -----------------------------
+      const streamingMessage = {
+        id: `stream-${Date.now()}`,
+        role: "assistant" as const,
+        content: "",
+        timestamp:
+          new Date().toISOString(),
+        isStreaming: true,
+      };
 
-      const evidence = mapSources(response.sources);
+      addMessage(streamingMessage);
 
-      // Replace streaming message
-      setMessages((prev) => {
-        const withoutStreaming = prev.filter(
-          (msg) => !msg.isStreaming
+      setIsQuerying(true);
+
+      try {
+        const response =
+          await sendQuery({
+            conversation_id:
+              conversationId,
+            query: question,
+          });
+
+        const assistantMessage =
+          mapChatResponse(
+            response
+          );
+
+        setMessages((prev) => {
+          const withoutStreaming =
+            prev.filter(
+              (msg) =>
+                !msg.isStreaming
+            );
+
+          return [
+            ...withoutStreaming,
+            assistantMessage,
+          ];
+        });
+
+        setActiveEvidence(
+          mapSources(
+            response.sources ??
+              []
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Chat Error:",
+          error
         );
 
-        return [
-          ...withoutStreaming,
-          assistantMessage,
-        ];
-      });
+        // Clear stale evidence
+        setActiveEvidence([]);
 
-      setActiveEvidence(evidence);
-    } catch (error) {
-      console.error("Chat Error:", error);
-
-      // Remove streaming message on error
-      setMessages((prev) =>
-        prev.filter((msg) => !msg.isStreaming)
-      );
-    } finally {
-      setIsQuerying(false);
-    }
-  };
+        // Remove streaming placeholder
+        setMessages((prev) =>
+          prev.filter(
+            (msg) =>
+              !msg.isStreaming
+          )
+        );
+      } finally {
+        setIsQuerying(false);
+      }
+    };
 
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLTextAreaElement>
   ) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey
+    ) {
       e.preventDefault();
       handleSubmit();
     }
@@ -112,13 +189,18 @@ export function MessageInput() {
   const handleInput = (
     e: React.ChangeEvent<HTMLTextAreaElement>
   ) => {
-    setValue(e.target.value);
+    setValue(
+      e.target.value
+    );
 
-    const textarea = textareaRef.current;
+    const textarea =
+      textareaRef.current;
 
     if (!textarea) return;
 
-    textarea.style.height = "auto";
+    textarea.style.height =
+      "auto";
+
     textarea.style.height = `${Math.min(
       textarea.scrollHeight,
       160
@@ -128,13 +210,21 @@ export function MessageInput() {
   return (
     <div className="px-4 pb-4 pt-2 border-t border-white/[0.06] flex-shrink-0">
       <motion.div
-        initial={{ y: 8, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial={{
+          y: 8,
+          opacity: 0,
+        }}
+        animate={{
+          y: 0,
+          opacity: 1,
+        }}
         className="flex items-end gap-2 bg-surface border border-white/[0.10] rounded-2xl p-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all"
       >
         <button
-           type="button"
-           onClick={() => fileInputRef.current?.click()}
+          type="button"
+          onClick={() =>
+            fileInputRef.current?.click()
+          }
           className="p-2 rounded-lg text-zinc-600 hover:text-zinc-400 hover:bg-hover transition-colors flex-shrink-0"
         >
           <Paperclip className="w-4 h-4" />
@@ -143,22 +233,38 @@ export function MessageInput() {
         <textarea
           ref={textareaRef}
           value={value}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
+          onChange={
+            handleInput
+          }
+          onKeyDown={
+            handleKeyDown
+          }
           placeholder="Ask a question about your documents..."
           rows={1}
-          disabled={isQuerying}
+          disabled={
+            isQuerying
+          }
           className="flex-1 bg-transparent text-[14px] text-zinc-200 placeholder:text-zinc-600 resize-none focus:outline-none py-1.5 px-1 min-h-[36px] max-h-[160px] disabled:opacity-50"
         />
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleSubmit}
-          disabled={!value.trim() || isQuerying}
+          whileHover={{
+            scale: 1.05,
+          }}
+          whileTap={{
+            scale: 0.95,
+          }}
+          onClick={
+            handleSubmit
+          }
+          disabled={
+            !value.trim() ||
+            isQuerying
+          }
           className={cn(
             "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
-            value.trim() && !isQuerying
+            value.trim() &&
+              !isQuerying
               ? "bg-primary hover:bg-primary/90 text-white"
               : "bg-white/[0.04] text-zinc-600"
           )}
@@ -171,23 +277,27 @@ export function MessageInput() {
         </motion.button>
 
         <input
-          ref={fileInputRef}
+          ref={
+            fileInputRef
+          }
           type="file"
           accept=".pdf,.txt,.md,.doc,.docx"
           multiple
           className="hidden"
           onChange={(e) => {
-            onFileInputChange(e);
+            onFileInputChange(
+              e
+            );
 
-            // Reset the input so cancelling or selecting
-            // the same file later still works.
-            e.target.value = "";
+            e.target.value =
+              "";
           }}
         />
       </motion.div>
 
       <p className="text-[10px] text-zinc-700 text-center mt-2">
-        Shift + Enter for new line · Enter to send
+        Shift + Enter for new line ·
+        Enter to send
       </p>
     </div>
   );
