@@ -208,26 +208,4 @@ Chunk {index}
         print("===================\n")
         print("========== CHAT END ==========\n")
 
-        # -----------------------------------------
-        # Build Evidence Response
-        # -----------------------------------------
-        evidence = []
-
-        for result in results:
-
-            chunk = result["chunk"]
-
-            evidence.append(
-                {
-                    "id": chunk.id,
-                    "document_id": chunk.document_id,
-                    "document_name": chunk.document.title,
-                    "chunk_index": chunk.chunk_index,
-                    "page_number": result["page_number"],
-                    "bboxes": result["bboxes"],
-                    "score": result["score"],
-                    "preview": chunk.content,
-                }
-            )
-
-        return answer, evidence
+        return answer, results

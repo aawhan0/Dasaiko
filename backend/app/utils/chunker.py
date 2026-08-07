@@ -7,55 +7,36 @@ splitter = RecursiveCharacterTextSplitter(
     chunk_overlap=200,
 )
 
+paragraph_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=0,
+)
+
 
 def split_text(text: str) -> list[str]:
     return splitter.split_text(text)
 
 
+def split_paragraph(text: str) -> list[str]:
+    return paragraph_splitter.split_text(text)
+
+
 def split_page(page: dict):
     chunks = []
 
-    chunk_index = 0
+    for paragraph in page["paragraphs"]:
+        paragraph_chunks = split_paragraph(paragraph["text"])
 
-    current_text = ""
-    current_boxes = []
-
-    for block in page["blocks"]:
-
-        block_text = block["text"]
-
-        # If adding this block exceeds the chunk size,
-        # flush the current chunk.
-        if (
-            current_text
-            and len(current_text) + len(block_text)
-            > 1000
-        ):
+        for content in paragraph_chunks:
             chunks.append(
                 {
-                    "content": current_text.strip(),
+                    "content": content,
                     "page_number": page["page_number"],
-                    "chunk_index": chunk_index,
-                    "bboxes": current_boxes,
+                    "page_width": page["page_width"],
+                    "page_height": page["page_height"],
+                    "chunk_index": len(chunks),
+                    "bboxes": [paragraph["bbox"]],
                 }
             )
-
-            chunk_index += 1
-            current_text = ""
-            current_boxes = []
-
-        current_text += block_text + "\n"
-        current_boxes.append(block["bbox"])
-
-    # Flush final chunk
-    if current_text.strip():
-        chunks.append(
-            {
-                "content": current_text.strip(),
-                "page_number": page["page_number"],
-                "chunk_index": chunk_index,
-                "bboxes": current_boxes,
-            }
-        )
 
     return chunks

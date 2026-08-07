@@ -14,6 +14,10 @@ export interface SourceResponse {
 
   page_number: number;
 
+  page_width?: number | null;
+
+  page_height?: number | null;
+
   bboxes: number[][];
 
   confidence: number;

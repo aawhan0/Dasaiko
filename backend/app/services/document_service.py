@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -25,7 +26,6 @@ from app.utils.pdf import (
 )
 
 from app.utils.chunker import (
-    split_text,
     split_page,
 )
 
@@ -120,7 +120,17 @@ class DocumentService:
         if not document:
             raise DocumentNotFoundException()
 
+        upload_dir = Path("uploads").resolve()
+        uploaded_file = upload_dir / Path(
+            document.file_path
+        ).name
+
         db.delete(document)
+        db.flush()
+
+        if uploaded_file.is_file():
+            uploaded_file.unlink()
+
         return True
 
     @staticmethod
@@ -191,6 +201,8 @@ class DocumentService:
                     content=chunk["content"],
                     chunk_index=global_chunk_index,
                     page_number=chunk["page_number"],
+                    page_width=chunk["page_width"],
+                    page_height=chunk["page_height"],
                     bboxes=chunk["bboxes"],
                     token_count=len(
                         chunk["content"].split()

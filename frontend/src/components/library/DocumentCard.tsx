@@ -2,9 +2,13 @@ import { motion } from "framer-motion";
 import {
   FileText,
   MoreHorizontal,
+  Pencil,
+  Trash2,
   Clock,
   Layers,
 } from "lucide-react";
+
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 import { staggerItem } from "@/utils/animations";
 import { cn } from "@/utils/cn";
@@ -16,6 +20,9 @@ interface DocumentCardProps {
   document: Document;
   isActive?: boolean;
   onClick?: () => void;
+  onRename?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 const statusDot: Record<Document["status"], string> = {
@@ -29,6 +36,9 @@ export function DocumentCard({
   document,
   isActive = false,
   onClick,
+  onRename,
+  onDelete,
+  isDeleting = false,
 }: DocumentCardProps) {
   return (
     <motion.div
@@ -103,17 +113,46 @@ export function DocumentCard({
         </div>
       </div>
 
-      {/* More Button */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          // TODO: Open context menu
-        }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-zinc-500 hover:text-white flex-shrink-0"
-      >
-        <MoreHorizontal className="w-4 h-4" />
-      </button>
+            {/* Actions */}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-zinc-500 hover:text-white flex-shrink-0"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+        </DropdownMenu.Trigger>
+
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content
+            align="end"
+            sideOffset={6}
+            className="z-50 min-w-[180px] rounded-lg border border-white/10 bg-[#171717] p-1 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <DropdownMenu.Item
+              onSelect={onRename}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-zinc-200 outline-none transition-colors hover:bg-white/10"
+            >
+              <Pencil className="h-4 w-4" />
+              Rename
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator className="my-1 h-px bg-white/10" />
+
+            <DropdownMenu.Item
+              disabled={isDeleting}
+              onSelect={onDelete}
+              className="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-red-400 outline-none transition-colors hover:bg-red-500/10 data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              {isDeleting ? "Deleting..." : "Delete"}
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
     </motion.div>
   );
 }
