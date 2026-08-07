@@ -14,9 +14,18 @@ import type { Document } from "@/types";
 
 interface DocumentCardProps {
   document: Document;
+
   isActive?: boolean;
+
   onClick?: () => void;
+
+  onContextMenu?: (
+    left: number,
+    top: number,
+  ) => void;
 }
+
+
 
 const statusDot: Record<Document["status"], string> = {
   ready: "bg-emerald-400",
@@ -29,6 +38,7 @@ export function DocumentCard({
   document,
   isActive = false,
   onClick,
+  onContextMenu,
 }: DocumentCardProps) {
   return (
     <motion.div
@@ -36,6 +46,18 @@ export function DocumentCard({
       role="button"
       tabIndex={0}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+
+        const rect =
+          e.currentTarget.getBoundingClientRect();
+
+        onContextMenu?.(
+          rect.right + 20,
+          rect.top + 8,
+        );
+      }}
+      
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -103,17 +125,39 @@ export function DocumentCard({
         </div>
       </div>
 
-      {/* More Button */}
+            {/* Actions */}
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          // TODO: Open context menu
+
+          const rect =
+            e.currentTarget.getBoundingClientRect();
+
+          onContextMenu?.(
+            rect.right + 8,
+            rect.bottom + 4,
+          );
         }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-zinc-500 hover:text-white flex-shrink-0"
+        className="
+          opacity-0
+          group-hover:opacity-100
+          transition-opacity
+          w-7
+          h-7
+          rounded-md
+          hover:bg-white/10
+          flex
+          items-center
+          justify-center
+          text-zinc-500
+          hover:text-white
+          flex-shrink-0
+        "
       >
         <MoreHorizontal className="w-4 h-4" />
       </button>
     </motion.div>
+    
   );
 }

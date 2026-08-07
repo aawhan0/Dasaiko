@@ -12,6 +12,9 @@ from app.models.chunk import Chunk
 from app.models.document import Document
 from app.models.embedding import Embedding
 
+
+from app.services.title_service import TitleService
+
 from app.schemas.document import (
     DocumentCreate,
     DocumentUpdate,
@@ -163,12 +166,15 @@ class DocumentService:
         # Create Document
         # -----------------------------
         document = Document(
-            title=file.filename.replace(".pdf", ""),
-            content=extracted_text,
-            source="pdf",
-            file_name=file.filename,
-            file_path=public_path,
-        )
+            title=TitleService.resolve_title(
+            pdf_path=disk_path,
+            filename=file.filename,
+        ),
+        content=extracted_text,
+        source="pdf",
+        file_name=file.filename,
+        file_path=public_path,
+    )
 
         db.add(document)
         db.flush()
