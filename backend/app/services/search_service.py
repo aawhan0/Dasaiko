@@ -101,6 +101,8 @@ class SearchService:
 
                     "score": score,
 
+                    "preview": chunk.content,
+
                     "chunk": chunk,
                 }
             )

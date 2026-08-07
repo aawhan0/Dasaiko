@@ -15,9 +15,7 @@ interface PDFViewerProps {
 
   pageNumber?: number;
 
-  startChar?: number;
-
-  endChar?: number;
+  bboxes?: number[][];
 }
 
 const API = "http://localhost:8000";
@@ -25,6 +23,7 @@ const API = "http://localhost:8000";
 export function PDFViewer({
   file,
   pageNumber: initialPage = 1,
+  bboxes = [],
 }: PDFViewerProps) {
   const [numPages, setNumPages] =
     useState(0);

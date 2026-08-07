@@ -37,14 +37,12 @@ export function mapSources(
 
     chunkIndex: source.chunk_index + 1,
 
+    pageNumber: source.page_number,
+
+    bboxes: source.bboxes,
+
     score: source.confidence,
 
     preview: source.preview,
-
-    pageNumber: source.page_number,
-
-    startChar: source.start_char,
-
-    endChar: source.end_char,
   }));
 }

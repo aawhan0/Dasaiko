@@ -41,7 +41,7 @@ class ChatService:
             conversation_id=conversation_id,
         )
 
-        # Keep only the recent history
+        # Keep only recent history
         messages = messages[-4:]
 
         conversation_history = "\n".join(
@@ -105,16 +105,17 @@ class ChatService:
         context_parts = []
 
         for index, result in enumerate(results, start=1):
+
             chunk = result["chunk"]
 
             context_parts.append(
                 f"""
-        Document: {chunk.document.title}
-        Page: {result["page_number"]}
-        Chunk {index}
-        ----------------------------------------
-        {chunk.content}
-        """
+Document: {chunk.document.title}
+Page: {result["page_number"]}
+Chunk {index}
+----------------------------------------
+{chunk.content}
+"""
             )
 
         context = "\n".join(context_parts)
@@ -193,6 +194,8 @@ class ChatService:
 
         for result in results:
 
+            chunk = result["chunk"]
+
             print(
                 f"Chunk ID: {chunk.id}",
                 f"Document ID: {chunk.document_id}",
@@ -204,3 +207,27 @@ class ChatService:
 
         print("===================\n")
         print("========== CHAT END ==========\n")
+
+        # -----------------------------------------
+        # Build Evidence Response
+        # -----------------------------------------
+        evidence = []
+
+        for result in results:
+
+            chunk = result["chunk"]
+
+            evidence.append(
+                {
+                    "id": chunk.id,
+                    "document_id": chunk.document_id,
+                    "document_name": chunk.document.title,
+                    "chunk_index": chunk.chunk_index,
+                    "page_number": result["page_number"],
+                    "bboxes": result["bboxes"],
+                    "score": result["score"],
+                    "preview": chunk.content,
+                }
+            )
+
+        return answer, evidence

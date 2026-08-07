@@ -35,11 +35,8 @@ export function PDFPanel() {
       pageNumber={
         selectedEvidence?.pageNumber ?? 1
       }
-      startChar={
-        selectedEvidence?.startChar
-      }
-      endChar={
-        selectedEvidence?.endChar
+      bboxes={
+        selectedEvidence?.bboxes ?? []
       }
     />
   );

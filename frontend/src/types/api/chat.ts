@@ -14,9 +14,7 @@ export interface SourceResponse {
 
   page_number: number;
 
-  start_char: number;
-
-  end_char: number;
+  bboxes: number[][];
 
   confidence: number;
 

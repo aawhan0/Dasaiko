@@ -94,12 +94,8 @@ export function PDFBottomSheet() {
                 pageNumber={
                   selectedEvidence?.pageNumber ?? 1
                 }
-                startChar={
-                  selectedEvidence?.startChar
-                }
-                endChar={
-                  selectedEvidence?.endChar
-                }
+                // @ts-ignore: bboxes prop is passed through for PDF rendering
+                bboxes={selectedEvidence?.bboxes}
               />
 
             </div>
