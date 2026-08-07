@@ -22,7 +22,6 @@ from app.services.embedding_service import generate_embedding
 from app.utils.pdf import (
     extract_text_from_pdf,
     extract_pages_from_pdf,
-    find_chunk_bboxes,
 )
 
 from app.utils.chunker import (
@@ -189,15 +188,6 @@ class DocumentService:
 
             for chunk in page_chunks:
 
-                # ---------------------------------
-                # Find bounding boxes for this chunk
-                # ---------------------------------
-                bboxes = find_chunk_bboxes(
-                    disk_path,
-                    chunk["page_number"],
-                    chunk["content"],
-                )
-
                 chunk_obj = Chunk(
                     document_id=document.id,
 
@@ -207,7 +197,11 @@ class DocumentService:
 
                     page_number=chunk["page_number"],
 
-                    bboxes=bboxes,
+                    page_width=chunk["page_width"],
+
+                    page_height=chunk["page_height"],
+
+                    bboxes=chunk["bboxes"],
 
                     token_count=len(
                         chunk["content"].split()
