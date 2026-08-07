@@ -14,23 +14,14 @@ import type {
 
 interface WorkspaceState {
   activeConversationId: string | null;
-
   activeDocumentId: string | null;
-
   selectedPdf: string | null;
-
   selectedEvidence: EvidenceChunk | null;
-
   messages: ChatMessage[];
-
   documents: Document[];
-
   conversations: Conversation[];
-
   activeEvidence: EvidenceChunk[];
-
   isQuerying: boolean;
-
   sidebarOpen: boolean;
 }
 
@@ -97,6 +88,10 @@ interface WorkspaceActions {
     doc: Document
   ) => void;
 
+  removeDocument: (
+    id: string
+  ) => void;
+
   updateDocument: (
     id: string,
     updates: Partial<Document>
@@ -105,7 +100,7 @@ interface WorkspaceActions {
 
 type WorkspaceStore =
   WorkspaceState &
-    WorkspaceActions;
+  WorkspaceActions;
 
 const WorkspaceContext =
   createContext<WorkspaceStore | null>(
@@ -359,6 +354,20 @@ export function WorkspaceProvider({
       []
     );
 
+  const removeDocument =
+    useCallback(
+      (id: string) => {
+        setDocumentsState(
+          (prev) =>
+            prev.filter(
+              (doc) =>
+                doc.id !== id
+            )
+        );
+      },
+      []
+    );
+
   const updateDocument =
     useCallback(
       (
@@ -417,6 +426,7 @@ export function WorkspaceProvider({
         toggleSidebar,
 
         addDocument,
+        removeDocument,
         updateDocument,
       }}
     >
