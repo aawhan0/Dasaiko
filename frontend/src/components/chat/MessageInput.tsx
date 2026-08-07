@@ -129,10 +129,13 @@ export function MessageInput() {
             query: question,
           });
 
-        const assistantMessage =
-          mapChatResponse(
-            response
-          );
+        const assistantMessage = {
+          ...mapChatResponse(response),
+
+          evidence: mapSources(
+            response.sources ?? []
+          ),
+        };
 
         setMessages((prev) => {
           const withoutStreaming =

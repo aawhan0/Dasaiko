@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Document,
   Page,
@@ -12,24 +12,35 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/b
 
 interface PDFViewerProps {
   file: string;
+
+  pageNumber?: number;
+
+  startChar?: number;
+
+  endChar?: number;
 }
 
 const API = "http://localhost:8000";
 
 export function PDFViewer({
   file,
+  pageNumber: initialPage = 1,
 }: PDFViewerProps) {
   const [numPages, setNumPages] =
     useState(0);
 
   const [pageNumber, setPageNumber] =
-    useState(1);
+    useState(initialPage);
+
+  useEffect(() => {
+    setPageNumber(initialPage);
+  }, [initialPage]);
 
   return (
     <div className="flex h-full flex-col bg-[#090909]">
 
       {/* Toolbar */}
-      <div className="flex items-center justify-between px-8 py-4">
+      <div className="flex items-center justify-between border-b border-white/[0.06] px-8 py-4">
 
         <button
           onClick={() =>
@@ -64,7 +75,9 @@ export function PDFViewer({
               Math.min(numPages, p + 1)
             )
           }
-          disabled={pageNumber === numPages}
+          disabled={
+            pageNumber === numPages
+          }
           className="
             rounded-lg
             border
@@ -93,11 +106,16 @@ export function PDFViewer({
               Loading PDF...
             </div>
           }
-          onLoadSuccess={({ numPages }) =>
+          onLoadSuccess={({
+            numPages,
+          }) =>
             setNumPages(numPages)
           }
           onLoadError={(err) =>
-            console.error(err)
+            console.error(
+              "PDF ERROR:",
+              err
+            )
           }
         >
           <div className="flex justify-center pb-12">

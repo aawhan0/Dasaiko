@@ -8,8 +8,6 @@ from sqlalchemy.orm import Session
 from app.core.exceptions import DocumentNotFoundException
 from app.db.transaction import transactional
 
-from app.services.bm25_service import BM25Service
-
 from app.models.chunk import Chunk
 from app.models.document import Document
 from app.models.embedding import Embedding
@@ -21,8 +19,15 @@ from app.schemas.document import (
 
 from app.services.embedding_service import generate_embedding
 
-from app.utils.chunker import split_text
-from app.utils.pdf import extract_text_from_pdf
+from app.utils.pdf import (
+    extract_text_from_pdf,
+    extract_pages_from_pdf,
+)
+
+from app.utils.chunker import (
+    split_text,
+    split_page,
+)
 
 
 class DocumentService:
@@ -125,9 +130,9 @@ class DocumentService:
         file: UploadFile,
     ) -> Document:
 
-        # ----------------------------------
+        # -----------------------------
         # Save PDF
-        # ----------------------------------
+        # -----------------------------
         upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
@@ -145,51 +150,67 @@ class DocumentService:
 
         file.file.close()
 
-        # ----------------------------------
-        # Extract Text
-        # ----------------------------------
+        # -----------------------------
+        # Extract full text
+        # -----------------------------
         extracted_text = extract_text_from_pdf(
             disk_path
         )
 
-        # ----------------------------------
-        # Create Document
-        # ----------------------------------
+        # -----------------------------
+        # Create document
+        # -----------------------------
         document = Document(
             title=file.filename.replace(".pdf", ""),
             content=extracted_text,
             source="pdf",
             file_name=file.filename,
-            file_path=f"/uploads/{unique_name}",
+            file_path=public_path,
         )
 
         db.add(document)
         db.flush()
 
-        # ----------------------------------
-        # Create Chunks + Embeddings
-        # ----------------------------------
-        chunks = split_text(extracted_text)
+        # -----------------------------
+        # Page-aware chunking
+        # -----------------------------
+        pages = extract_pages_from_pdf(
+            disk_path
+        )
 
-        for index, chunk in enumerate(chunks):
+        global_chunk_index = 0
 
-            chunk_obj = Chunk(
-                document_id=document.id,
-                content=chunk,
-                chunk_index=index,
-                token_count=len(chunk.split()),
-            )
+        for page in pages:
 
-            db.add(chunk_obj)
-            db.flush()
+            page_chunks = split_page(page)
 
-            embedding_obj = Embedding(
-                chunk_id=chunk_obj.id,
-                model_name="all-MiniLM-L6-v2",
-                embedding=generate_embedding(chunk),
-            )
+            for chunk in page_chunks:
 
-            db.add(embedding_obj)
+                chunk_obj = Chunk(
+                    document_id=document.id,
+                    content=chunk["content"],
+                    chunk_index=global_chunk_index,
+                    page_number=chunk["page_number"],
+                    bboxes=chunk["bboxes"],
+                    token_count=len(
+                        chunk["content"].split()
+                    ),
+                )
+
+                db.add(chunk_obj)
+                db.flush()
+
+                embedding_obj = Embedding(
+                    chunk_id=chunk_obj.id,
+                    model_name="all-MiniLM-L6-v2",
+                    embedding=generate_embedding(
+                        chunk["content"]
+                    ),
+                )
+
+                db.add(embedding_obj)
+
+                global_chunk_index += 1
 
         db.refresh(document)
 

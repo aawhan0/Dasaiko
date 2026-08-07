@@ -7,13 +7,14 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 export function PDFPanel() {
   const {
     selectedPdf,
+    selectedEvidence,
   } = useWorkspaceStore();
 
   if (!selectedPdf) {
     return (
       <div className="flex h-full items-center justify-center bg-[#090909]">
         <div className="text-center">
-          <FileText className="mx-auto mb-4 h-12 w-12 text-zinc-600" />
+          <FileText className="mx-auto mb-4 h-10 w-10 text-zinc-600" />
 
           <h3 className="text-sm font-semibold text-white">
             No paper selected
@@ -31,6 +32,15 @@ export function PDFPanel() {
   return (
     <PDFViewer
       file={selectedPdf}
+      pageNumber={
+        selectedEvidence?.pageNumber ?? 1
+      }
+      startChar={
+        selectedEvidence?.startChar
+      }
+      endChar={
+        selectedEvidence?.endChar
+      }
     />
   );
 }

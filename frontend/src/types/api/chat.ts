@@ -4,9 +4,22 @@ export interface ChatRequest {
 }
 
 export interface SourceResponse {
-  paper_title: string;
-  chunk_number: number;
+  id: number;
+
+  document_id: number;
+
+  document_name: string;
+
+  chunk_index: number;
+
+  page_number: number;
+
+  start_char: number;
+
+  end_char: number;
+
   confidence: number;
+
   preview: string;
 }
 

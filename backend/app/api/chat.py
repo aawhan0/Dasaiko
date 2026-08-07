@@ -26,7 +26,7 @@ def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
 ):
-    answer, results = ChatService.chat(
+    answer, evidence = ChatService.chat(
         db=db,
         conversation_id=request.conversation_id,
         query=request.query,
@@ -35,8 +35,11 @@ def chat(
     # ----------------------------------------
     # Normalize confidence scores
     # ----------------------------------------
-    if results:
-        scores = [score for _, score in results]
+    if evidence:
+        scores = [
+            item["score"]
+            for item in evidence
+        ]
 
         min_score = min(scores)
         max_score = max(scores)
@@ -46,26 +49,36 @@ def chat(
 
     sources = []
 
-    for chunk, score in results:
+    for item in evidence:
 
         if max_score == min_score:
             confidence = 100.0
         else:
             confidence = (
-                (score - min_score)
+                (item["score"] - min_score)
                 / (max_score - min_score)
             ) * 100
 
-        preview = chunk.content.strip()
+        preview = item["preview"].strip()
 
         if len(preview) > 180:
-            preview = preview[:180].rstrip() + "..."
+            preview = (
+                preview[:180].rstrip()
+                + "..."
+            )
 
         sources.append(
             SourceResponse(
-                paper_title=chunk.document.title,
-                chunk_number=chunk.chunk_index + 1,
-                confidence=round(confidence, 1),
+                id=item["id"],
+                document_id=item["document_id"],
+                document_name=item["document_name"],
+                chunk_index=item["chunk_index"],
+                page_number=item["page_number"],
+                bboxes=item["bboxes"],
+                confidence=round(
+                    confidence,
+                    1,
+                ),
                 preview=preview,
             )
         )

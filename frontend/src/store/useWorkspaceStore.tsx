@@ -19,6 +19,8 @@ interface WorkspaceState {
 
   selectedPdf: string | null;
 
+  selectedEvidence: EvidenceChunk | null;
+
   messages: ChatMessage[];
 
   documents: Document[];
@@ -43,6 +45,10 @@ interface WorkspaceActions {
 
   setSelectedPdf: (
     path: string | null
+  ) => void;
+
+  setSelectedEvidence: (
+    evidence: EvidenceChunk | null
   ) => void;
 
   addMessage: (
@@ -133,6 +139,13 @@ export function WorkspaceProvider({
   );
 
   const [
+    selectedEvidence,
+    setSelectedEvidenceState,
+  ] = useState<EvidenceChunk | null>(
+    null
+  );
+
+  const [
     messages,
     setMessagesState,
   ] = useState<ChatMessage[]>(
@@ -192,6 +205,18 @@ export function WorkspaceProvider({
     useCallback(
       (path: string | null) => {
         setSelectedPdfState(path);
+      },
+      []
+    );
+
+  const setSelectedEvidence =
+    useCallback(
+      (
+        evidence: EvidenceChunk | null
+      ) => {
+        setSelectedEvidenceState(
+          evidence
+        );
       },
       []
     );
@@ -361,6 +386,7 @@ export function WorkspaceProvider({
         activeConversationId,
         activeDocumentId,
         selectedPdf,
+        selectedEvidence,
 
         messages,
         documents,
@@ -374,6 +400,7 @@ export function WorkspaceProvider({
         setActiveConversation,
         setActiveDocument,
         setSelectedPdf,
+        setSelectedEvidence,
 
         addMessage,
         setMessages,

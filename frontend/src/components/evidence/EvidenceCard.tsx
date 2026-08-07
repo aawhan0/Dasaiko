@@ -33,6 +33,7 @@ export const EvidenceCard = memo(function EvidenceCard({
   const {
     documents,
     setSelectedPdf,
+    setSelectedEvidence,
   } = useWorkspaceStore();
 
   const confidenceColor =
@@ -45,13 +46,9 @@ export const EvidenceCard = memo(function EvidenceCard({
   const handleOpenSource = () => {
     console.log("Clicked:", chunk.documentName);
 
-    console.table(documents);
-
     const doc = documents.find(
       (d) =>
-        d.fileName === chunk.documentName ||
-        d.title === chunk.documentName ||
-        d.name === chunk.documentName
+        String(d.id) === chunk.documentId
     );
 
     console.log("Matched document:", doc);
@@ -61,7 +58,7 @@ export const EvidenceCard = memo(function EvidenceCard({
       return;
     }
 
-    console.log("Opening:", doc.filePath);
+    setSelectedEvidence(chunk);
 
     setSelectedPdf(doc.filePath);
   };
@@ -104,11 +101,15 @@ export const EvidenceCard = memo(function EvidenceCard({
                 {paperTitle}
               </h3>
 
-              <div className="mt-1 flex items-center gap-2 text-[11px] text-zinc-500">
+              <div className="flex items-center gap-3">
 
                 <span className="flex items-center gap-1">
                   <Hash className="h-3 w-3" />
                   Chunk {chunk.chunkIndex}
+                </span>
+
+                <span className="text-zinc-500">
+                  Page {chunk.pageNumber}
                 </span>
 
               </div>

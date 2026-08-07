@@ -7,12 +7,24 @@ class ChatRequest(BaseModel):
 
 
 class SourceResponse(BaseModel):
-    paper_title: str
-    chunk_number: int
+    id: int
+
+    document_id: int
+
+    document_name: str
+
+    chunk_index: int
+
+    page_number: int
+
+    bboxes: list
+
     confidence: float
+
     preview: str
 
 
 class ChatResponse(BaseModel):
     answer: str
+
     sources: list[SourceResponse]

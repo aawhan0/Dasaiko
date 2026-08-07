@@ -28,22 +28,23 @@ export function mapChatResponse(
 export function mapSources(
   sources: SourceResponse[]
 ): EvidenceChunk[] {
-  return sources.map((source, index) => ({
-    id: `${index}`,
+  return sources.map((source) => ({
+    id: String(source.id),
 
-    // Research paper title
-    documentName: source.paper_title,
+    documentId: String(source.document_id),
 
-    // Human-readable chunk number
-    chunkIndex: source.chunk_number,
+    documentName: source.document_name,
 
-    // Confidence (0-100)
+    chunkIndex: source.chunk_index + 1,
+
     score: source.confidence,
 
-    // Preview from backend
     preview: source.preview,
 
-    // Future use (PDF page highlighting)
-    page: undefined,
+    pageNumber: source.page_number,
+
+    startChar: source.start_char,
+
+    endChar: source.end_char,
   }));
 }

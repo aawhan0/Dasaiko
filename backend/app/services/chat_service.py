@@ -104,15 +104,17 @@ class ChatService:
         # -----------------------------------------
         context_parts = []
 
-        for index, (chunk, score) in enumerate(results, start=1):
+        for index, result in enumerate(results, start=1):
+            chunk = result["chunk"]
 
             context_parts.append(
                 f"""
-Document: {chunk.document.title}
-Chunk {index}
-----------------------------------------
-{chunk.content}
-"""
+        Document: {chunk.document.title}
+        Page: {result["page_number"]}
+        Chunk {index}
+        ----------------------------------------
+        {chunk.content}
+        """
             )
 
         context = "\n".join(context_parts)
@@ -189,17 +191,16 @@ Chunk {index}
 
         print("\n===== RESULTS =====")
 
-        for chunk, score in results:
+        for result in results:
 
             print(
                 f"Chunk ID: {chunk.id}",
                 f"Document ID: {chunk.document_id}",
                 f"Document: {chunk.document.title}",
+                f"Page: {result['page_number']}",
                 f"Chunk Index: {chunk.chunk_index}",
-                f"Score: {score}",
+                f"Score: {result['score']}",
             )
 
         print("===================\n")
         print("========== CHAT END ==========\n")
-
-        return answer, results

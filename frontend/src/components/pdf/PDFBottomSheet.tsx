@@ -7,6 +7,7 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 export function PDFBottomSheet() {
   const {
     selectedPdf,
+    selectedEvidence,
     setSelectedPdf,
   } = useWorkspaceStore();
 
@@ -48,25 +49,30 @@ export function PDFBottomSheet() {
               shadow-[0_-20px_80px_rgba(0,0,0,0.6)]
             "
           >
-            {/* Drag Handle */}
+            {/* Handle */}
             <div className="flex justify-center py-3">
               <div className="h-1.5 w-16 rounded-full bg-zinc-700" />
             </div>
 
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-2">
+
               <div>
                 <h2 className="text-lg font-semibold text-white">
                   Document Viewer
                 </h2>
 
                 <p className="text-xs text-zinc-500">
-                  Source document
+                  {selectedEvidence
+                    ? `Page ${selectedEvidence.pageNumber}`
+                    : "Source document"}
                 </p>
               </div>
 
               <button
-                onClick={() => setSelectedPdf(null)}
+                onClick={() =>
+                  setSelectedPdf(null)
+                }
                 className="
                   rounded-xl
                   p-2
@@ -78,11 +84,26 @@ export function PDFBottomSheet() {
               >
                 <ChevronDown className="h-5 w-5" />
               </button>
+
             </div>
 
             <div className="h-[calc(88vh-72px)] overflow-hidden">
-              <PDFViewer file={selectedPdf} />
+
+              <PDFViewer
+                file={selectedPdf}
+                pageNumber={
+                  selectedEvidence?.pageNumber ?? 1
+                }
+                startChar={
+                  selectedEvidence?.startChar
+                }
+                endChar={
+                  selectedEvidence?.endChar
+                }
+              />
+
             </div>
+
           </motion.div>
         </>
       )}
