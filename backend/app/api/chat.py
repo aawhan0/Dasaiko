@@ -74,6 +74,8 @@ def chat(
                 document_name=item["document_name"],
                 chunk_index=item["chunk_index"],
                 page_number=item["page_number"],
+                page_width=item["page_width"],
+                page_height=item["page_height"],
                 bboxes=item["bboxes"],
                 confidence=round(
                     confidence,

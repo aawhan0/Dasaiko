@@ -17,6 +17,10 @@ class SourceResponse(BaseModel):
 
     page_number: int
 
+    page_width: float | None = None
+
+    page_height: float | None = None
+
     bboxes: list
 
     confidence: float
