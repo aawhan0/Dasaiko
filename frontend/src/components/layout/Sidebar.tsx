@@ -51,7 +51,7 @@ export function Sidebar() {
 
   const [activeTab, setActiveTab] = useState<
     "library" | "threads"
-  >("library");
+  >("threads");
 
   const [
     editingConversationId,
@@ -299,7 +299,7 @@ export function Sidebar() {
 
           {/* Tabs */}
           <div className="flex gap-1 px-3 py-2 flex-shrink-0">
-            {(["library", "threads"] as const).map(
+            {(["threads", "library"] as const).map(
               (tab) => (
                 <button
                   key={tab}
