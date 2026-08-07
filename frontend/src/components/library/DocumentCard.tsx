@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
   FileText,
-  MoreHorizontal,
+  Trash2,
   Clock,
   Layers,
 } from "lucide-react";
@@ -16,6 +16,8 @@ interface DocumentCardProps {
   document: Document;
   isActive?: boolean;
   onClick?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
 }
 
 const statusDot: Record<Document["status"], string> = {
@@ -29,6 +31,8 @@ export function DocumentCard({
   document,
   isActive = false,
   onClick,
+  onDelete,
+  isDeleting = false,
 }: DocumentCardProps) {
   return (
     <motion.div
@@ -103,16 +107,18 @@ export function DocumentCard({
         </div>
       </div>
 
-      {/* More Button */}
+      {/* Delete Button */}
       <button
         type="button"
+        disabled={isDeleting}
         onClick={(e) => {
           e.stopPropagation();
-          // TODO: Open context menu
+          onDelete?.();
         }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-md hover:bg-white/10 flex items-center justify-center text-zinc-500 hover:text-white flex-shrink-0"
+        aria-label={`Delete ${document.name}`}
+        className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-md hover:bg-red-500/10 disabled:opacity-50 flex items-center justify-center text-zinc-500 hover:text-red-400 flex-shrink-0"
       >
-        <MoreHorizontal className="w-4 h-4" />
+        <Trash2 className="w-4 h-4" />
       </button>
     </motion.div>
   );
