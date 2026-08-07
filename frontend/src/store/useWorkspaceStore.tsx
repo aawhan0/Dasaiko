@@ -14,15 +14,21 @@ import type {
 
 interface WorkspaceState {
   activeConversationId: string | null;
+
   activeDocumentId: string | null;
 
+  selectedPdf: string | null;
+
   messages: ChatMessage[];
+
   documents: Document[];
+
   conversations: Conversation[];
 
   activeEvidence: EvidenceChunk[];
 
   isQuerying: boolean;
+
   sidebarOpen: boolean;
 }
 
@@ -33,6 +39,10 @@ interface WorkspaceActions {
 
   setActiveDocument: (
     id: string | null
+  ) => void;
+
+  setSelectedPdf: (
+    path: string | null
   ) => void;
 
   addMessage: (
@@ -72,7 +82,7 @@ interface WorkspaceActions {
   ) => void;
 
   setIsQuerying: (
-    v: boolean
+    value: boolean
   ) => void;
 
   toggleSidebar: () => void;
@@ -89,7 +99,7 @@ interface WorkspaceActions {
 
 type WorkspaceStore =
   WorkspaceState &
-  WorkspaceActions;
+    WorkspaceActions;
 
 const WorkspaceContext =
   createContext<WorkspaceStore | null>(
@@ -104,32 +114,51 @@ export function WorkspaceProvider({
   const [
     activeConversationId,
     setActiveConversationId,
-  ] = useState<string | null>(null);
+  ] = useState<string | null>(
+    null
+  );
 
   const [
     activeDocumentId,
     setActiveDocumentId,
-  ] = useState<string | null>(null);
+  ] = useState<string | null>(
+    null
+  );
+
+  const [
+    selectedPdf,
+    setSelectedPdfState,
+  ] = useState<string | null>(
+    null
+  );
 
   const [
     messages,
     setMessagesState,
-  ] = useState<ChatMessage[]>([]);
+  ] = useState<ChatMessage[]>(
+    []
+  );
 
   const [
     documents,
     setDocumentsState,
-  ] = useState<Document[]>([]);
+  ] = useState<Document[]>(
+    []
+  );
 
   const [
     conversations,
     setConversationsState,
-  ] = useState<Conversation[]>([]);
+  ] = useState<
+    Conversation[]
+  >([]);
 
   const [
     activeEvidence,
     setActiveEvidence,
-  ] = useState<EvidenceChunk[]>([]);
+  ] = useState<
+    EvidenceChunk[]
+  >([]);
 
   const [
     isQuerying,
@@ -144,7 +173,9 @@ export function WorkspaceProvider({
   const setActiveConversation =
     useCallback(
       (id: string | null) => {
-        setActiveConversationId(id);
+        setActiveConversationId(
+          id
+        );
       },
       []
     );
@@ -157,13 +188,26 @@ export function WorkspaceProvider({
       []
     );
 
+  const setSelectedPdf =
+    useCallback(
+      (path: string | null) => {
+        setSelectedPdfState(path);
+      },
+      []
+    );
+
   const addMessage =
-    useCallback((msg: ChatMessage) => {
-      setMessagesState((prev) => [
-        ...prev,
-        msg,
-      ]);
-    }, []);
+    useCallback(
+      (msg: ChatMessage) => {
+        setMessagesState(
+          (prev) => [
+            ...prev,
+            msg,
+          ]
+        );
+      },
+      []
+    );
 
   const setMessages =
     useCallback(
@@ -178,9 +222,13 @@ export function WorkspaceProvider({
           typeof updater ===
           "function"
         ) {
-          setMessagesState(updater);
+          setMessagesState(
+            updater
+          );
         } else {
-          setMessagesState(updater);
+          setMessagesState(
+            updater
+          );
         }
       },
       []
@@ -188,8 +236,12 @@ export function WorkspaceProvider({
 
   const setDocuments =
     useCallback(
-      (documents: Document[]) => {
-        setDocumentsState(documents);
+      (
+        documents: Document[]
+      ) => {
+        setDocumentsState(
+          documents
+        );
       },
       []
     );
@@ -221,17 +273,22 @@ export function WorkspaceProvider({
       []
     );
 
-
-
   const removeConversation =
-    useCallback((id: string) => {
-      setConversationsState((prev) =>
-        prev.filter(
-          (conversation) =>
-            conversation.id !== id
-        )
-      );
-    }, []);
+    useCallback(
+      (id: string) => {
+        setConversationsState(
+          (prev) =>
+            prev.filter(
+              (
+                conversation
+              ) =>
+                conversation.id !==
+                id
+            )
+        );
+      },
+      []
+    );
 
   const updateConversation =
     useCallback(
@@ -240,14 +297,17 @@ export function WorkspaceProvider({
       ) => {
         setConversationsState(
           (prev) =>
-            prev.map((conversation) =>
-              conversation.id ===
-              updatedConversation.id
-                ? {
-                    ...conversation,
-                    ...updatedConversation,
-                  }
-                : conversation
+            prev.map(
+              (
+                conversation
+              ) =>
+                conversation.id ===
+                updatedConversation.id
+                  ? {
+                      ...conversation,
+                      ...updatedConversation,
+                    }
+                  : conversation
             )
         );
       },
@@ -262,21 +322,17 @@ export function WorkspaceProvider({
     }, []);
 
   const addDocument =
-    useCallback((doc: Document) => {
-      console.log(
-        "========== DOCUMENT ADDED =========="
-      );
-      console.log(doc);
-
-      setDocumentsState((prev) => {
-        console.log(
-          "========== PREVIOUS DOCUMENTS =========="
+    useCallback(
+      (doc: Document) => {
+        setDocumentsState(
+          (prev) => [
+            doc,
+            ...prev,
+          ]
         );
-        console.log(prev);
-
-        return [doc, ...prev];
-      });
-    }, []);
+      },
+      []
+    );
 
   const updateDocument =
     useCallback(
@@ -284,15 +340,16 @@ export function WorkspaceProvider({
         id: string,
         updates: Partial<Document>
       ) => {
-        setDocumentsState((prev) =>
-          prev.map((doc) =>
-            doc.id === id
-              ? {
-                  ...doc,
-                  ...updates,
-                }
-              : doc
-          )
+        setDocumentsState(
+          (prev) =>
+            prev.map((doc) =>
+              doc.id === id
+                ? {
+                    ...doc,
+                    ...updates,
+                  }
+                : doc
+            )
         );
       },
       []
@@ -303,6 +360,7 @@ export function WorkspaceProvider({
       value={{
         activeConversationId,
         activeDocumentId,
+        selectedPdf,
 
         messages,
         documents,
@@ -315,6 +373,7 @@ export function WorkspaceProvider({
 
         setActiveConversation,
         setActiveDocument,
+        setSelectedPdf,
 
         addMessage,
         setMessages,
@@ -341,7 +400,9 @@ export function WorkspaceProvider({
 
 export function useWorkspaceStore(): WorkspaceStore {
   const context =
-    useContext(WorkspaceContext);
+    useContext(
+      WorkspaceContext
+    );
 
   if (!context) {
     throw new Error(

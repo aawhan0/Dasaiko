@@ -7,9 +7,11 @@ class ChatRequest(BaseModel):
 
 
 class SourceResponse(BaseModel):
-    document: str
-    chunk_index: int
-    score: float
+    paper_title: str
+    chunk_number: int
+    confidence: float
+    preview: str
+
 
 class ChatResponse(BaseModel):
     answer: str

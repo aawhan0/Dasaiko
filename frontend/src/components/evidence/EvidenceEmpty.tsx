@@ -1,6 +1,10 @@
-import { motion } from 'framer-motion';
-import { BookOpen } from 'lucide-react';
-import { fadeInUp } from '@/utils/animations';
+import { motion } from "framer-motion";
+import {
+  BookOpen,
+  Sparkles,
+} from "lucide-react";
+
+import { fadeInUp } from "@/utils/animations";
 
 export function EvidenceEmpty() {
   return (
@@ -8,16 +12,24 @@ export function EvidenceEmpty() {
       variants={fadeInUp}
       initial="hidden"
       animate="visible"
-      className="flex flex-col items-center justify-center gap-4 py-16 px-6 text-center h-full"
+      className="flex h-full flex-col items-center justify-center px-8 text-center"
     >
-      <div className="w-12 h-12 rounded-xl bg-surface border border-white/[0.06] flex items-center justify-center">
-        <BookOpen className="w-5 h-5 text-zinc-600" />
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
+        <BookOpen className="h-7 w-7 text-primary" />
       </div>
-      <div>
-        <p className="text-sm font-medium text-zinc-400 mb-1">No evidence yet</p>
-        <p className="text-xs text-zinc-600 max-w-48 leading-relaxed">
-          Ask a question to see source citations and supporting evidence appear here.
-        </p>
+
+      <h3 className="text-base font-semibold text-white">
+        Research Evidence
+      </h3>
+
+      <p className="mt-2 max-w-[240px] text-sm leading-6 text-zinc-500">
+        Ask a question about an uploaded paper.
+        Relevant research evidence will appear here.
+      </p>
+
+      <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
+        <Sparkles className="h-3 w-3" />
+        AI Grounded Responses
       </div>
     </motion.div>
   );

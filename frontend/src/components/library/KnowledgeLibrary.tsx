@@ -36,7 +36,6 @@ export function KnowledgeLibrary() {
     >
       <SearchBar
         onSearch={setQuery}
-        className="mx-3"
       />
 
       <div className="flex-1 overflow-y-auto min-h-0">

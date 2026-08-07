@@ -24,11 +24,19 @@ export async function listDocuments(): Promise<Document[]> {
     await api.get<ApiResponse<DocumentResponse[]>>(
       "/documents"
     );
+    
+  console.log(response.data.data);
 
   return response.data.data.map((doc) => ({
     id: String(doc.id),
 
-    name: doc.file_name ?? doc.title,
+    title: doc.title,
+
+    name: doc.title,
+
+    fileName: doc.file_name ?? "",
+
+    filePath: doc.file_path  ?? "",
 
     type: "pdf",
 
@@ -60,7 +68,13 @@ export async function getDocument(
   return {
     id: String(doc.id),
 
-    name: doc.file_name ?? doc.title,
+    title: doc.title,
+
+    name: doc.title,
+
+    fileName: doc.file_name ?? "",
+
+    filePath: doc.file_path  ?? "",
 
     type: "pdf",
 
@@ -98,17 +112,18 @@ export async function uploadDocument(
       }
     );
 
-  console.log(
-    "UPLOAD RESPONSE",
-    response.data
-  );
-
   const doc = response.data.data;
 
   return {
     id: String(doc.id),
 
-    name: doc.file_name ?? doc.title,
+    title: doc.title,
+
+    name: doc.title,
+
+    fileName: doc.file_name ?? "",
+
+    filePath: doc.file_path  ?? "",
 
     type: "pdf",
 

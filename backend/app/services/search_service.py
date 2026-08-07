@@ -52,58 +52,28 @@ class SearchService:
 
         combined = {}
 
-        print("\n========== VECTOR RESULTS ==========")
+        # Add Vector Search results first
+        for chunk, score in vector_results:
 
-        for index, result in enumerate(vector_results):
-            try:
-                print(f"[{index}] {type(result)}")
+            if chunk is None:
+                continue
 
-                chunk, score = result
+            combined[chunk.id] = (
+                chunk,
+                float(score),
+            )
 
-                if chunk is None:
-                    print("⚠ Skipping None chunk")
-                    continue
+        # Add BM25 results if not already present
+        for chunk, score in bm25_results:
 
+            if chunk is None:
+                continue
+
+            if chunk.id not in combined:
                 combined[chunk.id] = (
                     chunk,
                     float(score),
                 )
-
-            except Exception as e:
-                print(
-                    f"❌ Vector Result #{index} failed:"
-                )
-                print(result)
-                raise
-
-        print("====================================")
-
-        print("\n========== BM25 RESULTS ==========")
-
-        for index, result in enumerate(bm25_results):
-            try:
-                print(f"[{index}] {type(result)}")
-
-                chunk, score = result
-
-                if chunk is None:
-                    print("⚠ Skipping None chunk")
-                    continue
-
-                if chunk.id not in combined:
-                    combined[chunk.id] = (
-                        chunk,
-                        float(score),
-                    )
-
-            except Exception as e:
-                print(
-                    f"❌ BM25 Result #{index} failed:"
-                )
-                print(result)
-                raise
-
-        print("===================================")
 
         combined_results = list(combined.values())
 
@@ -112,11 +82,11 @@ class SearchService:
         )
 
         # ---------------------------------------------------
-        # Empty Search Protection
+        # No Results
         # ---------------------------------------------------
-        if len(combined_results) == 0:
-            print("⚠ No search results found.")
+        if not combined_results:
 
+            print("⚠ No search results found.")
             print("========== SEARCH END ==========\n")
 
             return []

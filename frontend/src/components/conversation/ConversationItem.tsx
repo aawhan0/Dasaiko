@@ -55,8 +55,19 @@ export function ConversationItem({
   }, [isEditing]);
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onOpen}
+      onKeyDown={(e) => {
+        if (
+          e.key === "Enter" ||
+          e.key === " "
+        ) {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
       onContextMenu={(e) => {
         e.preventDefault();
 
@@ -69,8 +80,7 @@ export function ConversationItem({
         );
       }}
       className={cn(
-        "group w-full text-left px-3 py-2.5 rounded-lg border transition-all duration-200",
-
+        "group w-full cursor-pointer text-left px-3 py-2.5 rounded-lg border transition-all duration-200",
         isEditing
           ? "border-primary shadow-[0_0_18px_rgba(124,58,237,0.35)] bg-primary/10"
           : isActive
@@ -141,6 +151,7 @@ export function ConversationItem({
         </div>
 
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onTogglePin();
@@ -164,6 +175,6 @@ export function ConversationItem({
           conversation.lastActivityAt
         )}
       </p>
-    </button>
+    </div>
   );
 }

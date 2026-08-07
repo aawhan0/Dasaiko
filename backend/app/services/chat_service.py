@@ -2,7 +2,9 @@ from groq import Groq
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+
 from app.services.search_service import SearchService
+from app.services.query_rewriter_service import QueryRewriterService
 
 from app.services.conversation_service import ConversationService
 from app.services.message_service import MessageService
@@ -39,7 +41,8 @@ class ChatService:
             conversation_id=conversation_id,
         )
 
-        messages = messages[-10:]
+        # Keep only the recent history
+        messages = messages[-4:]
 
         conversation_history = "\n".join(
             f"{message.role.upper()}: {message.content}"
@@ -48,6 +51,9 @@ class ChatService:
 
         print(f"✓ Loaded {len(messages)} previous messages")
 
+        # -----------------------------------------
+        # Save user message
+        # -----------------------------------------
         MessageService.create_message(
             db=db,
             conversation_id=conversation_id,
@@ -57,27 +63,68 @@ class ChatService:
 
         print("✓ User message saved")
 
+        # -----------------------------------------
+        # Query Rewriting
+        # -----------------------------------------
+        rewritten_query = query
+
+        if len(messages) > 0:
+            try:
+                rewritten_query = QueryRewriterService.rewrite(
+                    conversation_history=conversation_history,
+                    query=query,
+                )
+
+                print("\n========== QUERY REWRITE ==========")
+                print("Original :", query)
+                print("Rewritten:", rewritten_query)
+                print("===================================\n")
+
+            except Exception as e:
+                print("⚠ Query rewriting failed.")
+                print(e)
+                rewritten_query = query
+
+        # -----------------------------------------
+        # Search
+        # -----------------------------------------
         print("Searching...")
 
         results = SearchService.search(
             db=db,
-            query=query,
+            query=rewritten_query,
             limit=5,
         )
 
         print("✓ Search returned")
         print(f"Retrieved {len(results)} results")
 
-        context = "\n\n".join(
-            chunk.content
-            for chunk, _ in results
-        )
+        # -----------------------------------------
+        # Build Context
+        # -----------------------------------------
+        context_parts = []
+
+        for index, (chunk, score) in enumerate(results, start=1):
+
+            context_parts.append(
+                f"""
+Document: {chunk.document.title}
+Chunk {index}
+----------------------------------------
+{chunk.content}
+"""
+            )
+
+        context = "\n".join(context_parts)
 
         print("✓ Context built")
 
         print("\n" + "=" * 100)
         print("QUESTION:")
         print(query)
+        print("=" * 100)
+        print("REWRITTEN QUERY:")
+        print(rewritten_query)
         print("=" * 100)
         print("CONTEXT SENT TO LLM:")
         print(context)
@@ -91,28 +138,41 @@ class ChatService:
 
         print("Calling Groq...")
 
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You answer questions strictly from the provided context. "
-                        "If the answer exists in the context, summarize it in your own words."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            temperature=0.2,
-        )
+        try:
+
+            response = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are Dasaiko, an AI research assistant."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+                temperature=0.2,
+            )
+
+            answer = response.choices[0].message.content
+
+        except Exception as e:
+
+            print("Groq Error:", e)
+
+            answer = (
+                "The language model took too long to respond. "
+                "Please try asking again."
+            )
 
         print("✓ Groq returned")
 
-        answer = response.choices[0].message.content
-
+        # -----------------------------------------
+        # Save Assistant Message
+        # -----------------------------------------
         MessageService.create_message(
             db=db,
             conversation_id=conversation_id,
@@ -130,6 +190,7 @@ class ChatService:
         print("\n===== RESULTS =====")
 
         for chunk, score in results:
+
             print(
                 f"Chunk ID: {chunk.id}",
                 f"Document ID: {chunk.document_id}",

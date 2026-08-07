@@ -4,9 +4,10 @@ export interface ChatRequest {
 }
 
 export interface SourceResponse {
-  document: string;
-  chunk_index: number;
-  score: number;
+  paper_title: string;
+  chunk_number: number;
+  confidence: number;
+  preview: string;
 }
 
 export interface ChatResponse {

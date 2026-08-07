@@ -7,7 +7,8 @@ from app.models.chunk import Chunk
 class BM25Service:
 
     bm25 = None
-    chunks = []
+
+    indexed_chunks = []
 
     @staticmethod
     def search(
@@ -15,48 +16,79 @@ class BM25Service:
         query: str,
         limit: int = 5,
     ):
-        # Build the BM25 index once
         if BM25Service.bm25 is None:
             print("Building BM25 Index...")
             BM25Service.build_index(db)
             print(
-                f"✓ Indexed {len(BM25Service.chunks)} chunks"
+                f"✓ Indexed {len(BM25Service.indexed_chunks)} chunks"
             )
 
-        query_tokens = query.split()
-
-        print(f"BM25 Query Tokens: {query_tokens}")
+        query_tokens = query.lower().split()
 
         scores = BM25Service.bm25.get_scores(
             query_tokens
         )
 
         ranked = sorted(
-            zip(BM25Service.chunks, scores),
+            zip(BM25Service.indexed_chunks, scores),
             key=lambda x: x[1],
             reverse=True,
         )
 
-        print("\n========== BM25 TOP RESULTS ==========")
+        top_results = []
 
-        for index, result in enumerate(ranked[:limit]):
-            print(f"BM25 Result #{index}: {type(result)}")  
+        print("\n========== BM25 RESULTS ==========")
 
-        print("======================================\n")
+        for item, score in ranked[:limit]:
 
-        return ranked[:limit]
+            chunk = (
+                db.query(Chunk)
+                .filter(Chunk.id == item["id"])
+                .first()
+            )
+
+            if chunk is None:
+                continue
+
+            print(
+                f"Chunk {chunk.id} | "
+                f"Score {float(score):.4f}"
+            )
+
+            top_results.append(
+                (
+                    chunk,
+                    float(score),
+                )
+            )
+
+        print("=================================\n")
+
+        return top_results
 
     @staticmethod
     def build_index(
         db: Session,
     ):
-        BM25Service.chunks = (
-            db.query(Chunk).all()
-        )
 
-        corpus = [
-            chunk.content.split()
-            for chunk in BM25Service.chunks
-        ]
+        chunks = db.query(Chunk).all()
+
+        BM25Service.indexed_chunks = []
+
+        corpus = []
+
+        for chunk in chunks:
+
+            tokens = chunk.content.lower().split()
+
+            BM25Service.indexed_chunks.append(
+                {
+                    "id": chunk.id,
+                    "content": chunk.content,
+                    "tokens": tokens,
+                }
+            )
+
+            corpus.append(tokens)
 
         BM25Service.bm25 = BM25Okapi(corpus)

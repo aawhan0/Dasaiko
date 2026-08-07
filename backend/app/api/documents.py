@@ -143,6 +143,7 @@ def upload_document(
             title=document.title,
             source=document.source,
             file_name=document.file_name,
+            file_path=document.file_path,
             created_at=document.created_at,
         ),
     )

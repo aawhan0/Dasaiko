@@ -32,18 +32,49 @@ def chat(
         query=request.query,
     )
 
+    # ----------------------------------------
+    # Normalize confidence scores
+    # ----------------------------------------
+    if results:
+        scores = [score for _, score in results]
+
+        min_score = min(scores)
+        max_score = max(scores)
+    else:
+        min_score = 0
+        max_score = 1
+
+    sources = []
+
+    for chunk, score in results:
+
+        if max_score == min_score:
+            confidence = 100.0
+        else:
+            confidence = (
+                (score - min_score)
+                / (max_score - min_score)
+            ) * 100
+
+        preview = chunk.content.strip()
+
+        if len(preview) > 180:
+            preview = preview[:180].rstrip() + "..."
+
+        sources.append(
+            SourceResponse(
+                paper_title=chunk.document.title,
+                chunk_number=chunk.chunk_index + 1,
+                confidence=round(confidence, 1),
+                preview=preview,
+            )
+        )
+
     return APIResponse(
         success=True,
         message="Response generated successfully.",
         data=ChatResponse(
             answer=answer,
-            sources=[
-                SourceResponse(
-                    document=chunk.document.title,
-                    chunk_index=chunk.chunk_index,
-                    score=float(score),
-                )
-                for chunk, score in results
-            ],
+            sources=sources,
         ),
     )

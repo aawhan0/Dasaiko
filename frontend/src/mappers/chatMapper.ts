@@ -1,4 +1,7 @@
-import type { ChatMessage, EvidenceChunk } from "@/types";
+import type {
+  ChatMessage,
+  EvidenceChunk,
+} from "@/types";
 
 import type {
   ChatResponse,
@@ -27,10 +30,20 @@ export function mapSources(
 ): EvidenceChunk[] {
   return sources.map((source, index) => ({
     id: `${index}`,
-    documentName: source.document,
-    chunkIndex: source.chunk_index,
-    score: source.score,
-    preview: "",
+
+    // Research paper title
+    documentName: source.paper_title,
+
+    // Human-readable chunk number
+    chunkIndex: source.chunk_number,
+
+    // Confidence (0-100)
+    score: source.confidence,
+
+    // Preview from backend
+    preview: source.preview,
+
+    // Future use (PDF page highlighting)
     page: undefined,
   }));
 }

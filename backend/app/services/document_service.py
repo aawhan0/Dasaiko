@@ -6,13 +6,9 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import DocumentNotFoundException
-
-
 from app.db.transaction import transactional
 
-
 from app.services.bm25_service import BM25Service
-
 
 from app.models.chunk import Chunk
 from app.models.document import Document
@@ -46,7 +42,7 @@ class DocumentService:
         db.add(new_document)
         db.flush()
         db.refresh(new_document)
-            
+
         return new_document
 
     @staticmethod
@@ -56,8 +52,8 @@ class DocumentService:
 
         return (
             db.query(Document)
-                .order_by(Document.created_at.desc())
-                .all()
+            .order_by(Document.created_at.desc())
+            .all()
         )
 
     @staticmethod
@@ -129,34 +125,50 @@ class DocumentService:
         file: UploadFile,
     ) -> Document:
 
-        upload_dir = "app/storage/uploads"
+        # ----------------------------------
+        # Save PDF
+        # ----------------------------------
+        upload_dir = "uploads"
         os.makedirs(upload_dir, exist_ok=True)
 
         unique_name = f"{uuid.uuid4()}.pdf"
 
-        file_path = os.path.join(
+        disk_path = os.path.join(
             upload_dir,
             unique_name,
         )
 
-        with open(file_path, "wb") as buffer:
+        public_path = f"/uploads/{unique_name}"
+
+        with open(disk_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
         file.file.close()
 
-        extracted_text = extract_text_from_pdf(file_path)
+        # ----------------------------------
+        # Extract Text
+        # ----------------------------------
+        extracted_text = extract_text_from_pdf(
+            disk_path
+        )
 
+        # ----------------------------------
+        # Create Document
+        # ----------------------------------
         document = Document(
             title=file.filename.replace(".pdf", ""),
             content=extracted_text,
             source="pdf",
             file_name=file.filename,
-            file_path=file_path,
+            file_path=f"/uploads/{unique_name}",
         )
 
         db.add(document)
         db.flush()
 
+        # ----------------------------------
+        # Create Chunks + Embeddings
+        # ----------------------------------
         chunks = split_text(extracted_text)
 
         for index, chunk in enumerate(chunks):
@@ -180,4 +192,5 @@ class DocumentService:
             db.add(embedding_obj)
 
         db.refresh(document)
+
         return document

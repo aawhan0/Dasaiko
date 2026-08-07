@@ -208,7 +208,7 @@ export function MessageInput() {
   };
 
   return (
-    <div className="px-4 pb-4 pt-2 border-t border-white/[0.06] flex-shrink-0">
+    <div className="flex-shrink-0 px-4 pt-2 pb-4 border-t border-white/[0.06] bg-base">
       <motion.div
         initial={{
           y: 8,

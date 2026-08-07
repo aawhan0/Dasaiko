@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { PDFBottomSheet } from "@/components/pdf/PDFBottomSheet";
+
 import { ResearchWorkbench } from "@/components/chat/ResearchWorkbench";
 import { EvidenceVault } from "@/components/evidence/EvidenceVault";
 
@@ -22,24 +24,18 @@ export function WorkspacePage() {
     async function loadWorkspace() {
       try {
         // -----------------------------
-        // Load Documents
+        // Documents
         // -----------------------------
         const docs = await listDocuments();
         setDocuments(docs);
 
-        console.log("Loaded documents:");
-        console.table(docs);
-
         // -----------------------------
-        // Load Conversations
+        // Conversations
         // -----------------------------
         const conversations =
           await listConversations();
 
         setConversations(conversations);
-
-        console.log("Loaded conversations:");
-        console.table(conversations);
 
         // -----------------------------
         // Restore latest conversation
@@ -79,11 +75,23 @@ export function WorkspacePage() {
   ]);
 
   return (
-    <AppShell>
-      <div className="flex-1 grid grid-cols-[1fr_auto] h-full w-full overflow-hidden">
+  <AppShell>
+    <div className="relative flex h-full w-full overflow-hidden">
+
+      {/* Chat */}
+      <div className="flex min-w-0 flex-1">
         <ResearchWorkbench />
+      </div>
+
+      {/* Evidence */}
+      <div className="w-[400px] flex-shrink-0 border-l border-white/[0.06]">
         <EvidenceVault />
       </div>
-    </AppShell>
-  );
+
+      {/* PDF Bottom Sheet */}
+      <PDFBottomSheet />
+
+    </div>
+  </AppShell>
+);
 }
