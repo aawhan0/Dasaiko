@@ -224,6 +224,8 @@ Chunk {index}
                     "document_name": chunk.document.title,
                     "chunk_index": chunk.chunk_index,
                     "page_number": result["page_number"],
+                    "page_width": result.get("page_width"),
+                    "page_height": result.get("page_height"),
                     "bboxes": result["bboxes"],
                     "score": result["score"],
                     "preview": chunk.content,
