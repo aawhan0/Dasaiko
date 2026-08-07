@@ -135,6 +135,7 @@ class DocumentService:
         file: UploadFile,
     ) -> Document:
 
+        print(">>>>>>>>>>>> upload_pdf CALLED <<<<<<<<<<<<")
         # -----------------------------
         # Save PDF
         # -----------------------------
@@ -175,6 +176,10 @@ class DocumentService:
         file_name=file.filename,
         file_path=public_path,
     )
+        print("===================================")
+        print("DOCUMENT TITLE:", document.title)
+        print("FILE NAME:", document.file_name)
+        print("===================================")
 
         db.add(document)
         db.flush()
