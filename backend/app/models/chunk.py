@@ -48,6 +48,14 @@ class Chunk(Base):
         default=1,
     )
 
+    page_width: Mapped[float | None] = mapped_column(
+        nullable=True,
+    )
+
+    page_height: Mapped[float | None] = mapped_column(
+        nullable=True,
+    )
+
     # PDF coordinates for highlighting
     bboxes: Mapped[list] = mapped_column(
         JSON,

@@ -25,7 +25,6 @@ from app.utils.pdf import (
 )
 
 from app.utils.chunker import (
-    split_text,
     split_page,
 )
 
@@ -191,6 +190,8 @@ class DocumentService:
                     content=chunk["content"],
                     chunk_index=global_chunk_index,
                     page_number=chunk["page_number"],
+                    page_width=chunk["page_width"],
+                    page_height=chunk["page_height"],
                     bboxes=chunk["bboxes"],
                     token_count=len(
                         chunk["content"].split()
