@@ -28,48 +28,32 @@ def extract_pages_from_pdf(file_path: str):
     pages = []
 
     for page_index, page in enumerate(document):
+        rect = page.rect
+        page_width = rect.width
+        page_height = rect.height
 
-        text = ""
-
+        raw_blocks = page.get_text("blocks")
         blocks = []
-
-        page_dict = page.get_text("dict")
-
-        for block in page_dict["blocks"]:
-
-            if block["type"] != 0:
-                continue
-
-            block_text = ""
-
-            for line in block["lines"]:
-                for span in line["spans"]:
-                    block_text += span["text"]
-
-                block_text += "\n"
-
-            block_text = clean_text(block_text)
-
-            if not block_text.strip():
-                continue
-
-            text += block_text + "\n"
-
-            blocks.append(
-                {
-                    "text": block_text,
-                    "bbox": block["bbox"],
-                }
-            )
+        for b in raw_blocks:
+            x0, y0, x1, y1, text, block_no, block_type = b
+            if block_type == 0:  # Text block
+                cleaned = clean_text(text).strip()
+                if cleaned:
+                    blocks.append({
+                        "bbox": [x0, y0, x1, y1],
+                        "text": cleaned,
+                    })
 
         pages.append(
             {
                 "page_number": page_index + 1,
-                "text": text,
+                "text": clean_text(page.get_text()),
+                "page_width": float(page_width),
+                "page_height": float(page_height),
                 "blocks": blocks,
             }
         )
 
     document.close()
 
-    return pages
+    return pages

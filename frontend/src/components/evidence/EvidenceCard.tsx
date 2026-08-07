@@ -47,8 +47,7 @@ export const EvidenceCard = memo(function EvidenceCard({
     console.log("Clicked:", chunk.documentName);
 
     const doc = documents.find(
-      (d) =>
-        String(d.id) === chunk.documentId
+      (d) => d.id.toString() === chunk.documentId
     );
 
     console.log("Matched document:", doc);

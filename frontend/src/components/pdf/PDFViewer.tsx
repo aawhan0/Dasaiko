@@ -35,12 +35,13 @@ export function PDFViewer({
     setPageNumber(initialPage);
   }, [initialPage]);
 
-  return (
-    <div className="flex h-full flex-col bg-[#090909]">
+  // DEBUG
+  console.log("BBOXES:", bboxes);
 
+  return (
+    <>
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-white/[0.06] px-8 py-4">
-
         <button
           onClick={() =>
             setPageNumber((p) =>
@@ -92,12 +93,10 @@ export function PDFViewer({
         >
           Next →
         </button>
-
       </div>
 
       {/* PDF */}
       <div className="flex-1 overflow-auto bg-[#0d0d0d] p-8">
-
         <Document
           file={`${API}${file}`}
           loading={
@@ -105,9 +104,7 @@ export function PDFViewer({
               Loading PDF...
             </div>
           }
-          onLoadSuccess={({
-            numPages,
-          }) =>
+          onLoadSuccess={({ numPages }) =>
             setNumPages(numPages)
           }
           onLoadError={(err) =>
@@ -118,22 +115,39 @@ export function PDFViewer({
           }
         >
           <div className="flex justify-center pb-12">
-
-            <div className="rounded-xl bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-
+            <div className="relative rounded-xl bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
               <Page
                 pageNumber={pageNumber}
                 width={900}
               />
 
+              {bboxes.map(
+                (box, index) => {
+                  const [
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                  ] = box;
+
+                  return (
+                    <div
+                      key={index}
+                      className="absolute pointer-events-none border-2 border-yellow-400 bg-yellow-300/30"
+                      style={{
+                        left: x1,
+                        top: y1,
+                        width: x2 - x1,
+                        height: y2 - y1,
+                      }}
+                    />
+                  );
+                }
+              )}
             </div>
-
           </div>
-
         </Document>
-
       </div>
-
-    </div>
+    </>
   );
 }

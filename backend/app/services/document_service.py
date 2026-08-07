@@ -22,6 +22,7 @@ from app.services.embedding_service import generate_embedding
 from app.utils.pdf import (
     extract_text_from_pdf,
     extract_pages_from_pdf,
+    find_chunk_bboxes,
 )
 
 from app.utils.chunker import (
@@ -102,6 +103,7 @@ class DocumentService:
             document.content = updated_document.content
 
         db.refresh(document)
+
         return document
 
     @staticmethod
@@ -121,6 +123,7 @@ class DocumentService:
             raise DocumentNotFoundException()
 
         db.delete(document)
+
         return True
 
     @staticmethod
@@ -151,14 +154,14 @@ class DocumentService:
         file.file.close()
 
         # -----------------------------
-        # Extract full text
+        # Extract Full Text
         # -----------------------------
         extracted_text = extract_text_from_pdf(
             disk_path
         )
 
         # -----------------------------
-        # Create document
+        # Create Document
         # -----------------------------
         document = Document(
             title=file.filename.replace(".pdf", ""),
@@ -172,7 +175,7 @@ class DocumentService:
         db.flush()
 
         # -----------------------------
-        # Page-aware chunking
+        # Page-aware Chunking
         # -----------------------------
         pages = extract_pages_from_pdf(
             disk_path
@@ -186,12 +189,26 @@ class DocumentService:
 
             for chunk in page_chunks:
 
+                # ---------------------------------
+                # Find bounding boxes for this chunk
+                # ---------------------------------
+                bboxes = find_chunk_bboxes(
+                    disk_path,
+                    chunk["page_number"],
+                    chunk["content"],
+                )
+
                 chunk_obj = Chunk(
                     document_id=document.id,
+
                     content=chunk["content"],
+
                     chunk_index=global_chunk_index,
+
                     page_number=chunk["page_number"],
-                    bboxes=chunk["bboxes"],
+
+                    bboxes=bboxes,
+
                     token_count=len(
                         chunk["content"].split()
                     ),

@@ -94,7 +94,6 @@ export function PDFBottomSheet() {
                 pageNumber={
                   selectedEvidence?.pageNumber ?? 1
                 }
-                // @ts-ignore: bboxes prop is passed through for PDF rendering
                 bboxes={selectedEvidence?.bboxes}
               />
 
