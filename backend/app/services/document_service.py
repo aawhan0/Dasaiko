@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -119,7 +120,17 @@ class DocumentService:
         if not document:
             raise DocumentNotFoundException()
 
+        upload_dir = Path("uploads").resolve()
+        uploaded_file = upload_dir / Path(
+            document.file_path
+        ).name
+
         db.delete(document)
+        db.flush()
+
+        if uploaded_file.is_file():
+            uploaded_file.unlink()
+
         return True
 
     @staticmethod
