@@ -32,3 +32,4 @@ coverage/
 
 # Uploads
 backend/app/storage/uploads/
+backend/uploads
