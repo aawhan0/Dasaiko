@@ -1,46 +1,103 @@
 # Dasaiko
 
-> Remember more. Learn deeper. Think better.
+> **Remember more. Learn deeper. Think better.**
 
-Dasaiko is an AI-powered **Knowledge Operating System** built to help you capture, connect, and retrieve knowledge that grows with you.
+Dasaiko is an AI-powered research learning platform focused on helping people learn **Artificial Intelligence and Machine Learning through research papers**.
 
-Unlike traditional AI assistants that forget once a conversation ends, Dasaiko is designed to build long-term memory—turning your notes, documents, research papers, web pages, and ideas into a searchable, interconnected knowledge base.
+## The Idea
 
-Whether you're studying, researching, or building software, Dasaiko aims to become the place where your knowledge lives.
+AI/ML has evolved through thousands of research papers, but getting into those papers can be difficult.
 
-## Features (Planned)
+You may know that a paper is important, but still have no idea:
 
-- 🧠 Long-term AI memory
-- 🔍 Semantic & hybrid search
-- 📚 Retrieval-Augmented Generation (RAG)
-- 📄 PDF, web, and research paper ingestion
-- 🔗 Automatic knowledge linking
-- 🌐 Knowledge graph visualization
-- 💬 Citation-aware AI responses
-- ✨ AI-powered summaries & insights
+- Where to start
+- What you need to know beforehand
+- How to understand it
+- What you should read next
 
-## Tech Stack
+Dasaiko is being built to make that journey easier.
 
-**Frontend:** Next.js · React · TypeScript · Tailwind CSS · shadcn/ui
+The idea is simple:
 
-**Backend:** FastAPI · Python · Node.js
+```text
+Learn a concept
+      ↓
+Find the relevant research
+      ↓
+Read and understand the paper
+      ↓
+Ask questions and explore the evidence
+      ↓
+Discover what to learn next
 
-**AI:** LangGraph · LangChain · LlamaIndex · Sentence Transformers · Ollama
+```
 
-**Data:** PostgreSQL · pgvector · Redis
+The goal isn't to replace research papers with AI-generated explanations.
 
-**Infrastructure:** Docker · GitHub Actions · Vercel · Railway/Render
+The papers remain the source. Dasaiko helps you navigate them.
 
-## Why "Dasaiko"?
+## The Bigger Vision
 
-The name **Dasaiko** (दशैंको) is inspired by **Dashain (Dussehra)**, a festival that represents renewal, learning, and the triumph of wisdom over ignorance.
+The MVP starts with research-paper understanding and grounded AI assistance.
 
-That idea reflects the vision behind this project: knowledge shouldn't be something you repeatedly search for—it should grow, connect, and stay with you.
+But the larger vision is to build an ecosystem around research-based learning.
 
-## Status
+Over time, Dasaiko could help a learner:
 
-🚧 Currently under active development as a flagship AI engineering project, with a long-term vision of evolving into a production-ready SaaS platform.
+Discover important papers
+Understand the concepts required to read them
+Follow the evolution of an idea across papers
+Find related research
+Build structured research paths
+Gradually develop the habit of learning directly from primary research
 
----
+For example:
 
-*"Don't just search your knowledge. Grow it."*
+```text
+Machine Learning
+      ↓
+Neural Networks
+      ↓
+Sequence Models
+      ↓
+Attention
+      ↓
+Transformers
+      ↓
+Modern AI Research
+```
+
+Instead of treating research papers as isolated documents, Dasaiko aims to make the connections between them visible and useful.
+
+## Where This Could Go
+
+If the idea proves useful, Dasaiko could grow beyond a research-paper assistant into a broader AI/ML research learning ecosystem.
+
+A learner could enter a topic they want to understand and be guided through the research behind it — from foundational papers to important developments and eventually to current work.
+
+The long-term vision is to make research-based learning feel less like:
+
+"I found a paper. Now what?"
+
+and more like:
+
+"I know where I am, why I'm reading this, and where to go next."
+
+## Current Status
+
+🚧 MVP — Active Development
+
+The current MVP is focused on the foundations:
+
+```text
+Research paper ingestion
+PDF understanding
+Page-aware retrieval
+RAG-based conversations
+Evidence and citations
+Research-oriented document interaction
+```
+
+The product and its direction are still evolving.
+
+Don't just search your knowledge. Grow it.
