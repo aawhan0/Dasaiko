@@ -2,22 +2,17 @@
 
 > **Remember more. Learn deeper. Think better.**
 
-Dasaiko is an AI-powered research learning platform focused on helping people learn **Artificial Intelligence and Machine Learning through research papers**.
+Dasaiko is an AI-powered research learning platform designed to help people learn **Artificial Intelligence and Machine Learning through research papers**.
 
-## The Idea
+Instead of replacing primary research with AI-generated summaries, Dasaiko helps you **find, understand, question, and connect the research itself**.
 
-AI/ML has evolved through thousands of research papers, but getting into those papers can be difficult.
+---
 
-You may know that a paper is important, but still have no idea:
+## Why Dasaiko?
 
-- Where to start
-- What you need to know beforehand
-- How to understand it
-- What you should read next
+AI/ML has evolved through thousands of research papers. The difficult part isn't finding a paper — it's knowing **where to start, what you need to understand first, and what to read next**.
 
-Dasaiko is being built to make that journey easier.
-
-The idea is simple:
+Dasaiko is built around that journey:
 
 ```text
 Learn a concept
@@ -26,32 +21,19 @@ Find the relevant research
       ↓
 Read and understand the paper
       ↓
-Ask questions and explore the evidence
+Ask questions grounded in evidence
       ↓
 Discover what to learn next
-
 ```
 
-The goal isn't to replace research papers with AI-generated explanations.
+The papers remain the source of truth.  
+**Dasaiko helps you navigate them.**
 
-The papers remain the source. Dasaiko helps you navigate them.
+---
 
 ## The Bigger Vision
 
-The MVP starts with research-paper understanding and grounded AI assistance.
-
-But the larger vision is to build an ecosystem around research-based learning.
-
-Over time, Dasaiko could help a learner:
-
-Discover important papers
-Understand the concepts required to read them
-Follow the evolution of an idea across papers
-Find related research
-Build structured research paths
-Gradually develop the habit of learning directly from primary research
-
-For example:
+The MVP begins with research-paper understanding and grounded AI assistance. The long-term goal is a **research-based learning ecosystem** that helps learners build knowledge progressively.
 
 ```text
 Machine Learning
@@ -67,37 +49,87 @@ Transformers
 Modern AI Research
 ```
 
-Instead of treating research papers as isolated documents, Dasaiko aims to make the connections between them visible and useful.
+Over time, Dasaiko could help learners:
 
-## Where This Could Go
+- 🔎 Discover important papers
+- 🧠 Understand the concepts required to read them
+- 🧬 Follow the evolution of ideas across papers
+- 🔗 Find related research
+- 🗺️ Build structured research paths
+- 📚 Develop the habit of learning directly from primary research
 
-If the idea proves useful, Dasaiko could grow beyond a research-paper assistant into a broader AI/ML research learning ecosystem.
+The goal is to make research papers feel connected rather than isolated.
 
-A learner could enter a topic they want to understand and be guided through the research behind it — from foundational papers to important developments and eventually to current work.
+---
 
-The long-term vision is to make research-based learning feel less like:
+## Current MVP
 
-"I found a paper. Now what?"
+🚧 **Active Development**
 
-and more like:
+The current MVP focuses on the core research-workbench experience:
 
-"I know where I am, why I'm reading this, and where to go next."
-
-## Current Status
-
-🚧 MVP — Active Development
-
-The current MVP is focused on the foundations:
-
-```text
-Research paper ingestion
-PDF understanding
-Page-aware retrieval
-RAG-based conversations
-Evidence and citations
-Research-oriented document interaction
-```
+| Capability | Status |
+|---|---|
+| 📄 Research paper ingestion | 🚧 |
+| 🔍 PDF understanding & retrieval | 🚧 |
+| 📐 Page-aware evidence | 🚧 |
+| 🤖 RAG-based conversations | 🚧 |
+| 🔗 Evidence & citations | 🚧 |
+| 📚 Research-oriented document interaction | 🚧 |
+| 🧠 Persistent research context | 🚧 |
 
 The product and its direction are still evolving.
 
-Don't just search your knowledge. Grow it.
+---
+
+## Product Direction
+
+Dasaiko is being built around a simple principle:
+
+> **Don't just give learners answers. Help them build the ability to find and understand answers themselves.**
+
+The long-term experience should feel less like:
+
+> *"I found a paper. Now what?"*
+
+and more like:
+
+> *"I know where I am, why I'm reading this, and where to go next."*
+
+---
+
+## What's Next?
+
+The roadmap is centered around making research **connected, navigable, and learnable**:
+
+```text
+Research Papers
+      ↓
+Paper Understanding
+      ↓
+Prerequisite Concepts
+      ↓
+Research Connections
+      ↓
+Research Paths
+      ↓
+Deeper Learning
+```
+
+The vision is to guide a learner from foundational ideas to the research that built modern AI — while keeping the **original research at the center**.
+
+---
+
+## Philosophy
+
+**Primary sources first. AI as a guide.**
+
+Dasaiko should make research easier to approach without making learners dependent on AI explanations.
+
+The ultimate goal is not to hide the complexity of research.
+
+It's to give learners a better path through it.
+
+---
+
+> **Don't just search your knowledge. Grow it.**
