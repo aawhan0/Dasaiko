@@ -1,3 +1,5 @@
+import math
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -8,14 +10,45 @@ from app.schemas.chat import (
     ChatRequest,
     ChatResponse,
     SourceResponse,
+    PaperOptionResponse,
+    PaperSelectionResponse,
 )
 
 from app.services.chat_service import ChatService
+
 
 router = APIRouter(
     prefix="/chat",
     tags=["Chat"],
 )
+
+
+def relevance_percentage(
+    score: float,
+) -> float:
+
+    score = max(
+        min(
+            float(score),
+            20.0,
+        ),
+        -20.0,
+    )
+
+    percentage = (
+        1.0
+        /
+        (
+            1.0
+            +
+            math.exp(-score)
+        )
+    ) * 100.0
+
+    return round(
+        percentage,
+        1,
+    )
 
 
 @router.post(
@@ -26,68 +59,88 @@ def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
 ):
-    answer, evidence = ChatService.chat(
-        db=db,
-        conversation_id=request.conversation_id,
-        query=request.query,
+
+    answer, evidence, paper_options = (
+        ChatService.chat(
+            db=db,
+            conversation_id=
+                request.conversation_id,
+            query=request.query,
+            selected_document_id=
+                request.selected_document_id,
+            selection_continuation=
+                request.selection_continuation,
+        )
     )
-
-    # ----------------------------------------
-    # Normalize confidence scores
-    # ----------------------------------------
-    if evidence:
-        scores = [
-            item["score"]
-            for item in evidence
-        ]
-
-        min_score = min(scores)
-        max_score = max(scores)
-    else:
-        min_score = 0
-        max_score = 1
 
     sources = []
 
     for item in evidence:
 
-        if max_score == min_score:
-            confidence = 100.0
-        else:
-            confidence = (
-                (item["score"] - min_score)
-                / (max_score - min_score)
-            ) * 100
-
-        preview = item["preview"].strip()
+        preview = (
+            item["preview"]
+            .strip()
+        )
 
         if len(preview) > 180:
             preview = (
-                preview[:180].rstrip()
+                preview[:180]
+                .rstrip()
                 + "..."
             )
 
         sources.append(
             SourceResponse(
                 id=item["id"],
-                document_id=item["document_id"],
-                document_name=item["document_name"],
-                chunk_index=item["chunk_index"],
-                page_number=item["page_number"],
-                bboxes=item["bboxes"],
-                confidence=round(
-                    confidence,
-                    1,
-                ),
+                document_id=
+                    item["document_id"],
+                document_name=
+                    item["document_name"],
+                chunk_index=
+                    item["chunk_index"],
+                page_number=
+                    item["page_number"],
+                page_width=
+                    item.get("page_width"),
+                page_height=
+                    item.get("page_height"),
+                bboxes=
+                    item["bboxes"],
+                confidence=
+                    relevance_percentage(
+                        item["score"]
+                    ),
                 preview=preview,
+            )
+        )
+
+    paper_selection = None
+
+    if paper_options:
+
+        paper_selection = (
+            PaperSelectionResponse(
+                required=True,
+                documents=[
+                    PaperOptionResponse(
+                        id=document["id"],
+                        title=document["title"],
+                    )
+                    for document
+                    in paper_options
+                ],
             )
         )
 
     return APIResponse(
         success=True,
-        message="Response generated successfully.",
+        message=(
+            "Response generated successfully."
+        ),
         data=ChatResponse(
             answer=answer,
             sources=sources,
+            paper_selection=
+                paper_selection,
         ),
     )

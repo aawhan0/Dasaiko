@@ -12,7 +12,9 @@ import { listMessages } from "@/services/messages";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
+
 export function WorkspacePage() {
+
   const {
     setDocuments,
     setConversations,
@@ -20,78 +22,158 @@ export function WorkspacePage() {
     setMessages,
   } = useWorkspaceStore();
 
+
   useEffect(() => {
+
+    let cancelled = false;
+
+
     async function loadWorkspace() {
+
       try {
-        // -----------------------------
+
+        // -----------------------------------------
         // Documents
-        // -----------------------------
-        const docs = await listDocuments();
+        // -----------------------------------------
+
+        const docs =
+          await listDocuments();
+
+
+        if (cancelled) {
+          return;
+        }
+
+
         setDocuments(docs);
 
-        // -----------------------------
+
+        // -----------------------------------------
         // Conversations
-        // -----------------------------
+        // -----------------------------------------
+
         const conversations =
           await listConversations();
 
-        setConversations(conversations);
 
-        // -----------------------------
+        if (cancelled) {
+          return;
+        }
+
+
+        setConversations(
+          conversations
+        );
+
+
+        // -----------------------------------------
         // Restore latest conversation
-        // -----------------------------
-        if (conversations.length > 0) {
+        // -----------------------------------------
+
+        if (
+          conversations.length > 0
+        ) {
+
           const latestConversation =
             conversations[0];
+
 
           setActiveConversation(
             latestConversation.id
           );
+
 
           const messages =
             await listMessages(
               latestConversation.id
             );
 
+
+          if (cancelled) {
+            return;
+          }
+
+
           setMessages(messages);
+
         } else {
+
           setActiveConversation(null);
+
           setMessages([]);
+
         }
+
       } catch (err) {
-        console.error(
-          "Failed to load workspace:",
-          err
-        );
+
+        if (!cancelled) {
+
+          console.error(
+            "Failed to load workspace:",
+            err
+          );
+
+        }
+
       }
+
     }
 
+
     loadWorkspace();
-  }, [
-    setDocuments,
-    setConversations,
-    setActiveConversation,
-    setMessages,
-  ]);
+
+
+    return () => {
+
+      cancelled = true;
+
+    };
+
+    // IMPORTANT:
+    // Workspace initialization should happen once.
+    // The store setters must remain stable.
+    // They should NOT cause this effect to reload
+    // the workspace after every state update.
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   return (
-  <AppShell>
-    <div className="relative flex h-full w-full overflow-hidden">
 
-      {/* Chat */}
-      <div className="flex min-w-0 flex-1">
-        <ResearchWorkbench />
-      </div>
+    <>
 
-      {/* Evidence */}
-      <div className="w-[400px] flex-shrink-0 border-l border-white/[0.06]">
-        <EvidenceVault />
-      </div>
+      <AppShell>
 
-      {/* PDF Bottom Sheet */}
-      <PDFBottomSheet />
+        <div className="flex min-h-0 flex-1">
 
-    </div>
-  </AppShell>
-);
+          {/* Chat */}
+
+          <div className="flex min-w-0 flex-1">
+
+            <ResearchWorkbench />
+
+          </div>
+
+
+          {/* Evidence */}
+
+          <div className="w-[400px] flex-shrink-0 border-l border-white/[0.06]">
+
+            <EvidenceVault />
+
+          </div>
+
+
+          {/* PDF Bottom Sheet */}
+
+          <PDFBottomSheet />
+
+        </div>
+
+      </AppShell>
+
+    </>
+
+  );
 }

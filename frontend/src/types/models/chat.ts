@@ -8,5 +8,15 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   evidence?: EvidenceChunk[];
+  paperSelection?: PaperSelection;
   isStreaming?: boolean;
+}
+
+export interface PaperSelection {
+  required: boolean;
+
+  documents: {
+    id: number;
+    title: string;
+  }[];
 }

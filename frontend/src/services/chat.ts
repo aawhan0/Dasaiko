@@ -1,18 +1,24 @@
 import api from "./api";
 
-import {
+import type {
   ChatRequest,
   ChatResponse,
 } from "@/types/api/chat";
 
-import type { APIResponse } from "@/types/api/common";
+interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 export async function sendQuery(
   request: ChatRequest
 ): Promise<ChatResponse> {
-  const response = await api.post<APIResponse<ChatResponse>>(
-    "/chat",
-    request
-  );
+  const response =
+    await api.post<ApiResponse<ChatResponse>>(
+      "/chat",
+      request
+    );
 
   return response.data.data;
 }

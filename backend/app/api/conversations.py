@@ -10,7 +10,10 @@ from app.schemas.conversation import (
     ConversationResponse,
 )
 
-from app.services.conversation_service import ConversationService
+from app.services.conversation_service import (
+    ConversationService,
+)
+
 
 router = APIRouter(
     prefix="/conversations",
@@ -20,80 +23,108 @@ router = APIRouter(
 
 @router.post(
     "",
-    response_model=APIResponse[ConversationResponse],
+    response_model=APIResponse[
+        ConversationResponse
+    ],
 )
 def create_conversation(
     request: ConversationCreate,
     db: Session = Depends(get_db),
 ):
-    conversation = ConversationService.create_conversation(
-        db=db,
-        title=request.title,
+
+    conversation = (
+        ConversationService.create_conversation(
+            db=db,
+            title=request.title,
+        )
     )
 
     return APIResponse(
         success=True,
-        message="Conversation created successfully.",
+        message=(
+            "Conversation created successfully."
+        ),
         data=conversation,
     )
 
 
 @router.get(
     "",
-    response_model=APIResponse[list[ConversationResponse]],
+    response_model=APIResponse[
+        list[ConversationResponse]
+    ],
 )
 def get_conversations(
     db: Session = Depends(get_db),
 ):
-    conversations = ConversationService.get_conversations(
-        db=db,
+
+    conversations = (
+        ConversationService.get_conversations(
+            db=db,
+        )
     )
 
     return APIResponse(
         success=True,
-        message="Conversations fetched successfully.",
+        message=(
+            "Conversations fetched successfully."
+        ),
         data=conversations,
     )
 
 
 @router.patch(
     "/{conversation_id}/pin",
-    response_model=APIResponse[ConversationResponse],
+    response_model=APIResponse[
+        ConversationResponse
+    ],
 )
 def toggle_pin(
     conversation_id: int,
     db: Session = Depends(get_db),
 ):
-    conversation = ConversationService.toggle_pin(
-        db=db,
-        conversation_id=conversation_id,
+
+    conversation = (
+        ConversationService.toggle_pin(
+            db=db,
+            conversation_id=conversation_id,
+        )
     )
 
     return APIResponse(
         success=True,
-        message="Conversation updated successfully.",
+        message=(
+            "Conversation updated successfully."
+        ),
         data=conversation,
     )
 
 
 @router.patch(
     "/{conversation_id}/rename",
-    response_model=APIResponse[ConversationResponse],
+    response_model=APIResponse[
+        ConversationResponse
+    ],
 )
 def rename_conversation(
     conversation_id: int,
     request: ConversationRename,
     db: Session = Depends(get_db),
 ):
-    conversation = ConversationService.rename_conversation(
-        db=db,
-        conversation_id=conversation_id,
-        title=request.title,
+
+    conversation = (
+        ConversationService.rename_conversation(
+            db=db,
+            conversation_id=conversation_id,
+            title=request.title,
+        )
     )
 
     return APIResponse(
         success=True,
-        message="Conversation renamed successfully.",
+        message=(
+            "Conversation renamed successfully."
+        ),
         data=conversation,
     )
 
@@ -106,6 +137,7 @@ def delete_conversation(
     conversation_id: int,
     db: Session = Depends(get_db),
 ):
+
     deleted = (
         ConversationService.delete_conversation(
             db=db,
@@ -122,6 +154,8 @@ def delete_conversation(
 
     return APIResponse(
         success=True,
-        message="Conversation deleted successfully.",
+        message=(
+            "Conversation deleted successfully."
+        ),
         data=None,
     )

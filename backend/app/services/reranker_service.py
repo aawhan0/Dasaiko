@@ -4,7 +4,8 @@ from sentence_transformers import CrossEncoder
 class RerankerService:
 
     model = CrossEncoder(
-        "cross-encoder/ms-marco-MiniLM-L-6-v2"
+        "cross-encoder/ms-marco-MiniLM-L-6-v2",
+        local_files_only=True,
     )
 
     @staticmethod
@@ -13,38 +14,50 @@ class RerankerService:
         results: list,
         limit: int = 5,
     ):
-        try:
-            print("Building pairs...")
+        if not results:
+            return []
 
+        try:
             pairs = [
                 (query, chunk.content)
                 for chunk, _ in results
             ]
 
-            print(f"Built {len(pairs)} pairs")
-
-            print("Calling CrossEncoder.predict()...")
-
-            scores = RerankerService.model.predict(pairs)
-
-            print(f"Received {len(scores)} scores")
+            scores = RerankerService.model.predict(
+                pairs
+            )
 
             reranked = sorted(
-                zip(results, scores),
-                key=lambda x: x[1],
+                zip(
+                    [
+                        chunk
+                        for chunk, _ in results
+                    ],
+                    scores,
+                ),
+                key=lambda item: float(item[1]),
                 reverse=True,
             )
 
-            print("Sorting complete")
-
             return [
-                result
-                for result, _ in reranked[:limit]
+                (
+                    chunk,
+                    float(score),
+                )
+                for chunk, score in reranked[:limit]
             ]
 
-        except Exception as e:
-            print("\n========== RERANKER ERROR ==========")
+        except Exception:
             import traceback
+
+            print(
+                "\n========== RERANKER ERROR =========="
+            )
+
             traceback.print_exc()
-            print("====================================\n")
+
+            print(
+                "====================================\n"
+            )
+
             raise

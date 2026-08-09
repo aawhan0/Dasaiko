@@ -1,6 +1,9 @@
 import api from "./api";
 
-import type { Conversation } from "@/types";
+import type {
+  Conversation,
+} from "@/types";
+
 
 interface ApiResponse<T> {
   success: boolean;
@@ -8,113 +11,93 @@ interface ApiResponse<T> {
   data: T;
 }
 
+
 interface ConversationResponse {
   id: number;
   title: string;
   is_pinned: boolean;
+  selected_document_id: number | null;
 }
 
-export async function listConversations(): Promise<Conversation[]> {
-  const response =
-    await api.get<ApiResponse<ConversationResponse[]>>(
-      "/conversations"
-    );
 
-  return response.data.data.map((conversation) => ({
-    id: String(conversation.id),
-
-    title: conversation.title,
-
-    isPinned: conversation.is_pinned,
-
-    documentIds: [],
-
-    messageCount: 0,
-
-    lastActivityAt: new Date().toISOString(),
-  }));
-}
-
-export async function createConversation(): Promise<Conversation> {
-  const response =
-    await api.post<ApiResponse<ConversationResponse>>(
-      "/conversations",
-      {}
-    );
-
-  const conversation = response.data.data;
-
+function mapConversation(
+  conversation: ConversationResponse,
+): Conversation {
   return {
     id: String(conversation.id),
-
     title: conversation.title,
-
     isPinned: conversation.is_pinned,
-
     documentIds: [],
-
     messageCount: 0,
-
     lastActivityAt: new Date().toISOString(),
+    selectedDocumentId:
+      conversation.selected_document_id ?? null,
   };
 }
 
+
+export async function listConversations():
+  Promise<Conversation[]> {
+  const response =
+    await api.get<
+      ApiResponse<ConversationResponse[]>
+    >("/conversations");
+
+  return response.data.data.map(
+    mapConversation
+  );
+}
+
+
+export async function createConversation():
+  Promise<Conversation> {
+  const response =
+    await api.post<
+      ApiResponse<ConversationResponse>
+    >("/conversations", {});
+
+  return mapConversation(
+    response.data.data
+  );
+}
+
+
 export async function toggleConversationPin(
-  conversationId: string
+  conversationId: string,
 ): Promise<Conversation> {
   const response =
-    await api.patch<ApiResponse<ConversationResponse>>(
+    await api.patch<
+      ApiResponse<ConversationResponse>
+    >(
       `/conversations/${conversationId}/pin`
     );
 
-  const conversation = response.data.data;
-
-  return {
-    id: String(conversation.id),
-
-    title: conversation.title,
-
-    isPinned: conversation.is_pinned,
-
-    documentIds: [],
-
-    messageCount: 0,
-
-    lastActivityAt: new Date().toISOString(),
-  };
+  return mapConversation(
+    response.data.data
+  );
 }
+
 
 export async function renameConversation(
   conversationId: string,
-  title: string
+  title: string,
 ): Promise<Conversation> {
   const response =
-    await api.patch<ApiResponse<ConversationResponse>>(
+    await api.patch<
+      ApiResponse<ConversationResponse>
+    >(
       `/conversations/${conversationId}/rename`,
-      {
-        title,
-      }
+      { title }
     );
 
-  const conversation = response.data.data;
-
-  return {
-    id: String(conversation.id),
-
-    title: conversation.title,
-
-    isPinned: conversation.is_pinned,
-
-    documentIds: [],
-
-    messageCount: 0,
-
-    lastActivityAt: new Date().toISOString(),
-  };
+  return mapConversation(
+    response.data.data
+  );
 }
 
+
 export async function deleteConversation(
-  id: string
+  id: string,
 ): Promise<void> {
   await api.delete(
     `/conversations/${id}`

@@ -1,6 +1,12 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Boolean
+
 from app.db.base import Base
 
 
@@ -22,6 +28,20 @@ class Conversation(Base):
         Boolean,
         default=False,
         nullable=False,
+    )
+
+    selected_document_id = Column(
+        Integer,
+        ForeignKey(
+            "documents.id",
+            ondelete="SET NULL",
+        ),
+        nullable=True,
+    )
+
+    selected_document = relationship(
+        "Document",
+        foreign_keys=[selected_document_id],
     )
 
     messages = relationship(

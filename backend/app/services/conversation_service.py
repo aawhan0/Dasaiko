@@ -14,6 +14,7 @@ class ConversationService:
         conversation = Conversation(
             title=title or "New Workspace",
             is_pinned=False,
+            selected_document_id=None,
         )
 
         db.add(conversation)
@@ -21,6 +22,7 @@ class ConversationService:
         db.refresh(conversation)
 
         return conversation
+
 
     @staticmethod
     def get_conversation(
@@ -30,10 +32,13 @@ class ConversationService:
 
         return (
             db.query(Conversation)
-            .filter(Conversation.id == conversation_id)
+            .filter(
+                Conversation.id ==
+                conversation_id
+            )
             .first()
         )
-    
+
 
     @staticmethod
     def rename_conversation(
@@ -44,12 +49,17 @@ class ConversationService:
 
         conversation = (
             db.query(Conversation)
-            .filter(Conversation.id == conversation_id)
+            .filter(
+                Conversation.id ==
+                conversation_id
+            )
             .first()
         )
 
         if conversation is None:
-            raise ValueError("Conversation not found")
+            raise ValueError(
+                "Conversation not found"
+            )
 
         conversation.title = title
 
@@ -66,20 +76,24 @@ class ConversationService:
 
         return (
             db.query(Conversation)
-            .order_by(Conversation.id.desc())
+            .order_by(
+                Conversation.id.desc()
+            )
             .all()
         )
+
 
     @staticmethod
     def delete_conversation(
         db: Session,
         conversation_id: int,
     ) -> bool:
-    
+
         conversation = (
             db.query(Conversation)
             .filter(
-                Conversation.id == conversation_id
+                Conversation.id ==
+                conversation_id
             )
             .first()
         )
@@ -90,8 +104,9 @@ class ConversationService:
         db.delete(conversation)
         db.commit()
 
-        return True 
-    
+        return True
+
+
     @staticmethod
     def toggle_pin(
         db: Session,
@@ -100,12 +115,17 @@ class ConversationService:
 
         conversation = (
             db.query(Conversation)
-            .filter(Conversation.id == conversation_id)
+            .filter(
+                Conversation.id ==
+                conversation_id
+            )
             .first()
         )
 
         if conversation is None:
-            raise ValueError("Conversation not found")
+            raise ValueError(
+                "Conversation not found"
+            )
 
         conversation.is_pinned = (
             not conversation.is_pinned
