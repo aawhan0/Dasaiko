@@ -145,7 +145,7 @@ export function WorkspacePage() {
 
       <AppShell>
 
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-w-0 min-h-0 flex-1">
 
           {/* Chat */}
 

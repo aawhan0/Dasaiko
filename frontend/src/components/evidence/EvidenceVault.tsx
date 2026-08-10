@@ -45,71 +45,56 @@ export function EvidenceVault() {
       initial="hidden"
       animate="visible"
       className="
-        w-[380px]
-        flex-shrink-0
+        w-full
+        min-w-0
+        h-full
         flex
         flex-col
+        overflow-hidden
         border-l
         border-white/[0.06]
         bg-[#070707]
       "
     >
       {/* Header */}
-
-      <div className="px-5 py-5 border-b border-white/[0.06]">
-
-        <div className="flex items-center gap-2">
-
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+      <div className="shrink-0 px-6 py-6 border-b border-white/[0.06]">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
             <Database className="w-4 h-4 text-primary" />
           </div>
 
-          <div>
-
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold text-white">
               Research Evidence
             </h2>
 
-            <p className="text-xs text-zinc-500">
+            <p className="mt-1 text-xs leading-5 text-zinc-500">
               Every answer is grounded in retrieved paper chunks.
             </p>
-
           </div>
-
         </div>
 
         {hasEvidence && (
-
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs text-primary">
-
+          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1.5 text-xs text-primary">
             <Sparkles className="w-3 h-3" />
 
             {evidence.length} source
             {evidence.length !== 1
               ? "s"
               : ""}
-
           </div>
-
         )}
-
       </div>
 
       {/* Evidence */}
-
-      <div className="flex-1 overflow-y-auto p-4">
-
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
         {hasEvidence ? (
-
           <motion.div
-            variants={
-              staggerContainer
-            }
+            variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="space-y-3"
+            className="space-y-4"
           >
-
             {evidence.map(
               (
                 chunk: EvidenceChunk,
@@ -122,17 +107,13 @@ export function EvidenceVault() {
                 />
               )
             )}
-
           </motion.div>
-
         ) : (
-
-          <EvidenceEmpty />
-
+          <div className="h-full flex items-center justify-center px-2">
+            <EvidenceEmpty />
+          </div>
         )}
-
       </div>
-
     </motion.aside>
   );
 }

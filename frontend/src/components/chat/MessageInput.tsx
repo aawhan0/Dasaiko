@@ -33,6 +33,46 @@ export function MessageInput() {
       null
     );
 
+  // -----------------------------------------
+  // Streaming presentation queue
+  // -----------------------------------------
+  //
+  // The backend can deliver chunks much faster
+  // than we want to visually render them.
+  //
+  // We keep the real stream intact, put incoming
+  // text into a queue, and reveal it smoothly.
+  // This prevents:
+  //
+  //   receive everything -> animate instantly
+  //
+  // and also prevents the final response from
+  // replacing the streaming message mid-animation.
+  // -----------------------------------------
+
+  const streamQueueRef =
+    useRef("");
+
+  const streamTimerRef =
+    useRef<number | null>(null);
+
+  const streamActiveRef =
+    useRef(false);
+
+  const streamDoneRef =
+    useRef(false);
+
+  const streamMessageIdRef =
+    useRef<string | null>(null);
+
+  const streamFinalResponseRef =
+    useRef<Awaited<
+      ReturnType<typeof sendQuery>
+    > | null>(null);
+
+  const streamErrorRef =
+    useRef<unknown>(null);
+
   const { onFileInputChange } =
     useUpload();
 
@@ -66,6 +106,246 @@ export function MessageInput() {
             selectedDocumentId
         )
       : null;
+
+
+  // -----------------------------------------
+  // Smooth streaming renderer
+  // -----------------------------------------
+  //
+  // IMPORTANT:
+  // This renderer is started directly when a
+  // request begins. It does NOT depend on a React
+  // effect being re-triggered by ref changes.
+  //
+  // That is important because refs do not cause
+  // renders. The previous implementation could
+  // therefore remain stuck on the streaming
+  // indicator while the network request completed.
+  // -----------------------------------------
+
+  const startStreamRenderer = (
+    messageId: string
+  ) => {
+
+    if (
+      streamTimerRef.current !== null
+    ) {
+      return;
+    }
+
+
+    const renderNext = () => {
+
+      const queue =
+        streamQueueRef.current;
+
+
+      // -----------------------------------------
+      // Render a small amount from the queue.
+      // -----------------------------------------
+
+      if (queue.length > 0) {
+
+        // Keep the reveal readable and steady.
+        // 2-4 characters per tick feels much closer
+        // to a natural ChatGPT-style response than
+        // dumping an entire network chunk at once.
+        const visibleCount =
+          queue.length > 100
+            ? 4
+            : queue.length > 40
+              ? 3
+              : 2;
+
+
+        const visibleText =
+          queue.slice(
+            0,
+            visibleCount
+          );
+
+
+        streamQueueRef.current =
+          queue.slice(
+            visibleCount
+          );
+
+
+        setMessages(
+          (prev) =>
+            prev.map(
+              (message) =>
+                message.id ===
+                messageId
+                  ? {
+                      ...message,
+                      content:
+                        message.content +
+                        visibleText,
+                      isStreaming:
+                        true,
+                    }
+                  : message
+            )
+        );
+
+
+        streamTimerRef.current =
+          window.setTimeout(
+            () => {
+              streamTimerRef.current =
+                null;
+
+              renderNext();
+            },
+            24
+          );
+
+        return;
+      }
+
+
+      // -----------------------------------------
+      // Queue is empty.
+      //
+      // If the backend is still generating, keep
+      // polling gently. If it has completed, finish
+      // the message.
+      // -----------------------------------------
+
+      if (
+        streamDoneRef.current
+      ) {
+
+        const finalResponse =
+          streamFinalResponseRef.current;
+
+
+        if (finalResponse) {
+
+          setMessages(
+            (prev) =>
+              prev.map(
+                (message) =>
+                  message.id ===
+                  messageId
+                    ? {
+                        ...mapChatResponse(
+                          finalResponse
+                        ),
+                        evidence:
+                          mapSources(
+                            finalResponse
+                              .sources ??
+                              []
+                          ),
+                        // Preserve exactly what has
+                        // already been visually rendered.
+                        content:
+                          message.content,
+                        isStreaming:
+                          false,
+                      }
+                    : message
+              )
+          );
+
+
+          setActiveEvidence(
+            mapSources(
+              finalResponse.sources ??
+                []
+            )
+          );
+
+
+          streamActiveRef.current =
+            false;
+
+          streamMessageIdRef.current =
+            null;
+
+          streamFinalResponseRef.current =
+            null;
+
+          setIsQuerying(
+            false
+          );
+
+          streamTimerRef.current =
+            null;
+
+          return;
+        }
+
+
+        if (
+          streamErrorRef.current
+        ) {
+
+          console.error(
+            "Chat Error:",
+            streamErrorRef.current
+          );
+
+
+          setActiveEvidence(
+            []
+          );
+
+
+          setMessages(
+            (prev) =>
+              prev.filter(
+                (message) =>
+                  message.id !==
+                  messageId
+              )
+          );
+
+
+          streamActiveRef.current =
+            false;
+
+          streamMessageIdRef.current =
+            null;
+
+          streamErrorRef.current =
+            null;
+
+          setIsQuerying(
+            false
+          );
+
+          streamTimerRef.current =
+            null;
+
+          return;
+        }
+      }
+
+
+      // No text right now, but the backend may still
+      // be generating. Check again without making
+      // the UI busy.
+      streamTimerRef.current =
+        window.setTimeout(
+          () => {
+            streamTimerRef.current =
+              null;
+
+            renderNext();
+          },
+          24
+        );
+    };
+
+
+    streamActiveRef.current =
+      true;
+
+    renderNext();
+  };
 
 
   const handleSubmit =
@@ -194,6 +474,17 @@ export function MessageInput() {
       };
 
 
+      // Reset the presentation queue for this
+      // request before starting the network stream.
+      streamQueueRef.current = "";
+      streamDoneRef.current = false;
+      streamActiveRef.current = true;
+      streamMessageIdRef.current =
+        streamingMessage.id;
+      streamFinalResponseRef.current = null;
+      streamErrorRef.current = null;
+
+
       addMessage(
         streamingMessage
       );
@@ -201,6 +492,14 @@ export function MessageInput() {
 
       setIsQuerying(
         true
+      );
+
+
+      // Start the presentation loop immediately.
+      // It will wait for network chunks in the queue
+      // and consume them continuously as they arrive.
+      startStreamRenderer(
+        streamingMessage.id
       );
 
 
@@ -217,68 +516,47 @@ export function MessageInput() {
         // -----------------------------------------
 
         const response =
-          await sendQuery({
+          await sendQuery(
 
-            conversation_id:
-              conversationId,
+            {
+              conversation_id:
+                conversationId,
 
-            query:
-              question,
+              query:
+                question,
 
-            selected_document_id:
-              selectedDocumentId,
+              selected_document_id:
+                selectedDocumentId,
 
-          });
+            },
 
+            // -------------------------------------
+            // Network chunk -> presentation queue
+            // -------------------------------------
+            //
+            // IMPORTANT:
+            // Do not set React message content here.
+            // The renderer above consumes this queue
+            // at a steady visual rate.
+            // -------------------------------------
+            (chunk) => {
 
-        // -----------------------------------------
-        // Assistant Message
-        // -----------------------------------------
+              streamQueueRef.current +=
+                chunk;
 
-        const assistantMessage = {
+            }
 
-          ...mapChatResponse(
-            response
-          ),
-
-          evidence:
-            mapSources(
-              response.sources ??
-                []
-            ),
-        };
-
-
-        setMessages(
-          (prev) => {
-
-            const withoutStreaming =
-              prev.filter(
-                (msg) =>
-                  !msg.isStreaming
-              );
+          );
 
 
-            return [
-              ...withoutStreaming,
-              assistantMessage,
-            ];
-          }
-        );
+        // Keep the final response only for metadata
+        // and finalization. The visible text continues
+        // from the queue and is never replaced wholesale.
+        streamFinalResponseRef.current =
+          response;
 
-
-        // -----------------------------------------
-        // Evidence Vault
-        // -----------------------------------------
-
-        setActiveEvidence(
-          mapSources(
-            response.sources ??
-              []
-          )
-        );
-
-
+        streamDoneRef.current =
+          true;
       } catch (error) {
 
         console.error(
@@ -286,31 +564,11 @@ export function MessageInput() {
           error
         );
 
+        streamErrorRef.current =
+          error;
 
-        // Clear stale evidence
-
-        setActiveEvidence(
-          []
-        );
-
-
-        // Remove streaming placeholder
-
-        setMessages(
-          (prev) =>
-            prev.filter(
-              (msg) =>
-                !msg.isStreaming
-            )
-        );
-
-
-      } finally {
-
-        setIsQuerying(
-          false
-        );
-
+        streamDoneRef.current =
+          true;
       }
     };
 
@@ -392,17 +650,17 @@ export function MessageInput() {
           transition={{
             duration: 0.2,
           }}
-          className="mb-2 flex items-center justify-between rounded-lg border border-primary/10 bg-primary/[0.035] px-3 py-2"
+          className="mb-3 flex items-center justify-between rounded-xl border border-primary/10 bg-primary/[0.035] px-4 py-3"
         >
 
-          <div className="flex min-w-0 items-center gap-2">
+          <div className="flex min-w-0 items-center gap-3">
 
             {/* Check */}
 
-            <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
 
               <Check
-                className="h-2.5 w-2.5 text-primary"
+                className="h-3 w-3 text-primary"
                 strokeWidth={3}
               />
 
@@ -413,11 +671,11 @@ export function MessageInput() {
 
             <div className="min-w-0">
 
-              <p className="text-[9px] uppercase tracking-wider text-primary/60">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-primary/60">
                 Research context
               </p>
 
-              <p className="truncate text-[11px] text-zinc-400">
+              <p className="mt-0.5 truncate text-xs text-zinc-400">
 
                 {selectedPaper?.title ??
                   "Selected paper"}
@@ -446,7 +704,7 @@ export function MessageInput() {
           y: 0,
           opacity: 1,
         }}
-        className="flex items-end gap-2 bg-surface border border-white/[0.10] rounded-2xl p-2 focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10 transition-all"
+        className="flex items-end gap-2.5 rounded-2xl border border-white/[0.10] bg-surface p-2.5 transition-all focus-within:border-primary/30 focus-within:ring-1 focus-within:ring-primary/10"
       >
 
         {/* Attachment */}
@@ -456,7 +714,7 @@ export function MessageInput() {
           onClick={() =>
             fileInputRef.current?.click()
           }
-          className="p-2 rounded-lg text-zinc-600 hover:text-zinc-400 hover:bg-hover transition-colors flex-shrink-0"
+          className="flex-shrink-0 rounded-lg p-2.5 text-zinc-600 transition-colors hover:bg-hover hover:text-zinc-400"
         >
 
           <Paperclip
@@ -490,7 +748,7 @@ export function MessageInput() {
           disabled={
             isQuerying
           }
-          className="flex-1 bg-transparent text-[14px] text-zinc-200 placeholder:text-zinc-600 resize-none focus:outline-none py-1.5 px-1 min-h-[36px] max-h-[160px] disabled:opacity-50"
+          className="min-h-[40px] max-h-[160px] flex-1 resize-none bg-transparent px-1.5 py-2 text-[14px] text-zinc-200 placeholder:text-zinc-600 focus:outline-none disabled:opacity-50"
         />
 
 
@@ -512,7 +770,7 @@ export function MessageInput() {
             isQuerying
           }
           className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all",
+            "h-10 w-10 flex-shrink-0 rounded-xl transition-all flex items-center justify-center",
 
             value.trim() &&
               !isQuerying
@@ -563,17 +821,6 @@ export function MessageInput() {
         />
 
       </motion.div>
-
-
-      {/* --------------------------------------- */}
-      {/* Keyboard hint                           */}
-      {/* --------------------------------------- */}
-
-      <p className="text-[10px] text-zinc-700 text-center mt-2">
-        Shift + Enter for new line ·
-        Enter to send
-      </p>
-
     </div>
   );
 }

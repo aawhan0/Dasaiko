@@ -90,6 +90,48 @@ class SearchService:
     )
 
     # ============================================
+    # Summary / high-level understanding questions
+    # ============================================
+    #
+    # These questions benefit from a structured
+    # overview of the paper rather than arbitrary
+    # semantic matches. We therefore prioritize:
+    #
+    #   - abstract
+    #   - introduction
+    #   - conclusion
+    #   - nearby opening/closing chunks
+    #
+    # No paper names are hardcoded here.
+    # ============================================
+
+    SUMMARY_QUERY_PHRASES = (
+        "summary",
+        "summarize",
+        "summarise",
+        "give me a summary",
+        "give me the summary",
+        "summarize this paper",
+        "summarise this paper",
+        "summary of this paper",
+        "summarize the paper",
+        "summarise the paper",
+        "what is this paper about",
+        "what is the paper about",
+        "what is this research about",
+        "what is the main idea",
+        "what is the main idea of this paper",
+        "what is the main idea of the paper",
+        "give me an overview",
+        "give an overview",
+        "high level overview",
+        "high-level overview",
+        "overview of this paper",
+        "overview of the paper",
+        "explain this paper at a high level",
+    )
+
+    # ============================================
     # Normalize text
     # ============================================
 
@@ -200,6 +242,71 @@ class SearchService:
         return False
 
     # ============================================
+    # Detect author-specific metadata questions
+    #
+    # Author lists can span several adjacent chunks
+    # on the first page. These queries therefore use
+    # an ordered front-matter evidence block instead
+    # of letting the reranker select isolated chunks.
+    # ============================================
+
+    @staticmethod
+    def _is_author_metadata_query(
+        query: str,
+    ) -> bool:
+
+        normalized_query = (
+            SearchService._normalize_text(
+                query
+            )
+        )
+
+        author_phrases = (
+            "who is the author",
+            "who are the authors",
+            "who wrote",
+            "author of",
+            "authors of",
+            "the author",
+            "the authors",
+        )
+
+        return any(
+            phrase in normalized_query
+            for phrase in author_phrases
+        )
+
+    # ============================================
+    # Detect summary / overview questions
+    # ============================================
+
+    @staticmethod
+    def _is_summary_query(
+        query: str,
+    ) -> bool:
+
+        normalized_query = (
+            SearchService._normalize_text(
+                query
+            )
+        )
+
+        for phrase in (
+            SearchService.SUMMARY_QUERY_PHRASES
+        ):
+
+            if phrase in normalized_query:
+
+                print(
+                    "Query type: "
+                    "PAPER SUMMARY"
+                )
+
+                return True
+
+        return False
+
+    # ============================================
     # Get opening chunks from selected document
     #
     # Paper metadata is usually near the beginning
@@ -267,6 +374,176 @@ class SearchService:
             )
 
         return front_chunks
+
+    # ============================================
+    # Get summary-oriented chunks from a document
+    #
+    # We deliberately combine the beginning and end
+    # of the paper with chunks around section headings.
+    # This gives the LLM the paper's framing, core
+    # motivation, and conclusion instead of relying
+    # on arbitrary vector/BM25 matches.
+    # ============================================
+
+    @staticmethod
+    def _get_summary_chunks(
+        db: Session,
+        document_id: int,
+        limit: int = 16,
+    ):
+
+        chunks = (
+            db.query(Chunk)
+            .filter(
+                Chunk.document_id
+                == document_id
+            )
+            .order_by(
+                Chunk.page_number.asc(),
+                Chunk.chunk_index.asc(),
+            )
+            .all()
+        )
+
+        if not chunks:
+            return []
+
+        opening = []
+        section_neighbors = []
+        closing = []
+
+        # ----------------------------------------
+        # Opening: abstract + introduction.
+        # Keep this bounded so the conclusion still
+        # has guaranteed room in the final set.
+        # ----------------------------------------
+
+        for chunk in chunks:
+
+            page = chunk.page_number
+
+            if page is not None and page <= 3:
+                opening.append(chunk)
+
+            if len(opening) >= 8:
+                break
+
+        # ----------------------------------------
+        # Section neighborhoods.
+        # ----------------------------------------
+
+        section_terms = (
+            "abstract",
+            "introduction",
+            "conclusion",
+            "conclusions",
+            "discussion",
+        )
+
+        seen_section_ids = set()
+
+        for index, chunk in enumerate(chunks):
+
+            content = SearchService._normalize_text(
+                chunk.content
+            )
+
+            if not content:
+                continue
+
+            is_heading_chunk = any(
+                content == term
+                or content.startswith(term + " ")
+                for term in section_terms
+            )
+
+            if not is_heading_chunk:
+                continue
+
+            for neighbor in chunks[index:index + 3]:
+
+                if neighbor.id in seen_section_ids:
+                    continue
+
+                section_neighbors.append(neighbor)
+                seen_section_ids.add(neighbor.id)
+
+        # ----------------------------------------
+        # Closing: conclusion / final findings.
+        # Always reserve a few slots for the end.
+        # ----------------------------------------
+
+        closing = chunks[-4:]
+
+        # ----------------------------------------
+        # Merge by priority while preserving document
+        # order within each group.
+        # ----------------------------------------
+
+        selected = []
+        selected_ids = set()
+
+        def add(chunk):
+
+            if chunk.id in selected_ids:
+                return False
+
+            selected.append(chunk)
+            selected_ids.add(chunk.id)
+            return True
+
+        # Reserve space for opening and closing first.
+        for chunk in opening[:6]:
+            add(chunk)
+
+        for chunk in section_neighbors:
+            if len(selected) >= limit - 4:
+                break
+            add(chunk)
+
+        for chunk in closing:
+            add(chunk)
+
+        # Fill any remaining slots from the opening and
+        # section neighborhoods before falling back to
+        # arbitrary later chunks.
+        if len(selected) < limit:
+
+            for chunk in opening[6:]:
+                if len(selected) >= limit:
+                    break
+                add(chunk)
+
+        if len(selected) < limit:
+
+            for chunk in section_neighbors:
+                if len(selected) >= limit:
+                    break
+                add(chunk)
+
+        selected.sort(
+            key=lambda chunk: (
+                chunk.page_number
+                if chunk.page_number is not None
+                else 10**9,
+                chunk.chunk_index,
+            )
+        )
+
+        selected = selected[:limit]
+
+        print(
+            f"Summary candidates: {len(selected)}"
+        )
+
+        for chunk in selected:
+
+            print(
+                f"Summary | Chunk {chunk.id} | "
+                f"Page {chunk.page_number}"
+            )
+
+        return selected
 
     # ============================================
     # Token similarity
@@ -736,11 +1013,11 @@ class SearchService:
     # ============================================
 
     @staticmethod
-    def _should_use_research_context(
+    def _resolve_retrieval_document(
         db: Session,
         query: str,
         document_id: int,
-    ) -> bool:
+    ) -> int | None:
 
         normalized_query = (
             SearchService._normalize_text(
@@ -749,7 +1026,11 @@ class SearchService:
         )
 
         # ----------------------------------------
-        # Explicit request to leave selected paper
+        # Explicit request for external/global
+        # research.
+        #
+        # This is the ONLY case where retrieval
+        # should intentionally become global.
         # ----------------------------------------
 
         for phrase in (
@@ -763,12 +1044,20 @@ class SearchService:
                     "EXPLICIT EXTERNAL CONTEXT"
                 )
 
-                return False
+                return None
 
         # ----------------------------------------
         # Explicitly referenced another uploaded
-        # paper, even when the full title is not
-        # written in the query.
+        # document.
+        #
+        # IMPORTANT:
+        # This changes retrieval scope only for the
+        # current query. It does NOT change the
+        # conversation's persistent research context.
+        #
+        # Once a document is resolved here, vector
+        # search, BM25, metadata retrieval, and
+        # summary retrieval MUST all use this ID.
         # ----------------------------------------
 
         referenced_document = (
@@ -781,12 +1070,23 @@ class SearchService:
         )
 
         if referenced_document is not None:
-            return False
+
+            print(
+                "Search intent: "
+                "EXPLICIT OTHER DOCUMENT"
+            )
+
+            print(
+                f"Referenced document: "
+                f"{referenced_document.id}"
+            )
+
+            return referenced_document.id
 
         # ----------------------------------------
-        # Once selected, the paper remains the
-        # research context unless the user
-        # explicitly asks for another source.
+        # No explicit override:
+        # continue using the selected research
+        # context.
         # ----------------------------------------
 
         print(
@@ -794,7 +1094,7 @@ class SearchService:
             "SELECTED RESEARCH CONTEXT"
         )
 
-        return True
+        return document_id
 
     # ============================================
     # Search
@@ -824,44 +1124,78 @@ class SearchService:
             else False
         )
 
+        is_author_metadata_query = (
+            is_metadata_query
+            and SearchService._is_author_metadata_query(
+                query
+            )
+        )
+
+        is_summary_query = (
+            SearchService._is_summary_query(
+                query
+            )
+            if document_id is not None
+            else False
+        )
+
         # ========================================
-        # Determine research context
+        # Resolve retrieval scope
+        # ========================================
+        #
+        # There are three possible scopes:
+        #
+        #   1. Explicit external research
+        #      -> global search
+        #
+        #   2. Explicitly referenced uploaded paper
+        #      -> that document ONLY
+        #
+        #   3. No override
+        #      -> persistent selected paper
+        #
+        # The resolved document ID is passed directly
+        # into BOTH vector and BM25 retrieval. This
+        # prevents an explicitly referenced paper from
+        # accidentally falling back to global search.
         # ========================================
 
-        use_research_context = False
+        retrieval_document_id = None
 
         if document_id is not None:
 
-            use_research_context = (
+            retrieval_document_id = (
                 SearchService
-                ._should_use_research_context(
+                ._resolve_retrieval_document(
                     db=db,
                     query=query,
                     document_id=document_id,
                 )
             )
 
-        retrieval_document_id = (
-            document_id
-            if use_research_context
-            else None
-        )
+        if retrieval_document_id is not None:
 
-        if (
-            retrieval_document_id
-            is not None
-        ):
+            if (
+                retrieval_document_id
+                == document_id
+            ):
 
-            print(
-                f"Research context active: "
-                f"Document {retrieval_document_id}"
-            )
+                print(
+                    f"Research context active: "
+                    f"Document {retrieval_document_id}"
+                )
+
+            else:
+
+                print(
+                    f"Explicit document retrieval: "
+                    f"Document {retrieval_document_id}"
+                )
 
         elif document_id is not None:
 
             print(
-                "Research context available "
-                "but GLOBAL search selected"
+                "Global search selected"
             )
 
         else:
@@ -953,6 +1287,7 @@ class SearchService:
         # ========================================
 
         front_matter_chunks = []
+        summary_chunks = []
 
         if (
             is_metadata_query
@@ -969,8 +1304,16 @@ class SearchService:
                     db=db,
                     document_id=
                         retrieval_document_id,
-                    max_pages=2,
-                    limit=12,
+                    max_pages=(
+                        1
+                        if is_author_metadata_query
+                        else 2
+                    ),
+                    limit=(
+                        20
+                        if is_author_metadata_query
+                        else 12
+                    ),
                 )
             )
 
@@ -984,6 +1327,35 @@ class SearchService:
 
             print(
                 "============================================\n"
+            )
+
+        elif (
+            is_summary_query
+            and retrieval_document_id
+            is not None
+        ):
+
+            print(
+                "\n========== SUMMARY RETRIEVAL ==========\n"
+            )
+
+            summary_chunks = (
+                SearchService._get_summary_chunks(
+                    db=db,
+                    document_id=
+                        retrieval_document_id,
+                    limit=16,
+                )
+            )
+
+            for chunk in summary_chunks:
+
+                combined[
+                    chunk.id
+                ] = chunk
+
+            print(
+                "=========================================\n"
             )
 
         candidate_chunks = list(
@@ -1038,6 +1410,25 @@ class SearchService:
 
             print(
                 "Metadata reranker query:"
+            )
+
+            print(
+                reranker_query
+            )
+
+        elif is_summary_query:
+
+            reranker_query = (
+                f"{query}. "
+                "Prioritize the abstract, introduction, "
+                "main problem or motivation, key approach, "
+                "main findings, and conclusion of the "
+                "selected paper. Prefer coherent overview "
+                "passages over isolated implementation details."
+            )
+
+            print(
+                "Summary reranker query:"
             )
 
             print(
@@ -1159,17 +1550,101 @@ class SearchService:
                         result
                     )
 
-            # Keep the rerank order inside each
-            # group, but make front matter appear
-            # before unrelated later pages.
+            if is_author_metadata_query:
+
+                # Author names can be split across adjacent
+                # first-page chunks. Preserve PDF/document order
+                # so the complete author block survives instead
+                # of selecting only the single strongest chunk.
+                front_results.sort(
+                    key=lambda result: (
+                        result["page_number"]
+                        if result["page_number"] is not None
+                        else -1,
+                        result["chunk_index"],
+                    )
+                )
+
+                ranked_results = (
+                    front_results
+                    + other_results
+                )
+
+                print(
+                    "\nAuthor metadata priority applied "
+                    "(document order):"
+                )
+
+            else:
+
+                # Keep reranker order inside each group,
+                # while making front matter appear before
+                # unrelated later pages.
+
+                ranked_results = (
+                    front_results
+                    + other_results
+                )
+
+                print(
+                    "\nMetadata priority applied:"
+                )
+
+            for index, result in enumerate(
+                ranked_results[:10],
+                start=1,
+            ):
+
+                print(
+                    f"{index}. "
+                    f"Chunk {result['id']} | "
+                    f"Page {result['page_number']} | "
+                    f"Score {result['score']:.4f} | "
+                    f"{result['document_name']}"
+                )
+
+        elif (
+            is_summary_query
+            and summary_chunks
+        ):
+
+            summary_ids = {
+                chunk.id
+                for chunk in
+                summary_chunks
+            }
+
+            summary_results = []
+            other_results = []
+
+            for result in ranked_results:
+
+                if (
+                    result["id"]
+                    in summary_ids
+                ):
+
+                    summary_results.append(
+                        result
+                    )
+
+                else:
+
+                    other_results.append(
+                        result
+                    )
+
+            # Summary questions should favor the
+            # structured overview set. Keep the
+            # reranker order within that set.
 
             ranked_results = (
-                front_results
+                summary_results
                 + other_results
             )
 
             print(
-                "\nMetadata priority applied:"
+                "\nSummary priority applied:"
             )
 
             for index, result in enumerate(
@@ -1216,6 +1691,41 @@ class SearchService:
 
         final_results = []
 
+        evidence_limit = limit
+
+        # For author metadata, skip title/arXiv chunks and start at the
+        # first chunk that actually contains author/contact information.
+        # This keeps the evidence vault compact while still giving the LLM
+        # the complete five-author block for papers like this one.
+        if is_author_metadata_query:
+
+            author_start_index = None
+
+            for index, result in enumerate(
+                ranked_results
+            ):
+
+                preview = (
+                    result.get("preview")
+                    or ""
+                ).lower()
+
+                if (
+                    "@" in preview
+                    or "google inc" in preview
+                    or "author" in preview
+                ):
+                    author_start_index = index
+                    break
+
+            if author_start_index is not None:
+
+                ranked_results = (
+                    ranked_results[
+                        author_start_index:
+                    ]
+                )
+
         for result in ranked_results:
 
             if SearchService._is_duplicate_evidence(
@@ -1238,7 +1748,7 @@ class SearchService:
 
             if (
                 len(final_results)
-                >= limit
+                >= evidence_limit
             ):
                 break
 
@@ -1252,7 +1762,7 @@ class SearchService:
         # For normal questions, score remains the
         # final ordering criterion.
 
-        if not is_metadata_query:
+        if not is_metadata_query and not is_summary_query:
 
             final_results.sort(
                 key=lambda result:

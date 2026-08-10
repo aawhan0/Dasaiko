@@ -14,7 +14,7 @@ export function ResearchWorkbench() {
     useWorkspaceStore();
 
   const bottomRef =
-    useRef<HTMLDivElement>(null);
+    useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -37,18 +37,22 @@ export function ResearchWorkbench() {
         <EmptyState />
       ) : (
         <>
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            {messages.map((message) => (
-              <ChatBlock
-                key={message.id}
-                message={message}
-              />
-            ))}
+          <div className="flex-1 min-h-0 overflow-y-auto px-8 py-8">
+            <div className="mx-auto w-full max-w-5xl space-y-8">
+              {messages.map((message) => (
+                <ChatBlock
+                  key={message.id}
+                  message={message}
+                />
+              ))}
 
-            <div ref={bottomRef} />
+              <div ref={bottomRef} />
+            </div>
           </div>
 
-          <MessageInput />
+          <div className="shrink-0 px-6 pb-6 pt-3">
+            <MessageInput />
+          </div>
         </>
       )}
     </motion.div>

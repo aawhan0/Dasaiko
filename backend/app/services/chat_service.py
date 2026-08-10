@@ -1,5 +1,9 @@
+import time
+
 from groq import Groq
 from sqlalchemy.orm import Session
+
+from typing import Callable
 
 from app.core.config import settings
 
@@ -312,6 +316,7 @@ class ChatService:
         query: str,
         selected_document_id: int | None = None,
         selection_continuation: bool = False,
+        on_token: Callable[[str], None] | None = None,
     ) -> tuple[
         str,
         list,
@@ -467,6 +472,41 @@ class ChatService:
                 "Hello. How can I assist you "
                 "with your research?"
             )
+
+            # -----------------------------------------
+            # Stream casual responses too
+            # -----------------------------------------
+            #
+            # Casual messages intentionally bypass the
+            # LLM/RAG pipeline because there is no
+            # research question to answer. When the
+            # streaming endpoint supplies on_token,
+            # emit this fixed response progressively so
+            # "hi" behaves like a normal streamed reply.
+            #
+            # We do not call the LLM just to generate a
+            # greeting. The short pacing delay only
+            # controls delivery of this already-known
+            # response to the SSE client.
+            # -----------------------------------------
+
+            if on_token is not None:
+
+                # Send the complete known greeting as ONE
+                # streaming event.
+                #
+                # The frontend already owns the visual
+                # typewriter/presentation queue. Sending
+                # several tiny backend events here was
+                # unnecessary and could make the casual
+                # path race with the final "done" event.
+                #
+                # Research responses still stream from
+                # Groq token-by-token. Casual responses
+                # bypass the LLM/RAG pipeline but enter
+                # the exact same frontend presentation
+                # pipeline.
+                on_token(answer)
 
             MessageService.create_message(
                 db=db,
@@ -974,33 +1014,142 @@ Chunk {index}
 
         try:
 
-            response = (
-                client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": (
-                                "You are Dasaiko, "
-                                "an AI research "
-                                "assistant."
-                            ),
-                        },
-                        {
-                            "role": "user",
-                            "content": prompt,
-                        },
-                    ],
-                    temperature=0.2,
-                )
-            )
+            request_kwargs = {
+                "model": "llama-3.3-70b-versatile",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are Dasaiko, "
+                            "an AI research "
+                            "assistant."
+                        ),
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
+                ],
+                "temperature": 0.2,
+            }
 
-            answer = (
-                response
-                .choices[0]
-                .message
-                .content
-            )
+            if on_token is not None:
+
+                request_kwargs["stream"] = True
+
+                stream = (
+                    client.chat.completions.create(
+                        **request_kwargs
+                    )
+                )
+
+                answer_parts = []
+
+                # -------------------------------------------------
+                # Stream batching
+                # -------------------------------------------------
+                #
+                # Some model/SDK/network combinations can yield a
+                # very large number of tiny chunks in a tight burst.
+                # We keep consuming the real Groq stream immediately,
+                # but forward small batches to the SSE layer so the
+                # frontend receives coherent pieces of text.
+                #
+                # There is NO artificial frontend typewriter here.
+                # -------------------------------------------------
+
+                import time
+
+                stream_buffer: list[str] = []
+                last_flush = time.perf_counter()
+
+                FLUSH_INTERVAL = 0.045
+                MAX_BUFFER_CHARS = 24
+
+                def flush_stream_buffer() -> None:
+                    nonlocal last_flush
+
+                    if not stream_buffer:
+                        return
+
+                    text = "".join(
+                        stream_buffer
+                    )
+
+                    stream_buffer.clear()
+
+                    on_token(text)
+
+                    last_flush = (
+                        time.perf_counter()
+                    )
+
+                for chunk in stream:
+
+                    if not chunk.choices:
+                        continue
+
+                    delta = (
+                        chunk
+                        .choices[0]
+                        .delta
+                        .content
+                    )
+
+                    if not delta:
+                        continue
+
+                    answer_parts.append(
+                        delta
+                    )
+
+                    stream_buffer.append(
+                        delta
+                    )
+
+                    buffered_length = len(
+                        "".join(
+                            stream_buffer
+                        )
+                    )
+
+                    now = (
+                        time.perf_counter()
+                    )
+
+                    if (
+                        buffered_length
+                        >= MAX_BUFFER_CHARS
+                        or
+                        (
+                            now - last_flush
+                            >= FLUSH_INTERVAL
+                        )
+                    ):
+                        flush_stream_buffer()
+
+                # Forward any text left in the
+                # buffer after the model stream ends.
+                flush_stream_buffer()
+
+                answer = "".join(
+                    answer_parts
+                )
+
+            else:
+
+                response = (
+                    client.chat.completions.create(
+                        **request_kwargs
+                    )
+                )
+
+                answer = (
+                    response
+                    .choices[0]
+                    .message
+                    .content
+                )
 
         except Exception as e:
 
