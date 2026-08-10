@@ -140,40 +140,38 @@ export function WorkspacePage() {
 
 
   return (
+  <>
+    <AppShell>
 
-    <>
+      <div className="flex min-w-0 min-h-0 flex-1">
 
-      <AppShell>
+        {/* --------------------------------------- */}
+        {/* Central Workbench */}
+        {/* --------------------------------------- */}
 
-        <div className="flex min-w-0 min-h-0 flex-1">
+        <div className="relative flex min-w-0 flex-1 overflow-hidden">
 
-          {/* Chat */}
+          <ResearchWorkbench />
 
-          <div className="flex min-w-0 flex-1">
-
-            <ResearchWorkbench />
-
-          </div>
-
-
-          {/* Evidence */}
-
-          <div className="w-[400px] flex-shrink-0 border-l border-white/[0.06]">
-
-            <EvidenceVault />
-
-          </div>
-
-
-          {/* PDF Bottom Sheet */}
-
+          {/* PDF Viewer Overlay */}
           <PDFBottomSheet />
 
         </div>
 
-      </AppShell>
 
-    </>
+        {/* --------------------------------------- */}
+        {/* Evidence */}
+        {/* --------------------------------------- */}
 
-  );
+        <div className="w-[400px] flex-shrink-0 border-l border-white/[0.06]">
+
+          <EvidenceVault />
+
+        </div>
+
+      </div>
+
+    </AppShell>
+  </>
+);
 }

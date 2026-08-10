@@ -29,7 +29,7 @@ def extract_pages_from_pdf(file_path: str):
 
     for page_index, page in enumerate(document):
 
-        paragraphs = []
+        blocks = []
 
         page_dict = page.get_text("dict")
 
@@ -41,28 +41,42 @@ def extract_pages_from_pdf(file_path: str):
             lines = []
 
             for line in block["lines"]:
+
                 line_text = "".join(
                     span["text"]
                     for span in line["spans"]
                 )
 
                 if line_text:
-                    lines.append(line_text)
+                    lines.append(
+                        {
+                            "text": clean_text(line_text),
+                            "bbox": [
+                                float(value)
+                                for value in line["bbox"]
+                            ],
+                        }
+                    )
 
-            paragraph_text = clean_text(
-                "\n".join(lines)
-            ).strip()
-
-            if not paragraph_text:
+            if not lines:
                 continue
 
-            paragraphs.append(
+            block_text = "\n".join(
+                line["text"]
+                for line in lines
+            ).strip()
+
+            if not block_text:
+                continue
+
+            blocks.append(
                 {
-                    "text": paragraph_text,
+                    "text": block_text,
                     "bbox": [
-                        float(coordinate)
-                        for coordinate in block["bbox"]
+                        float(value)
+                        for value in block["bbox"]
                     ],
+                    "lines": lines,
                 }
             )
 
@@ -72,10 +86,10 @@ def extract_pages_from_pdf(file_path: str):
                 "page_width": float(page.rect.width),
                 "page_height": float(page.rect.height),
                 "text": "\n\n".join(
-                    paragraph["text"]
-                    for paragraph in paragraphs
+                    block["text"]
+                    for block in blocks
                 ),
-                "paragraphs": paragraphs,
+                "blocks": blocks,
             }
         )
 

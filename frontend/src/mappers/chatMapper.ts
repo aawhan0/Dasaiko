@@ -65,6 +65,12 @@ export function mapSources(
     pageNumber:
       source.page_number,
 
+    pageWidth:
+      source.page_width ?? null,
+
+    pageHeight:
+      source.page_height ?? null,
+
     bboxes:
       source.bboxes,
 
