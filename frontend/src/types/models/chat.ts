@@ -1,6 +1,11 @@
 import type { EvidenceChunk } from "./evidence";
 
-export type MessageRole = "user" | "assistant";
+
+export type MessageRole =
+  | "user"
+  | "assistant"
+  | "research_context";
+
 
 export interface ChatMessage {
   id: string;
@@ -12,8 +17,10 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
+
 export interface PaperSelection {
   required: boolean;
+
 
   documents: {
     id: number;

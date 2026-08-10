@@ -344,6 +344,22 @@ class ChatService:
         )
 
         # -----------------------------------------
+        # Determine whether this request is the
+        # one-time paper-selection continuation.
+        #
+        # Normal follow-up questions may also carry
+        # selected_document_id, but they must NOT
+        # create another "Research Context Set"
+        # event. Only the explicit picker action
+        # creates that historical event.
+        # -----------------------------------------
+
+        is_new_research_context_selection = (
+            selection_continuation
+            and selected_document_id is not None
+        )
+
+        # -----------------------------------------
         # Restore conversation research context
         #
         # The frontend also keeps a browser-local
@@ -593,6 +609,35 @@ class ChatService:
                     print(
                         "✓ Conversation research "
                         "context saved"
+                    )
+
+                # ---------------------------------
+                # Persist the context-selection event
+                # exactly once, at the moment the user
+                # selects the paper.
+                #
+                # This is a real message in the
+                # conversation history, so it survives
+                # reloads and is not re-created for
+                # subsequent questions.
+                # ---------------------------------
+
+                if (
+                    is_new_research_context_selection
+                ):
+
+                    MessageService.create_message(
+                        db=db,
+                        conversation_id=conversation_id,
+                        role="research_context",
+                        content=(
+                            selected_document.title
+                            or "Selected research paper"
+                        ),
+                    )
+
+                    print(
+                        "✓ Research context event saved"
                     )
 
         # -----------------------------------------

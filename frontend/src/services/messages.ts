@@ -14,7 +14,7 @@ export async function listMessages(
 
   return response.data.data.map((message) => ({
     id: String(message.id),
-    role: message.role,
+    role: message.role as ChatMessage["role"],
     content: message.content,
     timestamp: new Date().toISOString(),
   }));

@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -53,12 +53,6 @@ export const ChatBlock = memo(
       isQuerying,
       setIsQuerying,
     } = useWorkspaceStore();
-
-
-    const [
-      justSelected,
-      setJustSelected,
-    ] = useState(false);
 
 
     const handlePaperSelect = async (
@@ -122,11 +116,28 @@ export const ChatBlock = memo(
         documentId
       );
 
-      setJustSelected(true);
+      const selectedDocument =
+        documents.find(
+          (document) =>
+            Number(document.id) ===
+            documentId
+        );
 
-      window.setTimeout(() => {
-        setJustSelected(false);
-      }, 2200);
+      // Add the historical context-selection event
+      // immediately, at the exact position where the
+      // user selected the paper. The backend persists
+      // the same event, so it will be reconstructed
+      // here after a reload.
+      addMessage({
+        id:
+          `research-context-${documentId}-${Date.now()}`,
+        role: "research_context",
+        content:
+          selectedDocument?.title ??
+          "Selected research paper",
+        timestamp:
+          new Date().toISOString(),
+      });
 
 
       const conversationId =
@@ -248,14 +259,82 @@ export const ChatBlock = memo(
     };
 
 
-    const selectedPaper =
-      selectedDocumentId !== null
-        ? documents.find(
-            (document) =>
-              Number(document.id) ===
-              selectedDocumentId
-          )
-        : null;
+    // The research-context event is a real historical
+    // message. It must render once where it occurred,
+    // rather than being derived from the current
+    // conversation-level selectedDocumentId.
+    if (
+      message.role ===
+      "research_context"
+    ) {
+
+      return (
+        <motion.div
+          variants={fadeInUp}
+          initial="hidden"
+          animate="visible"
+          className="flex gap-4"
+        >
+
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 border bg-primary/10 border-primary/20"
+          >
+            <Check
+              className="w-4 h-4 text-primary"
+              strokeWidth={3}
+            />
+          </div>
+
+          <div className="flex-1 min-w-0 max-w-[85%]">
+
+            <div
+              className={cn(
+                "rounded-xl border px-3 py-3",
+                "border-primary/20",
+                "bg-primary/[0.045]"
+              )}
+            >
+
+              <div className="flex items-start gap-2.5">
+
+                <div className="min-w-0 flex-1">
+
+                  <p className="text-[10px] uppercase tracking-wider text-primary/70">
+                    Research context set
+                  </p>
+
+                  <p className="mt-0.5 truncate text-xs font-medium text-zinc-200">
+                    {message.content}
+                  </p>
+
+                  <p className="mt-1 text-[10px] leading-4 text-zinc-500">
+                    I'll use this paper as
+                    context when your
+                    questions don't specify
+                    another source.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="flex items-center gap-3 mt-1.5 px-1">
+
+              <span className="text-[10px] text-zinc-700 font-mono">
+                {formatRelativeDate(
+                  message.timestamp
+                )}
+              </span>
+
+            </div>
+
+          </div>
+
+        </motion.div>
+      );
+    }
 
 
     return (
@@ -323,37 +402,15 @@ export const ChatBlock = memo(
           </div>
 
 
-          {!isUser &&
-            (
-              // The paper-selection response owns the picker while it is
-              // present in memory. After a reload, paperSelection is not
-              // reconstructed from the persisted chat messages, so we also
-              // render the context card on the latest assistant message.
-              (
-                message.paperSelection &&
+          {!isUser && (
+            <div className="mt-3">
+
+              <AnimatePresence mode="wait">
+
+                {message.paperSelection &&
                 message.paperSelection.required &&
-                message.paperSelection.documents.length > 0
-              ) ||
-              (
-                selectedDocumentId !== null &&
-                message.id ===
-                  [...messages]
-                    .reverse()
-                    .find(
-                      (item) =>
-                        item.role === "assistant"
-                    )?.id
-              )
-            ) && (
-
-              <div className="mt-3">
-
-                <AnimatePresence mode="wait">
-
-                  {message.paperSelection &&
-                  message.paperSelection.required &&
-                  message.paperSelection.documents.length > 0 &&
-                  selectedDocumentId === null ? (
+                message.paperSelection.documents.length > 0 &&
+                selectedDocumentId === null ? (
 
                     <motion.div
                       key="paper-options"
@@ -453,119 +510,6 @@ export const ChatBlock = memo(
                         )}
 
                       </div>
-
-                    </motion.div>
-
-                  ) : selectedDocumentId !== null ? (
-
-                    <motion.div
-                      key="context-set"
-                      initial={{
-                        opacity: 0,
-                        y: 6,
-                        scale: 0.98,
-                      }}
-                      animate={{
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                      }}
-                      exit={{
-                        opacity: 0,
-                        y: -4,
-                      }}
-                      transition={{
-                        duration: 0.25,
-                      }}
-                      className={cn(
-                        "rounded-xl border px-3 py-3",
-                        "border-primary/20",
-                        "bg-primary/[0.045]"
-                      )}
-                    >
-
-                      <div className="flex items-start gap-2.5">
-
-                        <motion.div
-                          initial={{
-                            scale: 0,
-                          }}
-                          animate={{
-                            scale: 1,
-                          }}
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 20,
-                          }}
-                          className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 border border-primary/20"
-                        >
-                          <Check
-                            className="h-3 w-3 text-primary"
-                            strokeWidth={3}
-                          />
-                        </motion.div>
-
-                        <div className="min-w-0 flex-1">
-
-                          <p className="text-[10px] uppercase tracking-wider text-primary/70">
-                            Research context set
-                          </p>
-
-                          <p className="mt-0.5 truncate text-xs font-medium text-zinc-200">
-                            {selectedPaper?.title ??
-                              (
-                                message.paperSelection?.documents ??
-                                []
-                              ).find(
-                                (document) =>
-                                  document.id ===
-                                  selectedDocumentId
-                              )?.title ??
-                              "Selected research paper"}
-                          </p>
-
-                          <p className="mt-1 text-[10px] leading-4 text-zinc-500">
-                            I'll use this paper as
-                            context when your
-                            questions don't specify
-                            another source.
-                          </p>
-
-                        </div>
-
-                      </div>
-
-                      <AnimatePresence>
-
-                        {justSelected && (
-
-                          <motion.div
-                            initial={{
-                              opacity: 0,
-                              height: 0,
-                            }}
-                            animate={{
-                              opacity: 1,
-                              height: "auto",
-                            }}
-                            exit={{
-                              opacity: 0,
-                              height: 0,
-                            }}
-                            className="overflow-hidden"
-                          >
-
-                            <div className="mt-2.5 border-t border-primary/10 pt-2 text-[10px] text-primary/60">
-                              Your original question is
-                              being answered using this
-                              paper.
-                            </div>
-
-                          </motion.div>
-                        )}
-
-                      </AnimatePresence>
 
                     </motion.div>
 

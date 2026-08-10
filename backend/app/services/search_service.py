@@ -532,6 +532,205 @@ class SearchService:
         return False
 
     # ============================================
+    # Find an explicitly referenced OTHER document
+    #
+    # This lets queries such as:
+    #
+    #     "who wrote the attention paper?"
+    #     "what is the BERT paper?"
+    #
+    # leave the currently selected research context
+    # without hardcoding any paper names.
+    #
+    # We compare meaningful title tokens against the
+    # user's query and also support title acronyms.
+    # ============================================
+
+    @staticmethod
+    def _find_explicit_other_document(
+        db: Session,
+        query: str,
+        current_document_id: int,
+    ):
+        from app.models.document import Document
+
+        normalized_query = (
+            SearchService._normalize_text(
+                query
+            )
+        )
+
+        query_tokens = set(
+            re.findall(
+                r"[a-z0-9]+",
+                normalized_query,
+            )
+        )
+
+        generic_title_tokens = {
+            "the",
+            "a",
+            "an",
+            "of",
+            "and",
+            "or",
+            "for",
+            "to",
+            "in",
+            "on",
+            "with",
+            "from",
+            "is",
+            "are",
+            "this",
+            "that",
+            "paper",
+            "research",
+            "study",
+            "work",
+            "article",
+        }
+
+        query_tokens -= generic_title_tokens
+
+        if not query_tokens:
+            return None
+
+        documents = (
+            db.query(Document)
+            .all()
+        )
+
+        best_document = None
+        best_score = 0.0
+
+        for document in documents:
+
+            if document.id == current_document_id:
+                continue
+
+            title = (
+                document.title
+                or ""
+            ).strip()
+
+            if not title:
+                continue
+
+            normalized_title = (
+                SearchService._normalize_title(
+                    title
+                )
+            )
+
+            title_tokens = set(
+                re.findall(
+                    r"[a-z0-9]+",
+                    normalized_title,
+                )
+            )
+
+            title_tokens -= generic_title_tokens
+
+            if not title_tokens:
+                continue
+
+            # ------------------------------------
+            # Exact multi-word title reference
+            # ------------------------------------
+
+            if (
+                normalized_title
+                in normalized_query
+            ):
+                return document
+
+            # ------------------------------------
+            # Acronym support
+            #
+            # "BERT paper" can resolve a title
+            # such as "BERT: Pre-training..."
+            # ------------------------------------
+
+            title_words = [
+                token
+                for token in normalized_title.split()
+                if token not in generic_title_tokens
+            ]
+
+            acronym = "".join(
+                word[0]
+                for word in title_words
+                if word
+            )
+
+            if (
+                acronym
+                and len(acronym) >= 3
+                and acronym in query_tokens
+            ):
+                return document
+
+            # ------------------------------------
+            # Distinctive title-token matching
+            #
+            # A single short/common word should not
+            # switch documents. A distinctive token
+            # (6+ characters) can.
+            # ------------------------------------
+
+            overlap = (
+                query_tokens
+                & title_tokens
+            )
+
+            distinctive_overlap = {
+                token
+                for token in overlap
+                if len(token) >= 6
+            }
+
+            if not distinctive_overlap:
+                continue
+
+            # Prefer documents with stronger title
+            # coverage, while allowing a distinctive
+            # token such as "attention" to identify
+            # "Attention Is All You Need".
+            coverage = (
+                len(overlap)
+                / max(
+                    len(title_tokens),
+                    1,
+                )
+            )
+
+            score = (
+                0.70 * min(
+                    len(distinctive_overlap),
+                    3,
+                )
+                + 0.30 * coverage
+            )
+
+            if score > best_score:
+                best_score = score
+                best_document = document
+
+        if best_document is not None:
+            print(
+                "Search intent: "
+                "EXPLICIT OTHER DOCUMENT"
+            )
+
+            print(
+                f"Referenced document: "
+                f"{best_document.id}"
+            )
+
+        return best_document
+
+    # ============================================
     # Determine whether query should use the
     # selected research context.
     # ============================================
@@ -567,49 +766,22 @@ class SearchService:
                 return False
 
         # ----------------------------------------
-        # Explicitly named another uploaded paper
+        # Explicitly referenced another uploaded
+        # paper, even when the full title is not
+        # written in the query.
         # ----------------------------------------
 
-        from app.models.document import Document
-
-        documents = (
-            db.query(Document)
-            .all()
+        referenced_document = (
+            SearchService
+            ._find_explicit_other_document(
+                db=db,
+                query=query,
+                current_document_id=document_id,
+            )
         )
 
-        for document in documents:
-
-            if document.id == document_id:
-                continue
-
-            title = (
-                document.title
-                or ""
-            )
-
-            normalized_title = (
-                SearchService._normalize_title(
-                    title
-                )
-            )
-
-            if (
-                normalized_title
-                and normalized_title
-                in normalized_query
-            ):
-
-                print(
-                    "Search intent: "
-                    "EXPLICIT OTHER DOCUMENT"
-                )
-
-                print(
-                    f"Referenced document: "
-                    f"{document.id}"
-                )
-
-                return False
+        if referenced_document is not None:
+            return False
 
         # ----------------------------------------
         # Once selected, the paper remains the
