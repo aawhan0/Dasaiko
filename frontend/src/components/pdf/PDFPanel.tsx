@@ -35,6 +35,12 @@ export function PDFPanel() {
       pageNumber={
         selectedEvidence?.pageNumber ?? 1
       }
+      pageWidth={
+        selectedEvidence?.pageWidth
+      }
+      pageHeight={
+        selectedEvidence?.pageHeight
+      }
       bboxes={
         selectedEvidence?.bboxes ?? []
       }

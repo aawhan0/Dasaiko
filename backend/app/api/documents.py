@@ -111,7 +111,8 @@ def delete_document(
         document_id,
     )
 
-    BM25Service.build_index(db)
+    if BM25Service.bm25 is not None:
+        BM25Service.build_index(db)
 
     return APIResponse(
         success=True,

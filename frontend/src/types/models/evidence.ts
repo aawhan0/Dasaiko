@@ -9,6 +9,10 @@ export interface EvidenceChunk {
 
   pageNumber: number;
 
+  pageWidth: number | null;
+
+  pageHeight: number | null;
+
   bboxes: number[][];
 
   score: number;

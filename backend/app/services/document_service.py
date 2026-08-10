@@ -1,6 +1,7 @@
 import os
 import shutil
 import uuid
+from pathlib import Path
 
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
@@ -11,9 +12,6 @@ from app.db.transaction import transactional
 from app.models.chunk import Chunk
 from app.models.document import Document
 from app.models.embedding import Embedding
-
-
-from app.services.title_service import TitleService
 
 from app.schemas.document import (
     DocumentCreate,
@@ -28,7 +26,6 @@ from app.utils.pdf import (
 )
 
 from app.utils.chunker import (
-    split_text,
     split_page,
 )
 
@@ -105,7 +102,6 @@ class DocumentService:
             document.content = updated_document.content
 
         db.refresh(document)
-
         return document
 
     @staticmethod
@@ -124,7 +120,16 @@ class DocumentService:
         if not document:
             raise DocumentNotFoundException()
 
+        upload_dir = Path("uploads").resolve()
+        uploaded_file = upload_dir / Path(
+            document.file_path
+        ).name
+
         db.delete(document)
+        db.flush()
+
+        if uploaded_file.is_file():
+            uploaded_file.unlink()
 
         return True
 
@@ -135,7 +140,6 @@ class DocumentService:
         file: UploadFile,
     ) -> Document:
 
-        print(">>>>>>>>>>>> upload_pdf CALLED <<<<<<<<<<<<")
         # -----------------------------
         # Save PDF
         # -----------------------------
@@ -157,35 +161,28 @@ class DocumentService:
         file.file.close()
 
         # -----------------------------
-        # Extract Full Text
+        # Extract full text
         # -----------------------------
         extracted_text = extract_text_from_pdf(
             disk_path
         )
 
         # -----------------------------
-        # Create Document
+        # Create document
         # -----------------------------
         document = Document(
-            title=TitleService.resolve_title(
-            pdf_path=disk_path,
-            filename=file.filename,
-        ),
-        content=extracted_text,
-        source="pdf",
-        file_name=file.filename,
-        file_path=public_path,
-    )
-        print("===================================")
-        print("DOCUMENT TITLE:", document.title)
-        print("FILE NAME:", document.file_name)
-        print("===================================")
+            title=file.filename.replace(".pdf", ""),
+            content=extracted_text,
+            source="pdf",
+            file_name=file.filename,
+            file_path=public_path,
+        )
 
         db.add(document)
         db.flush()
 
         # -----------------------------
-        # Page-aware Chunking
+        # Page-aware chunking
         # -----------------------------
         pages = extract_pages_from_pdf(
             disk_path
@@ -201,19 +198,12 @@ class DocumentService:
 
                 chunk_obj = Chunk(
                     document_id=document.id,
-
                     content=chunk["content"],
-
                     chunk_index=global_chunk_index,
-
                     page_number=chunk["page_number"],
-
                     page_width=chunk["page_width"],
-
                     page_height=chunk["page_height"],
-
                     bboxes=chunk["bboxes"],
-
                     token_count=len(
                         chunk["content"].split()
                     ),

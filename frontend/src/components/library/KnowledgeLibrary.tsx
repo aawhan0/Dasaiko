@@ -1,109 +1,94 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import * as Dialog from "@radix-ui/react-dialog";
+import { Loader2 } from "lucide-react";
 
 import { fadeIn } from "@/utils/animations";
 
 import { DocumentCard } from "./DocumentCard";
 import { SearchBar } from "./SearchBar";
-import { DocumentMenu } from "./DocumentMenu";
-
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { deleteDocument } from "@/services/documents";
-
 import type { Document } from "@/types";
-
 
 export function KnowledgeLibrary() {
   const {
     documents,
     activeDocumentId,
     setActiveDocument,
-    removeDocument,
+    setDocuments,
+    selectedPdf,
+    selectedEvidence,
+    setSelectedPdf,
+    setSelectedEvidence,
   } = useWorkspaceStore();
 
   const [query, setQuery] = useState("");
-
-  const [deleteOpen, setDeleteOpen] = useState(false);
-
-  const [selectedDocument, setSelectedDocument] =
+  const [documentToDelete, setDocumentToDelete] =
     useState<Document | null>(null);
-
   const [isDeleting, setIsDeleting] =
     useState(false);
+  const [deleteError, setDeleteError] = useState<
+    string | null
+  >(null);
 
-  const [menuOpen, setMenuOpen] =
-    useState(false);
+  console.log(documents);
 
-  const [menuX, setMenuX] =
-    useState(0);
 
-  const [menuY, setMenuY] =
-    useState(0);
-
-  const menuRef =
-    useRef<HTMLDivElement>(null);
+  console.log("DOCUMENTS:");
+  console.table(documents);
 
   const filteredDocuments = documents.filter((doc) =>
     (doc.name ?? "").toLowerCase().includes(query.toLowerCase())
   );
 
-  const handleDelete = async () => {
-  if (!selectedDocument) return;
+  const handleDeleteDocument = async () => {
+    if (!documentToDelete || isDeleting) return;
 
-  try {
+    const documentsBeforeDeletion = documents;
+    const deletedDocument = documentToDelete;
+
     setIsDeleting(true);
-
-    await deleteDocument(selectedDocument.id);
-
-    removeDocument(selectedDocument.id);
-
-    if (activeDocumentId === selectedDocument.id) {
-      setActiveDocument(null);
-    }
-
-    setDeleteOpen(false);
-    setSelectedDocument(null);
-  } catch (error) {
-    console.error(error);
-    alert("Failed to delete document.");
-  } finally {
-    setIsDeleting(false);
-  }
-};
-
-useEffect(() => {
-  function handleClick(
-    event: MouseEvent
-  ) {
-    if (
-      menuRef.current &&
-      !menuRef.current.contains(
-        event.target as Node
+    setDeleteError(null);
+    setDocuments(
+      documents.filter(
+        (document) => document.id !== deletedDocument.id
       )
-    ) {
-      setMenuOpen(false);
+    );
+
+    const clearsSelection =
+      activeDocumentId === deletedDocument.id ||
+      selectedEvidence?.documentId === deletedDocument.id ||
+      selectedPdf === deletedDocument.filePath;
+
+    if (clearsSelection) {
+      setActiveDocument(null);
+      setSelectedEvidence(null);
+      setSelectedPdf(null);
     }
-  }
 
-  if (menuOpen) {
-    document.addEventListener(
-      "mousedown",
-      handleClick
-    );
-  }
+    try {
+      await deleteDocument(deletedDocument.id);
+      setDocumentToDelete(null);
+    } catch (error) {
+      console.error("Document deletion failed:", error);
+      setDocuments(documentsBeforeDeletion);
 
-  return () => {
-    document.removeEventListener(
-      "mousedown",
-      handleClick
-    );
+      if (clearsSelection) {
+        setActiveDocument(activeDocumentId);
+        setSelectedEvidence(selectedEvidence);
+        setSelectedPdf(selectedPdf);
+      }
+
+      setDeleteError(
+        "Could not delete the document. Please try again."
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
-}, [menuOpen]);
 
   return (
-      <>
     <motion.div
       variants={fadeIn}
       initial="hidden"
@@ -113,6 +98,15 @@ useEffect(() => {
       <SearchBar
         onSearch={setQuery}
       />
+
+      {deleteError && (
+        <p
+          role="alert"
+          className="px-3 text-xs text-red-400"
+        >
+          {deleteError}
+        </p>
+      )}
 
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="px-3 pb-2">
@@ -134,81 +128,65 @@ useEffect(() => {
               document={doc}
               isActive={activeDocumentId === doc.id}
               onClick={() => setActiveDocument(doc.id)}
-              onContextMenu={(x, y) => {
-                setSelectedDocument(doc);
-
-                setMenuX(x);
-                setMenuY(y);
-
-                setMenuOpen(true);
+              onDelete={() => {
+                setDeleteError(null);
+                setDocumentToDelete(doc);
               }}
+              isDeleting={isDeleting && documentToDelete?.id === doc.id}
             />
           ))
         )}
       </div>
+
+      {documentToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-document-title"
+            className="w-full max-w-sm rounded-xl border border-white/[0.10] bg-[#111111] p-5 shadow-2xl"
+          >
+            <h2
+              id="delete-document-title"
+              className="text-sm font-semibold text-white"
+            >
+              Delete document?
+            </h2>
+
+            <p className="mt-2 text-sm text-zinc-400">
+              This permanently deletes
+              {" "}
+              <span className="text-zinc-200">
+                {documentToDelete.name}
+              </span>
+              , its chunks, embeddings, and uploaded PDF.
+            </p>
+
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDocumentToDelete(null)}
+                className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleDeleteDocument}
+                className="flex items-center gap-2 rounded-lg bg-red-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
-    
-    {menuOpen && selectedDocument && (
-  <div ref={menuRef}>
-    <DocumentMenu
-      x={menuX}
-      y={menuY}
-      onRename={() => {
-        setMenuOpen(false);
-
-        // TODO
-      }}
-      onDelete={() => {
-        setMenuOpen(false);
-        setDeleteOpen(true);
-      }}
-    />
-  </div>
-)}
-
-<Dialog.Root
-  open={deleteOpen}
-  onOpenChange={setDeleteOpen}
->
-  <Dialog.Portal>
-    <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
-
-    <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[92vw] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/10 bg-[#171717] p-6 shadow-2xl">
-
-      <Dialog.Title className="text-lg font-semibold text-white">
-        Delete document
-      </Dialog.Title>
-
-      <Dialog.Description className="mt-2 text-sm text-zinc-400">
-        Are you sure you want to permanently delete{" "}
-        <span className="font-medium text-white">
-          {selectedDocument?.name}
-        </span>
-        ?
-      </Dialog.Description>
-
-      <div className="mt-6 flex justify-end gap-3">
-
-        <Dialog.Close asChild>
-          <button className="rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10">
-            Cancel
-          </button>
-        </Dialog.Close>
-
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-        >
-          {isDeleting ? "Deleting..." : "Delete"}
-        </button>
-
-      </div>
-
-    </Dialog.Content>
-  </Dialog.Portal>
-</Dialog.Root>
-
-</>
   );
 }

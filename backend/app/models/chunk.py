@@ -6,7 +6,6 @@ from sqlalchemy import (
     Integer,
     JSON,
     Text,
-    Float,
 )
 
 from sqlalchemy.orm import (
@@ -16,7 +15,6 @@ from sqlalchemy.orm import (
 )
 
 from app.db.base import Base
-
 
 
 class Chunk(Base):
@@ -51,12 +49,10 @@ class Chunk(Base):
     )
 
     page_width: Mapped[float | None] = mapped_column(
-        Float,
         nullable=True,
     )
 
     page_height: Mapped[float | None] = mapped_column(
-        Float,
         nullable=True,
     )
 

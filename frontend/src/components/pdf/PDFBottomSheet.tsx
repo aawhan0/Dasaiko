@@ -94,6 +94,12 @@ export function PDFBottomSheet() {
                 pageNumber={
                   selectedEvidence?.pageNumber ?? 1
                 }
+                pageWidth={
+                  selectedEvidence?.pageWidth
+                }
+                pageHeight={
+                  selectedEvidence?.pageHeight
+                }
                 bboxes={selectedEvidence?.bboxes}
               />
 

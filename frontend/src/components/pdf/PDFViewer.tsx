@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Document,
   Page,
@@ -15,14 +20,27 @@ interface PDFViewerProps {
 
   pageNumber?: number;
 
+  pageWidth?: number | null;
+
+  pageHeight?: number | null;
+
   bboxes?: number[][];
 }
 
 const API = "http://localhost:8000";
 
+interface RenderedPageDimensions {
+  width: number;
+  height: number;
+  originalWidth: number;
+  originalHeight: number;
+}
+
 export function PDFViewer({
   file,
   pageNumber: initialPage = 1,
+  pageWidth,
+  pageHeight,
   bboxes = [],
 }: PDFViewerProps) {
   const [numPages, setNumPages] =
@@ -31,17 +49,72 @@ export function PDFViewer({
   const [pageNumber, setPageNumber] =
     useState(initialPage);
 
+  const [availableWidth, setAvailableWidth] =
+    useState<number>();
+
+  const [renderedPage, setRenderedPage] =
+    useState<RenderedPageDimensions | null>(
+      null
+    );
+
+  const pageContainerRef =
+    useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setPageNumber(initialPage);
   }, [initialPage]);
 
-  // DEBUG
-  console.log("BBOXES:", bboxes);
+  useEffect(() => {
+    const container = pageContainerRef.current;
+
+    if (!container) return;
+
+    const updateAvailableWidth = () => {
+      setAvailableWidth(container.clientWidth);
+    };
+
+    updateAvailableWidth();
+
+    const observer = new ResizeObserver(
+      updateAvailableWidth
+    );
+
+    observer.observe(container);
+
+    return () => observer.disconnect();
+  }, []);
+
+  const handlePageRenderSuccess = useCallback(
+    (page: RenderedPageDimensions) => {
+      setRenderedPage(page);
+    },
+    []
+  );
+
+  const sourceWidth =
+    pageWidth ??
+    renderedPage?.originalWidth ??
+    renderedPage?.width;
+
+  const sourceHeight =
+    pageHeight ??
+    renderedPage?.originalHeight ??
+    renderedPage?.height;
+
+  const canRenderHighlights =
+    pageNumber === initialPage &&
+    renderedPage !== null &&
+    sourceWidth !== undefined &&
+    sourceHeight !== undefined &&
+    sourceWidth > 0 &&
+    sourceHeight > 0;
 
   return (
-    <>
+    <div className="flex h-full flex-col bg-[#090909]">
+
       {/* Toolbar */}
       <div className="flex items-center justify-between border-b border-white/[0.06] px-8 py-4">
+
         <button
           onClick={() =>
             setPageNumber((p) =>
@@ -93,10 +166,12 @@ export function PDFViewer({
         >
           Next →
         </button>
+
       </div>
 
       {/* PDF */}
       <div className="flex-1 overflow-auto bg-[#0d0d0d] p-8">
+
         <Document
           file={`${API}${file}`}
           loading={
@@ -104,7 +179,9 @@ export function PDFViewer({
               Loading PDF...
             </div>
           }
-          onLoadSuccess={({ numPages }) =>
+          onLoadSuccess={({
+            numPages,
+          }) =>
             setNumPages(numPages)
           }
           onLoadError={(err) =>
@@ -114,40 +191,66 @@ export function PDFViewer({
             )
           }
         >
-          <div className="flex justify-center pb-12">
-            <div className="relative rounded-xl bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-              <Page
-                pageNumber={pageNumber}
-                width={900}
-              />
+          <div
+            ref={pageContainerRef}
+            className="flex justify-center pb-12"
+          >
 
-              {bboxes.map(
-                (box, index) => {
-                  const [
-                    x1,
-                    y1,
-                    x2,
-                    y2,
-                  ] = box;
+            <div className="rounded-xl bg-white p-4 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
 
-                  return (
-                    <div
-                      key={index}
-                      className="absolute pointer-events-none border-2 border-yellow-400 bg-yellow-300/30"
-                      style={{
-                        left: x1,
-                        top: y1,
-                        width: x2 - x1,
-                        height: y2 - y1,
-                      }}
-                    />
-                  );
-                }
-              )}
+              <div className="relative inline-block">
+                <Page
+                  pageNumber={pageNumber}
+                  width={availableWidth}
+                  onRenderSuccess={
+                    handlePageRenderSuccess
+                  }
+                />
+
+                {canRenderHighlights && (
+                  <div className="pointer-events-none absolute inset-0">
+                    {bboxes.map((bbox, index) => {
+                      const [x0, y0, x1, y1] = bbox;
+
+                      if (
+                        [x0, y0, x1, y1].some(
+                          (coordinate) =>
+                            !Number.isFinite(coordinate)
+                        )
+                      ) {
+                        return null;
+                      }
+
+                      const scaleX =
+                        renderedPage.width / sourceWidth;
+                      const scaleY =
+                        renderedPage.height / sourceHeight;
+
+                      return (
+                        <div
+                          key={`${index}-${bbox.join("-")}`}
+                          className="absolute rounded-sm border-2 border-amber-400 bg-amber-300/30"
+                          style={{
+                            left: x0 * scaleX,
+                            top: y0 * scaleY,
+                            width: (x1 - x0) * scaleX,
+                            height: (y1 - y0) * scaleY,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
             </div>
+
           </div>
+
         </Document>
+
       </div>
-    </>
+
+    </div>
   );
 }

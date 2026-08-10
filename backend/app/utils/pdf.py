@@ -28,47 +28,54 @@ def extract_pages_from_pdf(file_path: str):
     pages = []
 
     for page_index, page in enumerate(document):
-        rect = page.rect
-        page_width = rect.width
-        page_height = rect.height
 
-        raw_dict = page.get_text("dict")
-        blocks = []
-        for block in raw_dict["blocks"]:
+        paragraphs = []
+
+        page_dict = page.get_text("dict")
+
+        for block in page_dict["blocks"]:
 
             if block["type"] != 0:
                 continue
 
-            text = ""
-            max_size = 0
+            lines = []
 
             for line in block["lines"]:
-                for span in line["spans"]:
+                line_text = "".join(
+                    span["text"]
+                    for span in line["spans"]
+                )
 
-                    text += span["text"]
+                if line_text:
+                    lines.append(line_text)
 
-                    if span["size"] > max_size:
-                        max_size = span["size"]
+            paragraph_text = clean_text(
+                "\n".join(lines)
+            ).strip()
 
-                text += "\n"
+            if not paragraph_text:
+                continue
 
-            cleaned = clean_text(text).strip()
-
-            if cleaned:
-
-                blocks.append({
-                    "bbox": block["bbox"],
-                    "text": cleaned,
-                    "font_size": max_size,
-                })
+            paragraphs.append(
+                {
+                    "text": paragraph_text,
+                    "bbox": [
+                        float(coordinate)
+                        for coordinate in block["bbox"]
+                    ],
+                }
+            )
 
         pages.append(
             {
                 "page_number": page_index + 1,
-                "text": clean_text(page.get_text()),
-                "page_width": float(page_width),
-                "page_height": float(page_height),
-                "blocks": blocks,
+                "page_width": float(page.rect.width),
+                "page_height": float(page.rect.height),
+                "text": "\n\n".join(
+                    paragraph["text"]
+                    for paragraph in paragraphs
+                ),
+                "paragraphs": paragraphs,
             }
         )
 
