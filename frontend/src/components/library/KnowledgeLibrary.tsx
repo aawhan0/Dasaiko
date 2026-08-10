@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { fadeIn } from "@/utils/animations";
 
 import { DocumentCard } from "./DocumentCard";
+import { DocumentMenu } from "./DocumentMenu";
 import { SearchBar } from "./SearchBar";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
@@ -26,20 +27,20 @@ export function KnowledgeLibrary() {
   const [query, setQuery] = useState("");
   const [documentToDelete, setDocumentToDelete] =
     useState<Document | null>(null);
+  const [documentMenu, setDocumentMenu] = useState<{
+    document: Document;
+    x: number;
+    y: number;
+  } | null>(null);
   const [isDeleting, setIsDeleting] =
     useState(false);
-  const [deleteError, setDeleteError] = useState<
-    string | null
-  >(null);
-
-  console.log(documents);
-
-
-  console.log("DOCUMENTS:");
-  console.table(documents);
+  const [deleteError, setDeleteError] =
+    useState<string | null>(null);
 
   const filteredDocuments = documents.filter((doc) =>
-    (doc.name ?? "").toLowerCase().includes(query.toLowerCase())
+    (doc.name ?? "")
+      .toLowerCase()
+      .includes(query.toLowerCase())
   );
 
   const handleDeleteDocument = async () => {
@@ -52,13 +53,15 @@ export function KnowledgeLibrary() {
     setDeleteError(null);
     setDocuments(
       documents.filter(
-        (document) => document.id !== deletedDocument.id
+        (document) =>
+          document.id !== deletedDocument.id
       )
     );
 
     const clearsSelection =
       activeDocumentId === deletedDocument.id ||
-      selectedEvidence?.documentId === deletedDocument.id ||
+      selectedEvidence?.documentId ===
+        deletedDocument.id ||
       selectedPdf === deletedDocument.filePath;
 
     if (clearsSelection) {
@@ -71,7 +74,11 @@ export function KnowledgeLibrary() {
       await deleteDocument(deletedDocument.id);
       setDocumentToDelete(null);
     } catch (error) {
-      console.error("Document deletion failed:", error);
+      console.error(
+        "Document deletion failed:",
+        error
+      );
+
       setDocuments(documentsBeforeDeletion);
 
       if (clearsSelection) {
@@ -94,11 +101,12 @@ export function KnowledgeLibrary() {
       initial="hidden"
       animate="visible"
       className="flex h-full flex-col gap-4"
+      onClick={() => {
+        if (documentMenu) {
+          setDocumentMenu(null);
+        }
+      }}
     >
-      <SearchBar
-        onSearch={setQuery}
-      />
-
       {deleteError && (
         <p
           role="alert"
@@ -126,17 +134,37 @@ export function KnowledgeLibrary() {
             <DocumentCard
               key={doc.id}
               document={doc}
-              isActive={activeDocumentId === doc.id}
-              onClick={() => setActiveDocument(doc.id)}
-              onDelete={() => {
-                setDeleteError(null);
-                setDocumentToDelete(doc);
+              isActive={
+                activeDocumentId === doc.id
+              }
+              onClick={() =>
+                setActiveDocument(doc.id)
+              }
+              onContextMenu={(x, y) => {
+                setDocumentMenu({
+                  document: doc,
+                  x,
+                  y,
+                });
               }}
-              isDeleting={isDeleting && documentToDelete?.id === doc.id}
             />
           ))
         )}
       </div>
+
+      {documentMenu && (
+        <DocumentMenu
+          x={documentMenu.x}
+          y={documentMenu.y}
+          onDelete={() => {
+            setDeleteError(null);
+            setDocumentToDelete(
+              documentMenu.document
+            );
+            setDocumentMenu(null);
+          }}
+        />
+      )}
 
       {documentToDelete && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
@@ -145,6 +173,9 @@ export function KnowledgeLibrary() {
             aria-modal="true"
             aria-labelledby="delete-document-title"
             className="w-full max-w-sm rounded-xl border border-white/[0.10] bg-[#111111] p-5 shadow-2xl"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
             <h2
               id="delete-document-title"
@@ -154,19 +185,21 @@ export function KnowledgeLibrary() {
             </h2>
 
             <p className="mt-2 text-sm text-zinc-400">
-              This permanently deletes
-              {" "}
+              This permanently deletes{" "}
               <span className="text-zinc-200">
                 {documentToDelete.name}
               </span>
-              , its chunks, embeddings, and uploaded PDF.
+              , its chunks, embeddings, and uploaded
+              PDF.
             </p>
 
             <div className="mt-5 flex justify-end gap-3">
               <button
                 type="button"
                 disabled={isDeleting}
-                onClick={() => setDocumentToDelete(null)}
+                onClick={() =>
+                  setDocumentToDelete(null)
+                }
                 className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
               >
                 Cancel
@@ -181,7 +214,9 @@ export function KnowledgeLibrary() {
                 {isDeleting && (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
-                {isDeleting ? "Deleting..." : "Delete"}
+                {isDeleting
+                  ? "Deleting..."
+                  : "Delete"}
               </button>
             </div>
           </div>
