@@ -8,29 +8,15 @@ import type { Conversation } from "@/types";
 
 interface ConversationItemProps {
   conversation: Conversation;
-
   isActive: boolean;
-
   isEditing: boolean;
-
   editingTitle: string;
-
-  onEditingTitleChange: (
-    value: string
-  ) => void;
-
+  onEditingTitleChange: (value: string) => void;
   onRename: () => void;
-
   onCancelRename: () => void;
-
   onOpen: () => void;
-
   onTogglePin: () => void;
-
-  onContextMenu: (
-    left: number,
-    top: number
-  ) => void;
+  onContextMenu: (left: number, top: number) => void;
 }
 
 export function ConversationItem({
@@ -45,8 +31,7 @@ export function ConversationItem({
   onTogglePin,
   onContextMenu,
 }: ConversationItemProps) {
-  const inputRef =
-    useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (isEditing) {
@@ -60,6 +45,10 @@ export function ConversationItem({
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => {
+        if (isEditing) {
+          return;
+        }
+
         if (
           e.key === "Enter" ||
           e.key === " "
@@ -71,13 +60,9 @@ export function ConversationItem({
       onContextMenu={(e) => {
         e.preventDefault();
 
-        const rect =
-          e.currentTarget.getBoundingClientRect();
+        const rect = e.currentTarget.getBoundingClientRect();
 
-        onContextMenu(
-          rect.right + 20,
-          rect.top + 8
-        );
+        onContextMenu(rect.right + 20, rect.top + 8);
       }}
       className={cn(
         "group w-full cursor-pointer text-left px-3 py-2.5 rounded-lg border transition-all duration-200",
@@ -99,25 +84,20 @@ export function ConversationItem({
               autoFocus
               ref={inputRef}
               value={editingTitle}
-              onClick={(e) =>
-                e.stopPropagation()
-              }
-              onChange={(e) =>
-                onEditingTitleChange(
-                  e.target.value
-                )
-              }
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => onEditingTitleChange(e.target.value)}
               onBlur={onRename}
               onKeyDown={(e) => {
-                if (
-                  e.key === "Enter"
-                ) {
+                e.stopPropagation();
+
+                if (e.key === "Enter") {
+                  e.preventDefault();
                   onRename();
+                  return;
                 }
 
-                if (
-                  e.key === "Escape"
-                ) {
+                if (e.key === "Escape") {
+                  e.preventDefault();
                   onCancelRename();
                 }
               }}
@@ -131,18 +111,13 @@ export function ConversationItem({
                 text-white
                 placeholder:text-zinc-500
               "
-              style={{
-                caretColor:
-                  "#8b5cf6",
-              }}
+              style={{ caretColor: "#8b5cf6" }}
             />
           ) : (
             <p
               className={cn(
                 "text-[13px] font-medium truncate",
-                isActive
-                  ? "text-white"
-                  : "text-zinc-300"
+                isActive ? "text-white" : "text-zinc-300"
               )}
             >
               {conversation.title}
@@ -165,15 +140,11 @@ export function ConversationItem({
       <p
         className={cn(
           "text-[10px] text-zinc-600 mt-1 font-mono transition-opacity duration-200",
-          isEditing
-            ? "opacity-40"
-            : "opacity-100"
+          isEditing ? "opacity-40" : "opacity-100"
         )}
       >
         {conversation.messageCount} msgs ·{" "}
-        {formatRelativeDate(
-          conversation.lastActivityAt
-        )}
+        {formatRelativeDate(conversation.lastActivityAt)}
       </p>
     </div>
   );
