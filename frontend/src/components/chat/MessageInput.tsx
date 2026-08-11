@@ -425,6 +425,10 @@ export function MessageInput() {
 
       setValue("");
 
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "40px";
+      }
+
 
       // -----------------------------------------
       // User Message

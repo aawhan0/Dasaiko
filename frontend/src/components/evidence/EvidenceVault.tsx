@@ -72,8 +72,8 @@ export function EvidenceVault() {
       <div
         className="
           shrink-0
-          px-6
-          py-6
+          px-5
+          py-5
           border-b
           border-white/[0.06]
         "
@@ -145,7 +145,7 @@ export function EvidenceVault() {
 
           <div
             className="
-              mt-5
+              mt-4
               inline-flex
               items-center
               gap-2
@@ -153,7 +153,7 @@ export function EvidenceVault() {
               bg-primary/10
               border
               border-primary/20
-              px-3.5
+              px-3
               py-1.5
               text-xs
               text-primary
@@ -187,8 +187,8 @@ export function EvidenceVault() {
           flex-1
           overflow-y-auto
           px-5
-          pt-5
-          pb-10
+          pt-4
+          pb-6
           overscroll-contain
         "
       >

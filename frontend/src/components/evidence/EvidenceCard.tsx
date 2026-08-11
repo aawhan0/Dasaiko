@@ -116,6 +116,7 @@ export const EvidenceCard = memo(
 
         whileTap={{
           scale: 0.995,
+
           transition: {
             duration: 0.08,
           },
@@ -133,9 +134,6 @@ export const EvidenceCard = memo(
             border
             text-left
             bg-surface
-          `,
-
-          `
             border-white/[0.06]
           `,
 
@@ -151,7 +149,7 @@ export const EvidenceCard = memo(
 
         {/* Card Content */}
 
-        <div className="px-4 py-3.5">
+        <div className="px-4 py-3">
 
           {/* Header */}
 
@@ -206,28 +204,35 @@ export const EvidenceCard = memo(
                 </h3>
 
 
-              <div
-                className="
-                  mt-1
-                  flex
-                  items-center
-                  gap-2
-                  text-[11px]
-                  text-zinc-500
-                "
-              >
-                <span>
-                  Page {chunk.pageNumber}
-                </span>
+                <div
+                  className="
+                    mt-1
+                    flex
+                    items-center
+                    gap-2
+                    text-[11px]
+                    text-zinc-500
+                  "
+                >
 
-                <span className="text-zinc-700">
-                  ·
-                </span>
+                  <span>
+                    Page {chunk.pageNumber}
+                  </span>
 
-                <span>
-                  Evidence
-                </span>
-              </div>  
+                  <span
+                    className="
+                      h-1
+                      w-1
+                      rounded-full
+                      bg-zinc-700
+                    "
+                  />
+
+                  <span>
+                    Chunk {chunk.chunkIndex}
+                  </span>
+
+                </div>
 
               </div>
 
@@ -260,10 +265,10 @@ export const EvidenceCard = memo(
 
           <div
             className="
-              mt-3
+              mt-2.5
               border-t
               border-white/[0.05]
-              pt-3
+              pt-2.5
             "
           >
 
@@ -283,7 +288,7 @@ export const EvidenceCard = memo(
 
             <motion.div
               className="
-                mt-2.5
+                mt-2
                 flex
                 items-center
                 gap-1
