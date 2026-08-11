@@ -21,6 +21,7 @@ from app.schemas.chat import (
 
 from app.services.chat_service import ChatService
 
+
 router = APIRouter(
     prefix="/chat",
     tags=["Chat"],
@@ -55,6 +56,46 @@ def relevance_percentage(
     )
 
 
+def _is_displayable_evidence(
+    preview: str,
+    *,
+    is_metadata_query: bool = False,
+) -> bool:
+
+    text = " ".join(
+        (preview or "").split()
+    ).strip()
+
+    if not text:
+        return False
+
+    # Metadata evidence can legitimately be
+    # very short, for example:
+    #
+    # "Vaswani et al."
+    # "Google Research"
+    #
+    if is_metadata_query:
+        return True
+
+    # Normal research evidence should contain
+    # enough actual text to be useful in the
+    # Evidence Vault.
+    if len(text) < 35:
+        return False
+
+    # Ignore tiny fragments such as:
+    #
+    # "Abstract"
+    # "11"
+    # "1 Introduction"
+    #
+    if len(text.split()) <= 4:
+        return False
+
+    return True
+
+
 def _build_chat_response(
     answer: str,
     evidence: list,
@@ -70,9 +111,27 @@ def _build_chat_response(
             .strip()
         )
 
-        if len(preview) > 180:
+        # ------------------------------------------------
+        # Evidence Vault filtering
+        #
+        # This only affects what is displayed to the user.
+        #
+        # The original evidence returned by ChatService is
+        # still available to the answer-generation pipeline.
+        # ------------------------------------------------
+
+        if not _is_displayable_evidence(
+            preview,
+            is_metadata_query=False,
+        ):
+            continue
+
+        # Keep the evidence card informative without
+        # making it unnecessarily large.
+        if len(preview) > 280:
+
             preview = (
-                preview[:180]
+                preview[:280]
                 .rstrip()
                 + "..."
             )
@@ -84,8 +143,12 @@ def _build_chat_response(
                 document_name=item["document_name"],
                 chunk_index=item["chunk_index"],
                 page_number=item["page_number"],
-                page_width=item.get("page_width"),
-                page_height=item.get("page_height"),
+                page_width=item.get(
+                    "page_width"
+                ),
+                page_height=item.get(
+                    "page_height"
+                ),
                 bboxes=item["bboxes"],
                 confidence=(
                     relevance_percentage(
