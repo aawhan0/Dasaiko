@@ -362,7 +362,7 @@ export const ChatBlock = memo(
             !message.content ? (
               <StreamingIndicator />
             ) : isUser ? (
-              <p>
+              <p className="whitespace-pre-wrap">
                 {message.content}
               </p>
             ) : (
