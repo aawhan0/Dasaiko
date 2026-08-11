@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
-import { fadeIn } from "@/utils/animations";
 
 import { DocumentCard } from "./DocumentCard";
 import { DocumentMenu } from "./DocumentMenu";
@@ -96,10 +94,7 @@ export function KnowledgeLibrary() {
   };
 
   return (
-    <motion.div
-      variants={fadeIn}
-      initial="hidden"
-      animate="visible"
+    <div
       className="flex h-full flex-col gap-4"
       onClick={() => {
         if (documentMenu) {
@@ -222,6 +217,6 @@ export function KnowledgeLibrary() {
           </div>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
