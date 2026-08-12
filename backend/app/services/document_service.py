@@ -25,9 +25,7 @@ from app.utils.pdf import (
     extract_pages_from_pdf,
 )
 
-from app.utils.chunker import (
-    split_page,
-)
+from app.utils.chunker import split_page
 
 
 class DocumentService:
@@ -37,9 +35,11 @@ class DocumentService:
     def create_document(
         db: Session,
         document: DocumentCreate,
+        user_id: int,
     ) -> Document:
 
         new_document = Document(
+            user_id=user_id,
             title=document.title,
             content=document.content,
         )
@@ -53,11 +53,17 @@ class DocumentService:
     @staticmethod
     def get_documents(
         db: Session,
+        user_id: int,
     ) -> list[Document]:
 
         return (
             db.query(Document)
-            .order_by(Document.created_at.desc())
+            .filter(
+                Document.user_id == user_id
+            )
+            .order_by(
+                Document.created_at.desc()
+            )
             .all()
         )
 
@@ -65,11 +71,15 @@ class DocumentService:
     def get_document_by_id(
         db: Session,
         document_id: int,
+        user_id: int,
     ) -> Document:
 
         document = (
             db.query(Document)
-            .filter(Document.id == document_id)
+            .filter(
+                Document.id == document_id,
+                Document.user_id == user_id,
+            )
             .first()
         )
 
@@ -84,11 +94,15 @@ class DocumentService:
         db: Session,
         document_id: int,
         updated_document: DocumentUpdate,
+        user_id: int,
     ) -> Document:
 
         document = (
             db.query(Document)
-            .filter(Document.id == document_id)
+            .filter(
+                Document.id == document_id,
+                Document.user_id == user_id,
+            )
             .first()
         )
 
@@ -96,12 +110,17 @@ class DocumentService:
             raise DocumentNotFoundException()
 
         if updated_document.title is not None:
-            document.title = updated_document.title
+            document.title = (
+                updated_document.title
+            )
 
         if updated_document.content is not None:
-            document.content = updated_document.content
+            document.content = (
+                updated_document.content
+            )
 
         db.refresh(document)
+
         return document
 
     @staticmethod
@@ -109,21 +128,31 @@ class DocumentService:
     def delete_document(
         db: Session,
         document_id: int,
+        user_id: int,
     ) -> bool:
 
         document = (
             db.query(Document)
-            .filter(Document.id == document_id)
+            .filter(
+                Document.id == document_id,
+                Document.user_id == user_id,
+            )
             .first()
         )
 
         if not document:
             raise DocumentNotFoundException()
 
-        upload_dir = Path("uploads").resolve()
-        uploaded_file = upload_dir / Path(
-            document.file_path
-        ).name
+        upload_dir = Path(
+            "uploads"
+        ).resolve()
+
+        uploaded_file = (
+            upload_dir
+            / Path(
+                document.file_path
+            ).name
+        )
 
         db.delete(document)
         db.flush()
@@ -138,43 +167,77 @@ class DocumentService:
     def upload_pdf(
         db: Session,
         file: UploadFile,
+        user_id: int,
     ) -> Document:
 
         # -----------------------------
         # Save PDF
         # -----------------------------
-        upload_dir = "uploads"
-        os.makedirs(upload_dir, exist_ok=True)
 
-        unique_name = f"{uuid.uuid4()}.pdf"
+        upload_dir = "uploads"
+
+        os.makedirs(
+            upload_dir,
+            exist_ok=True,
+        )
+
+        unique_name = (
+            f"{uuid.uuid4()}.pdf"
+        )
 
         disk_path = os.path.join(
             upload_dir,
             unique_name,
         )
 
-        public_path = f"/uploads/{unique_name}"
+        public_path = (
+            f"/uploads/{unique_name}"
+        )
 
-        with open(disk_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        with open(
+            disk_path,
+            "wb",
+        ) as buffer:
+
+            shutil.copyfileobj(
+                file.file,
+                buffer,
+            )
 
         file.file.close()
 
         # -----------------------------
         # Extract full text
         # -----------------------------
-        extracted_text = extract_text_from_pdf(
-            disk_path
+
+        extracted_text = (
+            extract_text_from_pdf(
+                disk_path
+            )
         )
 
         # -----------------------------
         # Create document
         # -----------------------------
+
+        filename = (
+            file.filename
+            or "Untitled"
+        )
+
+        title = filename
+
+        if title.lower().endswith(
+            ".pdf"
+        ):
+            title = title[:-4]
+
         document = Document(
-            title=file.filename.replace(".pdf", ""),
+            user_id=user_id,
+            title=title,
             content=extracted_text,
             source="pdf",
-            file_name=file.filename,
+            file_name=filename,
             file_path=public_path,
         )
 
@@ -184,28 +247,47 @@ class DocumentService:
         # -----------------------------
         # Page-aware chunking
         # -----------------------------
-        pages = extract_pages_from_pdf(
-            disk_path
+
+        pages = (
+            extract_pages_from_pdf(
+                disk_path
+            )
         )
 
         global_chunk_index = 0
 
         for page in pages:
 
-            page_chunks = split_page(page)
+            page_chunks = split_page(
+                page
+            )
 
             for chunk in page_chunks:
 
                 chunk_obj = Chunk(
                     document_id=document.id,
-                    content=chunk["content"],
-                    chunk_index=global_chunk_index,
-                    page_number=chunk["page_number"],
-                    page_width=chunk["page_width"],
-                    page_height=chunk["page_height"],
-                    bboxes=chunk["bboxes"],
+                    content=chunk[
+                        "content"
+                    ],
+                    chunk_index=(
+                        global_chunk_index
+                    ),
+                    page_number=chunk[
+                        "page_number"
+                    ],
+                    page_width=chunk[
+                        "page_width"
+                    ],
+                    page_height=chunk[
+                        "page_height"
+                    ],
+                    bboxes=chunk[
+                        "bboxes"
+                    ],
                     token_count=len(
-                        chunk["content"].split()
+                        chunk[
+                            "content"
+                        ].split()
                     ),
                 )
 
@@ -214,13 +296,21 @@ class DocumentService:
 
                 embedding_obj = Embedding(
                     chunk_id=chunk_obj.id,
-                    model_name="all-MiniLM-L6-v2",
-                    embedding=generate_embedding(
-                        chunk["content"]
+                    model_name=(
+                        "all-MiniLM-L6-v2"
+                    ),
+                    embedding=(
+                        generate_embedding(
+                            chunk[
+                                "content"
+                            ]
+                        )
                     ),
                 )
 
-                db.add(embedding_obj)
+                db.add(
+                    embedding_obj
+                )
 
                 global_chunk_index += 1
 

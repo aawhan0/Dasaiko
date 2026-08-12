@@ -5,6 +5,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKey,
 )
+
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
@@ -16,6 +17,16 @@ class Conversation(Base):
     id = Column(
         Integer,
         primary_key=True,
+        index=True,
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey(
+            "users.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
         index=True,
     )
 
@@ -39,9 +50,16 @@ class Conversation(Base):
         nullable=True,
     )
 
+    user = relationship(
+        "User",
+        back_populates="conversations",
+    )
+
     selected_document = relationship(
         "Document",
-        foreign_keys=[selected_document_id],
+        foreign_keys=[
+            selected_document_id
+        ],
     )
 
     messages = relationship(
