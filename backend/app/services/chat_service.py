@@ -220,10 +220,14 @@ class ChatService:
     @staticmethod
     def _get_paper_selection_options(
         db: Session,
+        user_id: int,
     ) -> list[dict]:
 
         documents = (
             db.query(Document)
+            .filter(
+                Document.user_id == user_id
+            )
             .order_by(
                 Document.id.asc()
             )
@@ -281,12 +285,14 @@ class ChatService:
     @staticmethod
     def _build_paper_selection_response(
         db: Session,
+        user_id: int,
     ) -> str:
 
         documents = (
             ChatService
             ._get_paper_selection_options(
-                db
+                db=db,
+                user_id=user_id,
             )
         )
 
@@ -313,6 +319,7 @@ class ChatService:
     def chat(
         db: Session,
         conversation_id: int,
+        user_id: int,
         query: str,
         selected_document_id: int | None = None,
         selection_continuation: bool = False,
@@ -333,8 +340,9 @@ class ChatService:
 
         conversation = (
             ConversationService.get_conversation(
-                db,
-                conversation_id,
+                db=db,
+                conversation_id=conversation_id,
+                user_id=user_id,
             )
         )
 
@@ -409,6 +417,7 @@ class ChatService:
             MessageService.get_messages(
                 db=db,
                 conversation_id=conversation_id,
+                user_id=user_id,
             )
         )
 
@@ -443,6 +452,7 @@ class ChatService:
                 conversation_id=conversation_id,
                 role="user",
                 content=query,
+                user_id=user_id,
             )
 
             print(
@@ -513,6 +523,7 @@ class ChatService:
                 conversation_id=conversation_id,
                 role="assistant",
                 content=answer,
+                user_id=user_id,
             )
 
             print(
@@ -553,7 +564,8 @@ class ChatService:
             paper_options = (
                 ChatService
                 ._get_paper_selection_options(
-                    db
+                    db=db,
+                    user_id=user_id,
                 )
             )
 
@@ -561,6 +573,7 @@ class ChatService:
                 ChatService
                 ._build_paper_selection_response(
                     db=db,
+                    user_id=user_id,
                 )
             )
 
@@ -598,8 +611,8 @@ class ChatService:
             selected_document = (
                 db.query(Document)
                 .filter(
-                    Document.id
-                    == selected_document_id
+                    Document.id == selected_document_id,
+                    Document.user_id == user_id,
                 )
                 .first()
             )
@@ -669,6 +682,7 @@ class ChatService:
                     MessageService.create_message(
                         db=db,
                         conversation_id=conversation_id,
+                        user_id=user_id,
                         role="research_context",
                         content=(
                             selected_document.title
@@ -1177,6 +1191,7 @@ Chunk {index}
             conversation_id=conversation_id,
             role="assistant",
             content=answer,
+            user_id=user_id,
         )
 
         print(

@@ -4,11 +4,18 @@ import queue
 import threading
 import math
 
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+)
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_user
 from app.db.dependencies import get_db
+
+from app.models.user import User
 
 from app.schemas.base import APIResponse
 from app.schemas.chat import (
@@ -20,6 +27,7 @@ from app.schemas.chat import (
 )
 
 from app.services.chat_service import ChatService
+from app.services.conversation_service import ConversationService
 
 
 router = APIRouter(
@@ -183,6 +191,10 @@ def _build_chat_response(
     )
 
 
+# ========================================================
+# NORMAL CHAT
+# ========================================================
+
 @router.post(
     "",
     response_model=APIResponse[ChatResponse],
@@ -190,12 +202,39 @@ def _build_chat_response(
 def chat(
     request: ChatRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+
+    # ----------------------------------------------------
+    # Verify conversation ownership
+    #
+    # The authenticated user can only chat inside
+    # conversations that belong to them.
+    # ----------------------------------------------------
+
+    conversation = (
+        ConversationService.get_conversation(
+            db=db,
+            conversation_id=request.conversation_id,
+            user_id=current_user.id,
+        )
+    )
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found.",
+        )
+
+    # ----------------------------------------------------
+    # Run ChatService
+    # ----------------------------------------------------
 
     answer, evidence, paper_options = (
         ChatService.chat(
             db=db,
             conversation_id=request.conversation_id,
+            user_id=current_user.id,
             query=request.query,
             selected_document_id=(
                 request.selected_document_id
@@ -217,13 +256,40 @@ def chat(
     )
 
 
+# ========================================================
+# STREAMING CHAT
+# ========================================================
+
 @router.post(
     "/stream",
 )
 async def chat_stream(
     request: ChatRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
+
+    # ----------------------------------------------------
+    # Verify conversation ownership BEFORE starting
+    # the background worker.
+    #
+    # This is important because otherwise an unauthorized
+    # user could start a streaming/RAG request.
+    # ----------------------------------------------------
+
+    conversation = (
+        ConversationService.get_conversation(
+            db=db,
+            conversation_id=request.conversation_id,
+            user_id=current_user.id,
+        )
+    )
+
+    if conversation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Conversation not found.",
+        )
 
     events: queue.Queue = queue.Queue()
 
@@ -254,6 +320,7 @@ async def chat_stream(
                     conversation_id=(
                         request.conversation_id
                     ),
+                    user_id=current_user.id,
                     query=request.query,
                     selected_document_id=(
                         request.selected_document_id

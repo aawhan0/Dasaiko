@@ -4,3 +4,6 @@ class DasaikoException(Exception):
 
 class DocumentNotFoundException(DasaikoException):
     pass
+
+class ConversationNotFoundException(DasaikoException):
+    pass

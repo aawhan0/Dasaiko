@@ -1,5 +1,10 @@
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import (
+    ConversationNotFoundException,
+)
+
+from app.models.conversation import Conversation
 from app.models.message import Message
 
 
@@ -11,7 +16,20 @@ class MessageService:
         conversation_id: int,
         role: str,
         content: str,
+        user_id: int,
     ) -> Message:
+
+        conversation = (
+            db.query(Conversation)
+            .filter(
+                Conversation.id == conversation_id,
+                Conversation.user_id == user_id,
+            )
+            .first()
+        )
+
+        if conversation is None:
+            raise ConversationNotFoundException()
 
         message = Message(
             conversation_id=conversation_id,
@@ -29,11 +47,26 @@ class MessageService:
     def get_messages(
         db: Session,
         conversation_id: int,
+        user_id: int,
     ) -> list[Message]:
+
+        conversation = (
+            db.query(Conversation)
+            .filter(
+                Conversation.id == conversation_id,
+                Conversation.user_id == user_id,
+            )
+            .first()
+        )
+
+        if conversation is None:
+            raise ConversationNotFoundException()
 
         return (
             db.query(Message)
-            .filter(Message.conversation_id == conversation_id)
+            .filter(
+                Message.conversation_id == conversation_id
+            )
             .order_by(Message.id)
             .all()
         )

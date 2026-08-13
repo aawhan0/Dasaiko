@@ -1,7 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import (
+    APIRouter,
+    Depends,
+)
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_current_user
 from app.db.dependencies import get_db
+
+from app.models.user import User
 
 from app.schemas.base import APIResponse
 from app.schemas.conversation import (
@@ -21,6 +27,10 @@ router = APIRouter(
 )
 
 
+# ========================================
+# CREATE CONVERSATION
+# ========================================
+
 @router.post(
     "",
     response_model=APIResponse[
@@ -30,23 +40,29 @@ router = APIRouter(
 def create_conversation(
     request: ConversationCreate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
 
     conversation = (
         ConversationService.create_conversation(
             db=db,
             title=request.title,
+            user_id=current_user.id,
         )
     )
 
     return APIResponse(
         success=True,
-        message=(
-            "Conversation created successfully."
-        ),
+        message="Conversation created successfully.",
         data=conversation,
     )
 
+
+# ========================================
+# GET MY CONVERSATIONS
+# ========================================
 
 @router.get(
     "",
@@ -56,22 +72,28 @@ def create_conversation(
 )
 def get_conversations(
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
 
     conversations = (
         ConversationService.get_conversations(
             db=db,
+            user_id=current_user.id,
         )
     )
 
     return APIResponse(
         success=True,
-        message=(
-            "Conversations fetched successfully."
-        ),
+        message="Conversations fetched successfully.",
         data=conversations,
     )
 
+
+# ========================================
+# TOGGLE PIN
+# ========================================
 
 @router.patch(
     "/{conversation_id}/pin",
@@ -82,23 +104,29 @@ def get_conversations(
 def toggle_pin(
     conversation_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
 
     conversation = (
         ConversationService.toggle_pin(
             db=db,
             conversation_id=conversation_id,
+            user_id=current_user.id,
         )
     )
 
     return APIResponse(
         success=True,
-        message=(
-            "Conversation updated successfully."
-        ),
+        message="Conversation updated successfully.",
         data=conversation,
     )
 
+
+# ========================================
+# RENAME
+# ========================================
 
 @router.patch(
     "/{conversation_id}/rename",
@@ -110,6 +138,9 @@ def rename_conversation(
     conversation_id: int,
     request: ConversationRename,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
 
     conversation = (
@@ -117,17 +148,20 @@ def rename_conversation(
             db=db,
             conversation_id=conversation_id,
             title=request.title,
+            user_id=current_user.id,
         )
     )
 
     return APIResponse(
         success=True,
-        message=(
-            "Conversation renamed successfully."
-        ),
+        message="Conversation renamed successfully.",
         data=conversation,
     )
 
+
+# ========================================
+# DELETE
+# ========================================
 
 @router.delete(
     "/{conversation_id}",
@@ -136,12 +170,16 @@ def rename_conversation(
 def delete_conversation(
     conversation_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
 ):
 
     deleted = (
         ConversationService.delete_conversation(
             db=db,
             conversation_id=conversation_id,
+            user_id=current_user.id,
         )
     )
 
@@ -154,8 +192,6 @@ def delete_conversation(
 
     return APIResponse(
         success=True,
-        message=(
-            "Conversation deleted successfully."
-        ),
+        message="Conversation deleted successfully.",
         data=None,
     )

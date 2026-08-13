@@ -2,8 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 import traceback
-from app.core.exceptions import DocumentNotFoundException
-
+from app.core.exceptions import (
+    ConversationNotFoundException,
+    DocumentNotFoundException,
+)
 
 def register_exception_handlers(app: FastAPI):
 
@@ -50,6 +52,21 @@ def register_exception_handlers(app: FastAPI):
             content={
                 "success": False,
                 "message": "Internal server error.",
+                "data": None,
+            },
+        )
+
+
+    @app.exception_handler(ConversationNotFoundException)
+    async def conversation_not_found_handler(
+        request: Request,
+        exc: ConversationNotFoundException,
+    ):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "success": False,
+                "message": "Conversation not found.",
                 "data": None,
             },
         )
