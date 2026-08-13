@@ -2,6 +2,7 @@ from rank_bm25 import BM25Okapi
 from sqlalchemy.orm import Session
 
 from app.models.chunk import Chunk
+from app.models.document import Document
 
 
 class BM25Service:
@@ -12,48 +13,42 @@ class BM25Service:
 
     indexed_document_id = None
 
+    indexed_user_id = None
+
     @staticmethod
     def search(
         db: Session,
         query: str,
+        user_id: int,
         limit: int = 5,
         document_id: int | None = None,
     ):
 
         # -----------------------------------------
-        # Load chunks
+        # Load only chunks belonging to this user
         # -----------------------------------------
 
         query_builder = (
             db.query(Chunk)
+            .join(
+                Document,
+                Chunk.document_id == Document.id,
+            )
+            .filter(
+                Document.user_id == user_id
+            )
             .order_by(Chunk.id)
         )
-
-        # -----------------------------------------
-        # Optional document filter
-        # -----------------------------------------
-        #
-        # No document selected:
-        #   Search all chunks.
-        #
-        # Document selected:
-        #   Search only chunks belonging to
-        #   that document.
-        # -----------------------------------------
 
         if document_id is not None:
 
             query_builder = (
                 query_builder.filter(
-                    Chunk.document_id
-                    == document_id
+                    Chunk.document_id == document_id
                 )
             )
 
-        chunks = (
-            query_builder
-            .all()
-        )
+        chunks = query_builder.all()
 
         current_ids = {
             chunk.id
@@ -66,14 +61,8 @@ class BM25Service:
         }
 
         # -----------------------------------------
-        # Rebuild index if necessary
-        # -----------------------------------------
-        #
-        # We also compare document_id because:
-        #
-        # Paper A -> Paper B
-        #
-        # could otherwise reuse the old BM25 index.
+        # Rebuild index when user/document scope
+        # changes.
         # -----------------------------------------
 
         if (
@@ -82,6 +71,10 @@ class BM25Service:
             or (
                 BM25Service.indexed_document_id
                 != document_id
+            )
+            or (
+                BM25Service.indexed_user_id
+                != user_id
             )
         ):
 
@@ -92,35 +85,22 @@ class BM25Service:
             BM25Service.build_index(
                 db=db,
                 chunks=chunks,
+                user_id=user_id,
                 document_id=document_id,
             )
 
             print(
-                f"✓ Indexed "
-                f"{len(chunks)} chunks"
+                f"Indexed {len(chunks)} chunks"
             )
 
-        # -----------------------------------------
-        # No chunks available
-        # -----------------------------------------
-
         if BM25Service.bm25 is None:
-
             return []
-
-        # -----------------------------------------
-        # Tokenize Query
-        # -----------------------------------------
 
         query_tokens = (
             query
             .lower()
             .split()
         )
-
-        # -----------------------------------------
-        # Calculate BM25 scores
-        # -----------------------------------------
 
         scores = (
             BM25Service.bm25
@@ -141,10 +121,6 @@ class BM25Service:
 
         top_results = []
 
-        # -----------------------------------------
-        # Chunk lookup
-        # -----------------------------------------
-
         chunk_map = {
             chunk.id: chunk
             for chunk in chunks
@@ -153,10 +129,6 @@ class BM25Service:
         print(
             "\n========== BM25 RESULTS =========="
         )
-
-        # -----------------------------------------
-        # Top results
-        # -----------------------------------------
 
         for item, score in ranked[:limit]:
 
@@ -189,18 +161,26 @@ class BM25Service:
     @staticmethod
     def build_index(
         db: Session,
+        user_id: int,
         chunks=None,
         document_id: int | None = None,
     ):
 
         # -----------------------------------------
-        # Load chunks if not supplied
+        # Load only this user's chunks if needed
         # -----------------------------------------
 
         if chunks is None:
 
             query_builder = (
                 db.query(Chunk)
+                .join(
+                    Document,
+                    Chunk.document_id == Document.id,
+                )
+                .filter(
+                    Document.user_id == user_id
+                )
                 .order_by(Chunk.id)
             )
 
@@ -213,10 +193,7 @@ class BM25Service:
                     )
                 )
 
-            chunks = (
-                query_builder
-                .all()
-            )
+            chunks = query_builder.all()
 
         # -----------------------------------------
         # Reset index
@@ -228,11 +205,11 @@ class BM25Service:
             document_id
         )
 
-        corpus = []
+        BM25Service.indexed_user_id = (
+            user_id
+        )
 
-        # -----------------------------------------
-        # Build corpus
-        # -----------------------------------------
+        corpus = []
 
         for chunk in chunks:
 
@@ -245,32 +222,18 @@ class BM25Service:
             BM25Service.indexed_chunks.append(
                 {
                     "id": chunk.id,
-
-                    "content":
-                        chunk.content,
-
-                    "tokens":
-                        tokens,
+                    "content": chunk.content,
+                    "tokens": tokens,
                 }
             )
 
-            corpus.append(
-                tokens
-            )
-
-        # -----------------------------------------
-        # Empty corpus
-        # -----------------------------------------
+            corpus.append(tokens)
 
         if not corpus:
 
             BM25Service.bm25 = None
 
             return
-
-        # -----------------------------------------
-        # Build BM25 index
-        # -----------------------------------------
 
         BM25Service.bm25 = BM25Okapi(
             corpus

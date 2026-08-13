@@ -775,6 +775,7 @@ class ChatService:
         results = SearchService.search(
             db=db,
             query=rewritten_query,
+            user_id=user_id,
             limit=5,
             document_id=selected_document_id,
         )

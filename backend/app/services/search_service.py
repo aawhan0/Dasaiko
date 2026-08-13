@@ -828,6 +828,7 @@ class SearchService:
         db: Session,
         query: str,
         current_document_id: int,
+        user_id: int,
     ):
         from app.models.document import Document
 
@@ -875,6 +876,9 @@ class SearchService:
 
         documents = (
             db.query(Document)
+            .filter(
+                Document.user_id == user_id
+            )
             .all()
         )
 
@@ -1017,6 +1021,7 @@ class SearchService:
         db: Session,
         query: str,
         document_id: int,
+        user_id: int,
     ) -> int | None:
 
         normalized_query = (
@@ -1066,6 +1071,7 @@ class SearchService:
                 db=db,
                 query=query,
                 current_document_id=document_id,
+                user_id=user_id,
             )
         )
 
@@ -1104,6 +1110,7 @@ class SearchService:
     def search(
         db: Session,
         query: str,
+        user_id: int,
         limit: int = 5,
         document_id: int | None = None,
     ):
@@ -1170,6 +1177,7 @@ class SearchService:
                     db=db,
                     query=query,
                     document_id=document_id,
+                    user_id=user_id,
                 )
             )
 
@@ -1221,6 +1229,7 @@ class SearchService:
             VectorSearchService.search(
                 db=db,
                 query=query,
+                user_id=user_id,
                 limit=candidate_limit,
                 document_id=
                     retrieval_document_id,
@@ -1240,6 +1249,7 @@ class SearchService:
             BM25Service.search(
                 db=db,
                 query=query,
+                user_id=user_id,
                 limit=candidate_limit,
                 document_id=
                     retrieval_document_id,

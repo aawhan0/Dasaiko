@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.chunk import Chunk
+from app.models.document import Document
 from app.models.embedding import Embedding
 
 from app.services.embedding_service import generate_embedding
@@ -12,6 +13,7 @@ class VectorSearchService:
     def search(
         db: Session,
         query: str,
+        user_id: int,
         limit: int = 5,
         document_id: int | None = None,
     ):
@@ -33,17 +35,17 @@ class VectorSearchService:
                 Embedding,
                 Chunk.id == Embedding.chunk_id,
             )
+            .join(
+                Document,
+                Chunk.document_id == Document.id,
+            )
+            .filter(
+                Document.user_id == user_id
+            )
         )
 
         # -----------------------------------------
         # Optional document filter
-        # -----------------------------------------
-        #
-        # If the user explicitly selected a paper,
-        # only retrieve chunks from that paper.
-        #
-        # If document_id is None, search everything
-        # exactly as before.
         # -----------------------------------------
 
         if document_id is not None:
