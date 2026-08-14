@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, Shield, FileSearch, Database, Zap } from 'lucide-react';
-import { fadeInUp, staggerContainer, staggerItem } from '@/utils/animations';
+import { Sparkles, ArrowRight, FileSearch, Database, Zap } from 'lucide-react';
+import { fadeInUp } from '@/utils/animations';
 
 export function LandingPage() {
   const navigate = useNavigate();
@@ -17,10 +17,10 @@ export function LandingPage() {
           <span className="text-lg font-bold text-white tracking-tight">Dasaiko</span>
         </div>
         <button
-          onClick={() => navigate('/workspace')}
+          onClick={() => navigate('/login')}
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-all shadow-glow"
         >
-          Open Workspace
+          Sign In
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
       </header>
@@ -43,7 +43,7 @@ export function LandingPage() {
 
           <div className="pt-4 flex items-center justify-center gap-4">
             <button
-              onClick={() => navigate('/workspace')}
+              onClick={() => navigate('/login')}
               className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold hover:opacity-95 transition-all shadow-glow"
             >
               Start Researching

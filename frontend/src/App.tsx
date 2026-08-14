@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WorkspaceProvider } from '@/store/useWorkspaceStore';
 import { UploadProvider } from '@/store/useUploadStore';
@@ -19,34 +19,36 @@ const queryClient = new QueryClient({
   },
 });
 
+function WorkspaceProviders() {
+  return (
+    <WorkspaceProvider>
+      <UploadProvider>
+        <Outlet />
+      </UploadProvider>
+    </WorkspaceProvider>
+  );
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WorkspaceProvider>
-        <UploadProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<LoginPage />} />
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
 
-                <Route element={<ProtectedRoute />}>
-                  <Route
-                    path="/workspace"
-                    element={<WorkspacePage />}
-                  />
-                  <Route
-                    path="/settings"
-                    element={<SettingsPage />}
-                  />
-                </Route>
+            <Route element={<ProtectedRoute />}>
+              <Route element={<WorkspaceProviders />}>
+                <Route path="/workspace" element={<WorkspacePage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+            </Route>
 
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </UploadProvider>
-      </WorkspaceProvider>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 }

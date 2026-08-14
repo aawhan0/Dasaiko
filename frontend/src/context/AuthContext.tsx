@@ -33,6 +33,9 @@ const AuthContext =
     null,
   );
 
+const SELECTED_DOCUMENT_STORAGE_KEY =
+  "dasaiko.selectedDocumentByConversation";
+
 export function AuthProvider({
   children,
 }: {
@@ -50,7 +53,13 @@ export function AuthProvider({
 
   const clearAuth =
     useCallback(() => {
-      localStorage.removeItem("token");
+      localStorage.removeItem(
+        "token",
+      );
+
+      localStorage.removeItem(
+        SELECTED_DOCUMENT_STORAGE_KEY,
+      );
 
       clearWorkspace();
 
@@ -152,6 +161,10 @@ export function AuthProvider({
       logoutRequest();
 
       clearWorkspace();
+
+      localStorage.removeItem(
+        SELECTED_DOCUMENT_STORAGE_KEY,
+      );
 
       setUser(null);
     }, [clearWorkspace]);
