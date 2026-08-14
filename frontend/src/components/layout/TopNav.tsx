@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Search, BookOpen, Command, LogOut } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
 import { useAuth } from '@/context/AuthContext';
@@ -65,30 +65,14 @@ export function TopNav() {
 
         {/* Right */}
         <div className="flex items-center gap-2">
-          {!isWorkspace && (
-            <>
-              <button
-                onClick={() => navigate('/workspace')}
-                className="px-4 py-1.5 rounded-lg text-[13px] font-medium text-zinc-300 hover:text-white hover:bg-hover border border-white/[0.06] hover:border-white/15 transition-all"
-              >
-                Open Workspace
-              </button>
-              <button
-                onClick={() => navigate('/workspace')}
-                className="px-4 py-1.5 rounded-lg text-[13px] font-medium bg-primary hover:bg-primary/90 text-white transition-colors"
-              >
-                Get Started
-              </button>
-            </>
-          )}
-          {isWorkspace && (
+          {user && (
             <div className="flex items-center gap-2">
               <div className="hidden sm:block text-right">
                 <div className="text-[11px] font-medium text-zinc-300">
-                  {user?.username ?? 'User'}
+                  {user.username}
                 </div>
                 <div className="text-[9px] text-zinc-600">
-                  {user?.email ?? ''}
+                  {user.email}
                 </div>
               </div>
               <button
