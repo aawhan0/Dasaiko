@@ -64,12 +64,14 @@ class SearchService:
         "who wrote the paper",
         "who wrote this",
         "who wrote it",
+
         "author of this paper",
         "authors of this paper",
         "author of the paper",
         "authors of the paper",
         "what is the author",
         "what are the authors",
+
         "when was it published",
         "when was this published",
         "when was the paper published",
@@ -78,15 +80,26 @@ class SearchService:
         "what year was the paper published",
         "publication year",
         "year of publication",
+
         "where was it published",
         "where was this published",
         "where was the paper published",
         "what conference was it published",
         "what journal was it published",
         "what venue was it published",
+
+        # Title
         "what is the title",
+        "what is the title of this",
+        "what is the title of this paper",
+        "what is the title of the paper",
+        "what's the title",
         "what is this paper called",
         "what is the paper called",
+        "title of this paper",
+        "title of the paper",
+        "paper title",
+        "title of this",
     )
 
     # ============================================
@@ -199,6 +212,11 @@ class SearchService:
             )
         )
 
+        # Use normalized phrase matching first.
+        # This handles normal questions such as:
+        #   "title of this paper?"
+        #   "what's the title?"
+        #   "who wrote this paper?"
         for phrase in (
             SearchService.METADATA_QUERY_PHRASES
         ):
@@ -210,12 +228,14 @@ class SearchService:
                     "PAPER METADATA"
                 )
 
+                print(
+                    f"Metadata phrase matched: "
+                    f"{phrase!r}"
+                )
+
                 return True
 
-        # ----------------------------------------
-        # Short generic metadata questions
-        # ----------------------------------------
-
+        # Short generic metadata questions.
         short_queries = {
             "author",
             "authors",
@@ -237,7 +257,49 @@ class SearchService:
                 "PAPER METADATA"
             )
 
+            print(
+                "Metadata short-query match"
+            )
+
             return True
+
+        # Defensive handling for punctuation/spacing variants
+        # that may not be covered by the phrase list.
+        metadata_patterns = (
+            r"\btitle\b.*\bpaper\b",
+            r"\bpaper\b.*\btitle\b",
+            r"\btitle\b.*\bthis\b",
+            r"\bthis\b.*\bpaper\b.*\bcalled\b",
+            r"\bwho\b.*\b(author|authors)\b",
+            r"\b(author|authors)\b.*\bpaper\b",
+            r"\bpublication\b.*\b(year|venue|conference|journal)\b",
+            r"\bwhen\b.*\bpublished\b",
+            r"\bwhere\b.*\bpublished\b",
+        )
+
+        for pattern in metadata_patterns:
+
+            if re.search(
+                pattern,
+                normalized_query,
+            ):
+
+                print(
+                    "Query type: "
+                    "PAPER METADATA"
+                )
+
+                print(
+                    f"Metadata pattern matched: "
+                    f"{pattern!r}"
+                )
+
+                return True
+
+        print(
+            "Query type: "
+            "NORMAL / NON-METADATA"
+        )
 
         return False
 
@@ -276,6 +338,36 @@ class SearchService:
             for phrase in author_phrases
         )
 
+
+
+
+    @staticmethod
+    def _is_title_metadata_query(
+        query: str,
+    ) -> bool:
+
+        normalized_query = (
+            SearchService._normalize_text(
+                query
+            )
+        )
+
+        return any(
+            phrase in normalized_query
+            for phrase in (
+                "what is the title",
+                "what is the title of this",
+                "what is the title of this paper",
+                "what is the title of the paper",
+                "what's the title",
+                "what is this paper called",
+                "what is the paper called",
+                "title of this paper",
+                "title of the paper",
+                "paper title",
+                "title of this",
+            )
+        )
     # ============================================
     # Detect summary / overview questions
     # ============================================
@@ -1138,12 +1230,27 @@ class SearchService:
             )
         )
 
+        is_title_metadata_query = (
+            is_metadata_query
+            and SearchService._is_title_metadata_query(
+                query
+            )
+        )
+
         is_summary_query = (
             SearchService._is_summary_query(
                 query
             )
             if document_id is not None
             else False
+        )
+
+        print(
+            "Metadata flags: "
+            f"metadata={is_metadata_query}, "
+            f"author={is_author_metadata_query}, "
+            f"title={is_title_metadata_query}, "
+            f"summary={is_summary_query}"
         )
 
         # ========================================
@@ -1412,10 +1519,12 @@ class SearchService:
 
             reranker_query = (
                 f"{query}. "
-                "Answer using the title, authors, "
-                "publication information, and "
-                "bibliographic information from "
-                "the beginning of the selected paper."
+                "For title questions, use the exact title "
+                "from the earliest front-matter chunk. "
+                "For author/publication questions, use the "
+                "corresponding bibliographic information "
+                "from the beginning of the selected paper. "
+                "Do not infer the title from the filename."
             )
 
             print(
@@ -1560,12 +1669,19 @@ class SearchService:
                         result
                     )
 
-            if is_author_metadata_query:
+            if (
+                is_author_metadata_query
+                or is_title_metadata_query
+            ):
 
-                # Author names can be split across adjacent
-                # first-page chunks. Preserve PDF/document order
-                # so the complete author block survives instead
-                # of selecting only the single strongest chunk.
+                # Metadata answers such as titles and authors
+                # depend on the document's front matter.
+                #
+                # Preserve PDF/document order so the title,
+                # author block, affiliations, and publication
+                # information remain together instead of allowing
+                # the reranker to push the critical front-matter
+                # chunks below the evidence limit.
                 front_results.sort(
                     key=lambda result: (
                         result["page_number"]
@@ -1735,10 +1851,13 @@ class SearchService:
 
         evidence_limit = limit
 
-        # For author metadata, skip title/arXiv chunks and start at the
-        # first chunk that actually contains author/contact information.
-        # This keeps the evidence vault compact while still giving the LLM
-        # the complete five-author block for papers like this one.
+        # Author metadata needs the contiguous author block.
+        #
+        # IMPORTANT:
+        # Title metadata must NOT use this logic. The title is
+        # normally in the very first chunk(s) of the document, so
+        # skipping ahead to an author/contact chunk would remove
+        # the exact evidence needed to answer the title question.
         if is_author_metadata_query:
 
             author_start_index = None
@@ -1754,9 +1873,11 @@ class SearchService:
 
                 if (
                     "@" in preview
-                    or "google inc" in preview
                     or "author" in preview
+                    or "university" in preview
+                    or "inc" in preview
                 ):
+
                     author_start_index = index
                     break
 
@@ -1767,6 +1888,25 @@ class SearchService:
                         author_start_index:
                     ]
                 )
+
+        elif is_title_metadata_query:
+
+            # Title questions should always preserve the earliest
+            # front-matter chunks. Metadata priority has already
+            # placed front matter first and document-order sorting
+            # has already made chunk_index 0 the first candidate.
+            #
+            # Do not search for "author" or "@" here: doing so would
+            # discard the title chunk itself.
+            ranked_results = sorted(
+                ranked_results,
+                key=lambda result: (
+                    result["page_number"]
+                    if result["page_number"] is not None
+                    else 10**9,
+                    result["chunk_index"],
+                ),
+            )
 
         for result in ranked_results:
 
