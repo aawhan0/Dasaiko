@@ -326,7 +326,11 @@ export const ChatBlock = memo(
         </motion.div>
       );
     }
-
+    console.log("PAPER SELECTION DEBUG:", {
+    messageId: message.id,
+    paperSelection: message.paperSelection,
+    selectedDocumentId,
+  });
     return (
       <motion.div
         variants={fadeInUp}

@@ -1645,8 +1645,40 @@ class SearchService:
                     )
 
             # Summary questions should favor the
-            # structured overview set. Keep the
-            # reranker order within that set.
+            # structured overview set.
+            #
+            # IMPORTANT:
+            # A summary chunk can be a section heading such as
+            # "Abstract" or "1 Introduction", or it can contain
+            # the actual explanatory text underneath that heading.
+            #
+            # Heading-only chunks are poor LLM context even when
+            # the reranker gives them a high score. Prefer chunks
+            # that contain meaningful text while preserving the
+            # rerank score as the primary signal.
+
+            def summary_content_priority(result):
+                preview = (
+                    result.get("preview")
+                    or ""
+                ).strip()
+
+                # Very short chunks are usually section headings,
+                # page labels, or isolated metadata.
+                is_content_bearing = len(
+                    preview
+                ) >= 100
+
+                return (
+                    1 if is_content_bearing else 0,
+                    result["score"],
+                )
+
+
+            summary_results.sort(
+                key=summary_content_priority,
+                reverse=True,
+            )
 
             ranked_results = (
                 summary_results
