@@ -22,7 +22,7 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // -------------------------
@@ -36,10 +36,15 @@ api.interceptors.response.use(
     if (error.response) {
       console.error("Status:", error.response.status);
       console.error("Body:", error.response.data);
+
+      if (error.response.status === 401) {
+        localStorage.removeItem("token");
+        window.dispatchEvent(new Event("dasaiko:unauthorized"));
+      }
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
