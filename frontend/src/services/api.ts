@@ -14,11 +14,11 @@ const api = axios.create({
 // -------------------------
 api.interceptors.request.use(
   (config) => {
-    // Future Authentication
-    // const token = localStorage.getItem("token");
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
 
     return config;
   },

@@ -29,7 +29,11 @@ export async function sendQuery(
   const streamURL =
     `${baseURL.replace(/\/$/, "")}/chat/stream`;
 
-  const response = await fetch(
+  const token =
+  localStorage.getItem("token");
+
+const response =
+  await fetch(
     streamURL,
     {
       method: "POST",
@@ -37,6 +41,13 @@ export async function sendQuery(
       headers: {
         "Content-Type":
           "application/json",
+
+        ...(token
+          ? {
+              Authorization:
+                `Bearer ${token}`,
+            }
+          : {}),
       },
 
       body: JSON.stringify(
