@@ -89,6 +89,7 @@ export function MessageInput() {
     // Conversation research context
     // -----------------------------------------
     selectedDocumentId,
+    setSelectedDocumentId,
     documents,
 
   } = useWorkspaceStore();
@@ -106,6 +107,21 @@ export function MessageInput() {
             selectedDocumentId
         )
       : null;
+
+
+  // -----------------------------------------
+  // Research context picker
+  // -----------------------------------------
+
+  const [isContextPickerOpen, setIsContextPickerOpen] =
+    useState(false);
+
+  const handleContextChange = (
+    documentId: number
+  ) => {
+    setSelectedDocumentId(documentId);
+    setIsContextPickerOpen(false);
+  };
 
 
   // -----------------------------------------
@@ -359,6 +375,53 @@ export function MessageInput() {
         !question ||
         isQuerying
       ) {
+        return;
+      }
+
+
+      // -----------------------------------------
+      // Context-change command
+      // -----------------------------------------
+      //
+      // These are UI commands, not questions for
+      // the backend. Intercept them BEFORE adding
+      // a user message and BEFORE sendQuery().
+      // -----------------------------------------
+
+      const normalizedQuestion =
+        question
+          .toLowerCase()
+          .replace(/[?.!,]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+
+      const isContextChangeCommand =
+        normalizedQuestion === "change the context" ||
+        normalizedQuestion === "change context" ||
+        normalizedQuestion === "change the research context" ||
+        normalizedQuestion === "change the paper" ||
+        normalizedQuestion === "change paper" ||
+        normalizedQuestion === "switch the context" ||
+        normalizedQuestion === "switch context" ||
+        normalizedQuestion === "switch the paper" ||
+        normalizedQuestion === "switch paper" ||
+        normalizedQuestion === "choose another paper" ||
+        normalizedQuestion === "select another paper" ||
+        normalizedQuestion === "choose a different paper" ||
+        normalizedQuestion === "select a different paper" ||
+        normalizedQuestion === "use another paper" ||
+        normalizedQuestion === "use a different paper";
+
+      if (isContextChangeCommand) {
+
+        setValue("");
+
+        if (textareaRef.current) {
+          textareaRef.current.style.height = "40px";
+        }
+
+        setIsContextPickerOpen(true);
+
         return;
       }
 
@@ -642,55 +705,172 @@ export function MessageInput() {
 
       {selectedDocumentId !== null && (
 
-        <motion.div
-          initial={{
-            opacity: 0,
-            y: 4,
-          }}
-          animate={{
-            opacity: 1,
-            y: 0,
-          }}
-          transition={{
-            duration: 0.2,
-          }}
-          className="mb-3 flex items-center justify-between rounded-xl border border-primary/10 bg-primary/[0.035] px-4 py-3"
-        >
+        <>
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 4,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.2,
+            }}
+            className="mb-3 flex items-center justify-between rounded-xl border border-primary/10 bg-primary/[0.035] px-4 py-3"
+          >
 
-          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
 
-            {/* Check */}
+              {/* Check */}
 
-            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
 
-              <Check
-                className="h-3 w-3 text-primary"
-                strokeWidth={3}
-              />
+                <Check
+                  className="h-3 w-3 text-primary"
+                  strokeWidth={3}
+                />
 
-            </span>
+              </span>
 
 
-            {/* Context information */}
+              {/* Context information */}
 
-            <div className="min-w-0">
+              <div className="min-w-0">
 
-              <p className="text-[10px] uppercase tracking-[0.14em] text-primary/60">
-                Research context
-              </p>
+                <p className="text-[10px] uppercase tracking-[0.14em] text-primary/60">
+                  Research context
+                </p>
 
-              <p className="mt-0.5 truncate text-xs text-zinc-400">
+                <p className="mt-0.5 truncate text-xs text-zinc-400">
 
-                {selectedPaper?.title ??
-                  "Selected paper"}
+                  {selectedPaper?.title ??
+                    "Selected paper"}
 
-              </p>
+                </p>
+
+              </div>
 
             </div>
 
-          </div>
+            <button
+              type="button"
+              disabled={isQuerying}
+              onClick={() =>
+                setIsContextPickerOpen(
+                  (open) => !open
+                )
+              }
+              className="ml-3 flex-shrink-0 rounded-md px-2 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isContextPickerOpen
+                ? "Close"
+                : "Change"}
+            </button>
 
-        </motion.div>
+          </motion.div>
+
+
+          {isContextPickerOpen && (
+
+            <motion.div
+              initial={{
+                opacity: 0,
+                y: -4,
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+              }}
+              transition={{
+                duration: 0.15,
+              }}
+              className="mb-3 overflow-hidden rounded-xl border border-white/[0.10] bg-surface"
+            >
+
+              <div className="border-b border-white/[0.06] px-4 py-3">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-primary/60">
+                  Change research context
+                </p>
+
+                <p className="mt-1 text-xs text-zinc-500">
+                  Choose the paper you want to use for
+                  this conversation.
+                </p>
+              </div>
+
+              <div className="max-h-56 overflow-y-auto p-2">
+
+                {documents.length === 0 ? (
+
+                  <p className="px-3 py-4 text-xs text-zinc-500">
+                    No uploaded papers available.
+                  </p>
+
+                ) : (
+
+                  documents.map((document) => {
+
+                    const documentId =
+                      Number(document.id);
+
+                    const isSelected =
+                      documentId ===
+                      selectedDocumentId;
+
+                    return (
+                      <button
+                        key={document.id}
+                        type="button"
+                        disabled={isSelected}
+                        onClick={() =>
+                          handleContextChange(
+                            documentId
+                          )
+                        }
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors",
+                          isSelected
+                            ? "bg-primary/[0.08] text-zinc-200"
+                            : "text-zinc-400 hover:bg-hover hover:text-zinc-200"
+                        )}
+                      >
+
+                        <span
+                          className={cn(
+                            "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border",
+                            isSelected
+                              ? "border-primary/30 bg-primary/10"
+                              : "border-white/[0.12]"
+                          )}
+                        >
+                          {isSelected && (
+                            <Check
+                              className="h-3 w-3 text-primary"
+                              strokeWidth={3}
+                            />
+                          )}
+                        </span>
+
+                        <span className="min-w-0 flex-1 truncate text-xs">
+                          {document.title ??
+                            "Untitled document"}
+                        </span>
+
+                      </button>
+                    );
+                  })
+
+                )}
+
+              </div>
+
+            </motion.div>
+
+          )}
+
+        </>
 
       )}
 

@@ -351,12 +351,24 @@ async def chat_stream(
 
             worker_db.rollback()
 
+            print(
+                "\n========== CHAT STREAM ERROR =========="
+            )
+
+            import traceback
+
+            traceback.print_exc()
+
+            print(
+                "=======================================\n"
+            )
+
             events.put(
                 {
                     "type": "error",
                     "message": str(error),
                 }
-            )
+            )        
 
         finally:
 

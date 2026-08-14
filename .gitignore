@@ -33,3 +33,9 @@ coverage/
 # Uploads
 backend/app/storage/uploads/
 backend/uploads
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vite generated Node config
+dist-node/

@@ -187,7 +187,8 @@ def delete_document(
 
     if BM25Service.bm25 is not None:
         BM25Service.build_index(
-            db
+            db,
+            current_user.id,
         )
 
     return APIResponse(
@@ -221,7 +222,10 @@ def upload_document(
         )
     )
 
-    BM25Service.build_index(db)
+    BM25Service.build_index(
+        db,
+        current_user.id,
+        )
 
     return APIResponse(
         success=True,

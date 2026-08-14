@@ -582,6 +582,7 @@ class ChatService:
                 conversation_id=conversation_id,
                 role="assistant",
                 content=answer,
+                user_id=user_id,
             )
 
             print(
@@ -844,6 +845,45 @@ class ChatService:
                     result["score"]
                 ) >= score_floor
             ]
+
+            # -----------------------------------------
+            # Summary-query safety
+            # -----------------------------------------
+            #
+            # For paper-summary questions, keep at least
+            # one content-bearing result even when its
+            # reranker score falls outside the normal
+            # selected-paper score margin.
+            #
+            # This prevents heading-only chunks such as
+            # "Abstract" or "1 Introduction" from consuming
+            # the entire evidence budget.
+            # -----------------------------------------
+
+            if (
+                SearchService._is_summary_query(query)
+                and results
+            ):
+
+                content_results = [
+                    result
+                    for result in results
+                    if len(
+                        (result.get("preview") or "").strip()
+                    ) >= 100
+                ]
+
+                if content_results:
+
+                    best_content_result = (
+                        content_results[0]
+                    )
+
+                    if best_content_result not in usable_results:
+
+                        usable_results.append(
+                            best_content_result
+                        )
 
             # -------------------------------------
             # Safety:

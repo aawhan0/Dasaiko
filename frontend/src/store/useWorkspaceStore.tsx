@@ -209,6 +209,8 @@ interface WorkspaceActions {
     id: string,
     updates: Partial<Document>
   ) => void;
+
+  clearWorkspace: () => void;
 }
 
 
@@ -921,6 +923,33 @@ export function WorkspaceProvider({
     );
 
 
+  // -----------------------------------------
+  // Clear Workspace
+  // -----------------------------------------
+
+  const clearWorkspace =
+    useCallback(() => {
+
+      activeConversationIdRef.current = null;
+      conversationsRef.current = [];
+      selectedDocumentMapRef.current = {};
+
+      setActiveConversationId(null);
+      setActiveDocumentId(null);
+      setSelectedDocumentIdState(null);
+      setSelectedPdfState(null);
+      setSelectedEvidenceState(null);
+      setMessagesState([]);
+      setDocumentsState([]);
+      setConversationsState([]);
+      setActiveEvidence([]);
+      setIsQuerying(false);
+
+      saveSelectedDocumentMap({});
+
+    }, []);
+
+
   return (
 
     <WorkspaceContext.Provider
@@ -989,6 +1018,8 @@ export function WorkspaceProvider({
         removeDocument,
 
         updateDocument,
+
+        clearWorkspace,
 
       }}
     >

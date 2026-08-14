@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Database,
@@ -50,6 +50,52 @@ export const ChatBlock = memo(
       isQuerying,
       setIsQuerying,
     } = useWorkspaceStore();
+
+    const [
+      isContextPickerOpen,
+      setIsContextPickerOpen,
+    ] = useState(false);
+
+
+    const handleContextChange = (
+      documentId: number
+    ) => {
+
+      if (isQuerying) {
+        return;
+      }
+
+      if (
+        selectedDocumentId === documentId
+      ) {
+        setIsContextPickerOpen(false);
+        return;
+      }
+
+      setSelectedDocumentId(
+        documentId
+      );
+
+      const selectedDocument =
+        documents.find(
+          (document) =>
+            Number(document.id) ===
+            documentId
+        );
+
+      addMessage({
+        id:
+          `research-context-${documentId}-${Date.now()}`,
+        role: "research_context",
+        content:
+          selectedDocument?.title ??
+          "Selected research paper",
+        timestamp:
+          new Date().toISOString(),
+      });
+
+      setIsContextPickerOpen(false);
+    };
 
 
     const handlePaperSelect = async (
@@ -290,17 +336,40 @@ export const ChatBlock = memo(
           className="w-full"
         >
 
-          <div
+          {/* ----------------------------------------- */}
+          {/* Research Context Card */}
+          {/* ----------------------------------------- */}
+
+          <button
+            type="button"
+            onClick={() =>
+              !isQuerying &&
+              setIsContextPickerOpen(
+                (previous) => !previous
+              )
+            }
+            disabled={isQuerying}
             className={cn(
-              "rounded-xl border px-4 py-3",
+              "group w-full rounded-xl border px-4 py-3 text-left",
               "border-primary/20",
-              "bg-primary/[0.045]"
+              "bg-primary/[0.045]",
+              "transition-all",
+              !isQuerying &&
+                "hover:border-primary/35 hover:bg-primary/[0.07]",
+              isQuerying &&
+                "cursor-not-allowed opacity-70"
             )}
           >
 
             <div className="flex items-center gap-2.5">
 
-              <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/10">
+              <div
+                className={cn(
+                  "flex h-7 w-7 flex-shrink-0",
+                  "items-center justify-center rounded-full",
+                  "border border-primary/20 bg-primary/10"
+                )}
+              >
                 <Check
                   className="h-3.5 w-3.5 text-primary"
                   strokeWidth={3}
@@ -319,14 +388,188 @@ export const ChatBlock = memo(
 
               </div>
 
+              <span
+                className={cn(
+                  "text-[10px] text-zinc-600",
+                  "transition-colors",
+                  !isQuerying &&
+                    "group-hover:text-primary/70"
+                )}
+              >
+                {isContextPickerOpen
+                  ? "Close"
+                  : "Change"}
+              </span>
+
             </div>
 
-          </div>
+          </button>
+
+
+          {/* ----------------------------------------- */}
+          {/* Context Picker */}
+          {/* ----------------------------------------- */}
+
+          <AnimatePresence>
+            {isContextPickerOpen && (
+              <motion.div
+                initial={{
+                  opacity: 0,
+                  height: 0,
+                  y: -4,
+                }}
+                animate={{
+                  opacity: 1,
+                  height: "auto",
+                  y: 0,
+                }}
+                exit={{
+                  opacity: 0,
+                  height: 0,
+                  y: -4,
+                }}
+                className="overflow-hidden"
+              >
+
+                <div
+                  className={cn(
+                    "mt-2 rounded-xl border p-3",
+                    "border-white/[0.06]",
+                    "bg-surface/40"
+                  )}
+                >
+
+                  <div className="flex items-center justify-between px-1">
+
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-zinc-600">
+                      Change research paper
+                    </p>
+
+                    <span className="text-[10px] text-zinc-700">
+                      {documents.length}{" "}
+                      {documents.length === 1
+                        ? "paper"
+                        : "papers"}
+                    </span>
+
+                  </div>
+
+
+                  <div className="mt-2 space-y-1.5">
+
+                    {documents.length === 0 ? (
+
+                      <p className="px-1 py-2 text-xs text-zinc-600">
+                        No uploaded papers available.
+                      </p>
+
+                    ) : (
+
+                      documents.map(
+                        (document) => {
+
+                          const documentId =
+                            Number(
+                              document.id
+                            );
+
+                          const isSelected =
+                            selectedDocumentId ===
+                            documentId;
+
+                          return (
+                            <button
+                              key={
+                                document.id
+                              }
+                              type="button"
+                              onClick={() =>
+                                handleContextChange(
+                                  documentId
+                                )
+                              }
+                              disabled={
+                                isQuerying
+                              }
+                              className={cn(
+                                "group flex w-full items-center gap-3",
+                                "rounded-xl border px-3.5 py-2.5",
+                                "text-left transition-all",
+                                isSelected
+                                  ? "border-primary/30 bg-primary/[0.06]"
+                                  : "border-white/[0.06] bg-surface/40 hover:border-primary/20 hover:bg-primary/[0.03]",
+                                isQuerying &&
+                                  "cursor-not-allowed opacity-60"
+                              )}
+                            >
+
+                              <span
+                                className={cn(
+                                  "flex h-4 w-4 flex-shrink-0",
+                                  "items-center justify-center",
+                                  "rounded-[4px] border bg-white",
+                                  isSelected
+                                    ? "border-primary"
+                                    : "border-zinc-400"
+                                )}
+                              >
+
+                                {isSelected && (
+                                  <Check
+                                    className="h-3 w-3 text-primary"
+                                    strokeWidth={3}
+                                  />
+                                )}
+
+                              </span>
+
+
+                              <BookOpen
+                                className={cn(
+                                  "h-3.5 w-3.5 flex-shrink-0",
+                                  "transition-colors",
+                                  isSelected
+                                    ? "text-primary"
+                                    : "text-zinc-600 group-hover:text-primary/70"
+                                )}
+                              />
+
+
+                              <span
+                                className={cn(
+                                  "min-w-0 truncate text-sm",
+                                  "transition-colors",
+                                  isSelected
+                                    ? "text-zinc-200"
+                                    : "text-zinc-400 group-hover:text-zinc-300"
+                                )}
+                              >
+                                {document.title}
+                              </span>
+
+                            </button>
+                          );
+                        }
+                      )
+
+                    )}
+
+                  </div>
+
+                </div>
+
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </motion.div>
       );
     }
-
+    console.log("PAPER SELECTION DEBUG:", {
+    messageId: message.id,
+    paperSelection: message.paperSelection,
+    selectedDocumentId,
+  });
     return (
       <motion.div
         variants={fadeInUp}
