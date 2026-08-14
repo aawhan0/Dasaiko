@@ -24,12 +24,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+const SELECTED_DOCUMENT_STORAGE_KEY = "dasaiko.selectedDocumentByConversation";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const clearAuth = useCallback(() => {
     localStorage.removeItem("token");
+    localStorage.removeItem(SELECTED_DOCUMENT_STORAGE_KEY);
     setUser(null);
   }, []);
 
