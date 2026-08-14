@@ -1,21 +1,26 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, BookOpen, Command } from 'lucide-react';
-import { cn } from '@/utils/cn';
+import { Search, BookOpen, Command, LogOut } from 'lucide-react';
 import { useCommandPalette } from '@/hooks/useCommandPalette';
-import { CommandPalette } from './CommandPalette';
 import { useWorkspaceStore } from '@/store/useWorkspaceStore';
+import { useAuth } from '@/context/AuthContext';
 
 export function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [commandOpen, setCommandOpen] = useState(false);
   const { documents } = useWorkspaceStore();
+  const { user, logout } = useAuth();
 
   useCommandPalette(() => setCommandOpen((v) => !v));
 
   const isWorkspace = location.pathname === '/workspace';
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
 
   return (
     <>
@@ -77,8 +82,23 @@ export function TopNav() {
             </>
           )}
           {isWorkspace && (
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-[11px] font-bold text-white">
-              U
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:block text-right">
+                <div className="text-[11px] font-medium text-zinc-300">
+                  {user?.username ?? 'User'}
+                </div>
+                <div className="text-[9px] text-zinc-600">
+                  {user?.email ?? ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                title="Sign out"
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-surface text-zinc-500 transition hover:border-red-400/20 hover:text-red-300"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
         </div>
