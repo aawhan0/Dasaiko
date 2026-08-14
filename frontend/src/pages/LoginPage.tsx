@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, BookOpen, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -31,9 +31,15 @@ export function LoginPage() {
         (location.state as { from?: string } | null)?.from ?? "/workspace";
 
       navigate(destination, { replace: true });
-    } catch (requestError: any) {
+    } catch (requestError: unknown) {
+      const response = (
+        requestError as {
+          response?: { data?: { detail?: string } };
+        }
+      ).response;
+
       const message =
-        requestError?.response?.data?.detail ??
+        response?.data?.detail ??
         "Unable to sign in. Please check your credentials and try again.";
 
       setError(message);
