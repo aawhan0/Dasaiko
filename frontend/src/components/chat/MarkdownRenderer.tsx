@@ -1,5 +1,9 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+
+import "katex/dist/katex.min.css";
 
 interface MarkdownRendererProps {
   content: string;
@@ -11,7 +15,13 @@ export function MarkdownRenderer({
   return (
     <div className="dasaiko-prose text-[14px] leading-[1.55] text-zinc-300">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[
+          remarkGfm,
+          remarkMath,
+        ]}
+        rehypePlugins={[
+          rehypeKatex,
+        ]}
         components={{
           /* ---------------------------------
              Paragraphs
@@ -151,10 +161,7 @@ export function MarkdownRenderer({
           ),
 
           /* ---------------------------------
-             Research / Key Insight
-             
-             This is one of the few places
-             where we intentionally use a box.
+             Blockquotes
           --------------------------------- */
 
           blockquote: ({ children }) => (
@@ -177,7 +184,7 @@ export function MarkdownRenderer({
           ),
 
           /* ---------------------------------
-             Inline Code
+             Inline Code / Code Blocks
           --------------------------------- */
 
           code: ({
@@ -185,7 +192,8 @@ export function MarkdownRenderer({
             children,
             ...props
           }) => {
-            const isBlock = Boolean(className);
+            const isBlock =
+              Boolean(className);
 
             return isBlock ? (
               <code
@@ -219,13 +227,6 @@ export function MarkdownRenderer({
             );
           },
 
-          /* ---------------------------------
-             Code / Equation Blocks
-             
-             Another intentional use of a
-             contained visual surface.
-          --------------------------------- */
-
           pre: ({ children }) => (
             <pre
               className="
@@ -242,6 +243,58 @@ export function MarkdownRenderer({
             >
               {children}
             </pre>
+          ),
+
+          /* ---------------------------------
+             Tables
+          --------------------------------- */
+
+          table: ({ children }) => (
+            <div className="my-4 overflow-x-auto">
+              <table
+                className="
+                  w-full
+                  border-collapse
+                  text-left
+                  text-[13px]
+                "
+              >
+                {children}
+              </table>
+            </div>
+          ),
+
+          thead: ({ children }) => (
+            <thead className="border-b border-white/[0.12]">
+              {children}
+            </thead>
+          ),
+
+          th: ({ children }) => (
+            <th
+              className="
+                px-3
+                py-2
+                font-semibold
+                text-zinc-100
+              "
+            >
+              {children}
+            </th>
+          ),
+
+          td: ({ children }) => (
+            <td
+              className="
+                border-b
+                border-white/[0.06]
+                px-3
+                py-2
+                text-zinc-300
+              "
+            >
+              {children}
+            </td>
           ),
 
           /* ---------------------------------
