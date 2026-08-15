@@ -1,88 +1,117 @@
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, FileSearch, Database, Zap } from 'lucide-react';
-import { fadeInUp } from '@/utils/animations';
+import { InteractiveCursor } from "@/components/landing/InteractiveCursor";
+import GradientWaves from "@/components/GradientWaves";
+
+import { LandingNavbar } from "@/components/landing/LandingNavbar";
+import { HeroSection } from "@/components/landing/HeroSection";
+import { ResearchUniverse } from "@/components/landing/ResearchUniverse";
+import { ResearchFlow } from "@/components/landing/ResearchFlow";
+import { QueryRewriteDemo } from "@/components/landing/QueryRewriteDemo";
+import { EvidenceSection } from "@/components/landing/EvidenceSection";
+import { WorkspaceShowcase } from "@/components/landing/WorkspaceShowcase";
+import { FeatureBento } from "@/components/landing/FeatureBento";
+import { FinalCTA } from "@/components/landing/FinalCTA";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 
 export function LandingPage() {
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-base text-zinc-300 overflow-x-hidden">
-      {/* Top Navbar */}
-      <header className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto border-b border-white/[0.06]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center font-bold text-white shadow-glow-sm">
-            D
-          </div>
-          <span className="text-lg font-bold text-white tracking-tight">Dasaiko</span>
-        </div>
-        <button
-          onClick={() => navigate('/login')}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-medium transition-all shadow-glow"
-        >
-          Sign In
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </header>
+    <div className="relative min-h-screen overflow-x-hidden bg-base text-zinc-300">
+      {/* =====================================================
+          DASAIKO GLOBAL ATMOSPHERE
+      ====================================================== */}
 
-      {/* Hero Section */}
-      <section className="pt-24 pb-20 px-6 max-w-5xl mx-auto text-center relative">
-        <motion.div variants={fadeInUp} initial="hidden" animate="visible" className="space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-medium">
-            <Sparkles className="w-3.5 h-3.5" />
-            AI Document Intelligence Platform
-          </div>
+      <div
+        className="
+          pointer-events-none
+          fixed
+          inset-0
+          z-0
+          overflow-hidden
+        "
+        aria-hidden="true"
+      >
+        <GradientWaves
+          horizonColor="#120020"
+          waveColor="#4C1D95"
+          crestColor="#A855F7"
+          speed={0.18}
+          amplitude={2.4}
+          waveScale={0.55}
+          waveRatio={0.85}
+          swell={30}
+          turbulence={15}
+          tilt={1.11}
+          zoom={1}
+          height={5.5}
+          fogDepth={16}
+          detail="high"
+          brightness={1.05}
+          opacity={0.72}
+          mouseInteraction={false}
+          parallaxStrength={0}
+          grain={true}
+          grainIntensity={0.025}
+          className="absolute inset-0"
+        />
+      </div>
 
-          <h1 className="text-5xl md:text-6xl font-extrabold text-white tracking-tight leading-[1.15]">
-            The AI that <span className="gradient-text">shows its work.</span>
-          </h1>
+      {/* =====================================================
+          GLOBAL READABILITY MASK
+      ====================================================== */}
 
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto font-normal leading-relaxed">
-            Upload research papers, PDFs and technical documents. Every answer is backed by verifiable, citable sources.
-          </p>
+      <div
+        className="
+          pointer-events-none
+          fixed
+          inset-0
+          z-[1]
+          bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(8,8,10,0.22)_48%,rgba(8,8,10,0.82)_100%)]
+        "
+        aria-hidden="true"
+      />
 
-          <div className="pt-4 flex items-center justify-center gap-4">
-            <button
-              onClick={() => navigate('/login')}
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-primary to-secondary text-white text-sm font-semibold hover:opacity-95 transition-all shadow-glow"
-            >
-              Start Researching
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </motion.div>
-      </section>
+      {/* =====================================================
+          NAVIGATION
+      ====================================================== */}
 
-      {/* Architecture / Preview Illustration */}
-      <section className="py-12 px-6 max-w-6xl mx-auto">
-        <div className="p-4 rounded-2xl border border-white/[0.08] bg-surface/50 glass shadow-2xl overflow-hidden">
-          <div className="rounded-xl border border-white/[0.06] bg-base p-6 grid grid-cols-3 gap-4">
-            <div className="p-4 rounded-xl border border-white/[0.06] bg-surface space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                <FileSearch className="w-4 h-4 text-primary" /> 1. Upload & Index
-              </div>
-              <p className="text-xs text-zinc-500">Vectorize and chunk PDFs, books, and lecture notes automatically.</p>
-            </div>
-            <div className="p-4 rounded-xl border border-white/[0.06] bg-surface space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                <Zap className="w-4 h-4 text-secondary" /> 2. Deep Retrieval
-              </div>
-              <p className="text-xs text-zinc-500">Semantic RAG retrieves exact passages with page numbers.</p>
-            </div>
-            <div className="p-4 rounded-xl border border-white/[0.06] bg-surface space-y-3">
-              <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300">
-                <Database className="w-4 h-4 text-emerald-400" /> 3. Evidence Vault
-              </div>
-              <p className="text-xs text-zinc-500">View side-by-side citations with high-contrast score badges.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <div className="relative z-50">
+        <LandingNavbar />
+      </div>
 
-      {/* Footer */}
-      <footer className="py-8 border-t border-white/[0.06] text-center text-xs text-zinc-600">
-        <p>© {new Date().getFullYear()} Dasaiko AI. Built for serious document research.</p>
-      </footer>
+      {/* =====================================================
+          PAGE CONTENT
+      ====================================================== */}
+
+      <main className="relative z-10">
+        <HeroSection />
+
+        <ResearchUniverse />
+
+        <ResearchFlow />
+
+        <QueryRewriteDemo />
+
+        <EvidenceSection />
+
+        <WorkspaceShowcase />
+
+        <FeatureBento />
+
+        <FinalCTA />
+      </main>
+
+      {/* =====================================================
+          FOOTER
+      ====================================================== */}
+
+      <div className="relative z-10">
+        <LandingFooter />
+      </div>
+
+      {/* =====================================================
+          CURSOR
+      ====================================================== */}
+
+      <InteractiveCursor />
     </div>
   );
 }

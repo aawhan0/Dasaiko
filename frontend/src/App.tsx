@@ -1,9 +1,12 @@
-import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { WorkspaceProvider } from '@/store/useWorkspaceStore';
 import { UploadProvider } from '@/store/useUploadStore';
 import { AuthProvider } from '@/context/AuthContext';
+
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
 import { WorkspacePage } from '@/pages/WorkspacePage';
@@ -19,35 +22,44 @@ const queryClient = new QueryClient({
   },
 });
 
-function WorkspaceProviders() {
-  return (
-    <WorkspaceProvider>
-      <UploadProvider>
-        <Outlet />
-      </UploadProvider>
-    </WorkspaceProvider>
-  );
-}
-
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
+        <WorkspaceProvider>
+          <UploadProvider>
+            <AuthProvider>
+              <Routes>
+                <Route
+                  path="/"
+                  element={<LandingPage />}
+                />
 
-            <Route element={<ProtectedRoute />}>
-              <Route element={<WorkspaceProviders />}>
-                <Route path="/workspace" element={<WorkspacePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-              </Route>
-            </Route>
+                <Route
+                  path="/login"
+                  element={<LoginPage />}
+                />
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </AuthProvider>
+                <Route element={<ProtectedRoute />}>
+                  <Route
+                    path="/workspace"
+                    element={<WorkspacePage />}
+                  />
+
+                  <Route
+                    path="/settings"
+                    element={<SettingsPage />}
+                  />
+                </Route>
+
+                <Route
+                  path="*"
+                  element={<NotFoundPage />}
+                />
+              </Routes>
+            </AuthProvider>
+          </UploadProvider>
+        </WorkspaceProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
