@@ -41,7 +41,9 @@ export function PDFViewer({
   pageHeight,
   bboxes = [],
 }: PDFViewerProps) {
-  const [numPages, setNumPages] = useState(0);
+  const [numPages, setNumPages] =
+    useState(0);
+
   const [pageNumber, setPageNumber] =
     useState(initialPage);
 
@@ -50,16 +52,12 @@ export function PDFViewer({
 
   const [renderedPage, setRenderedPage] =
     useState<RenderedPageDimensions | null>(
-      null
+      null,
     );
 
   /*
    * Keep the PDF visually stable while a new
    * evidence target is being calculated.
-   *
-   * Without this, the user briefly sees the
-   * page at its initial position and then watches
-   * it jump/scroll to the evidence.
    */
   const [isPositioning, setIsPositioning] =
     useState(true);
@@ -112,11 +110,12 @@ export function PDFViewer({
     }
 
     const update = () => {
-      const width = container.clientWidth;
+      const width =
+        container.clientWidth;
 
       if (width > 0) {
         setAvailableWidth(
-          Math.max(320, width - 48)
+          Math.max(320, width - 48),
         );
       }
     };
@@ -141,8 +140,11 @@ export function PDFViewer({
         return;
       }
 
-      const width = element.clientWidth;
-      const height = element.clientHeight;
+      const width =
+        element.clientWidth;
+
+      const height =
+        element.clientHeight;
 
       if (width <= 0 || height <= 0) {
         return;
@@ -164,7 +166,7 @@ export function PDFViewer({
 
     const measure = () => {
       requestAnimationFrame(
-        measureRenderedPage
+        measureRenderedPage,
       );
     };
 
@@ -210,21 +212,19 @@ export function PDFViewer({
 
   const scaleX =
     canRenderHighlights
-      ? renderedPage.width / sourceWidth
+      ? renderedPage.width /
+        sourceWidth
       : 1;
 
   const scaleY =
     canRenderHighlights
-      ? renderedPage.height / sourceHeight
+      ? renderedPage.height /
+        sourceHeight
       : 1;
 
   /*
    * Position the evidence only after the page
    * has reached its final rendered dimensions.
-   *
-   * The page stays visually hidden during this
-   * short positioning pass, so the user never
-   * sees the intermediate "render -> jump" state.
    */
   useEffect(() => {
     if (
@@ -249,17 +249,18 @@ export function PDFViewer({
       return;
     }
 
-    const validBboxes = bboxes.filter(
-      (bbox) =>
-        Array.isArray(bbox) &&
-        bbox.length === 4 &&
-        bbox.every(
-          (value) =>
-            Number.isFinite(value)
-        ) &&
-        bbox[2] > bbox[0] &&
-        bbox[3] > bbox[1]
-    );
+    const validBboxes =
+      bboxes.filter(
+        (bbox) =>
+          Array.isArray(bbox) &&
+          bbox.length === 4 &&
+          bbox.every(
+            (value) =>
+              Number.isFinite(value),
+          ) &&
+          bbox[2] > bbox[0] &&
+          bbox[3] > bbox[1],
+      );
 
     if (validBboxes.length === 0) {
       hasAutoScrolledRef.current = true;
@@ -269,33 +270,35 @@ export function PDFViewer({
 
     const minX = Math.min(
       ...validBboxes.map(
-        (bbox) => bbox[0]
-      )
+        (bbox) => bbox[0],
+      ),
     );
 
     const minY = Math.min(
       ...validBboxes.map(
-        (bbox) => bbox[1]
-      )
+        (bbox) => bbox[1],
+      ),
     );
 
     const maxX = Math.max(
       ...validBboxes.map(
-        (bbox) => bbox[2]
-      )
+        (bbox) => bbox[2],
+      ),
     );
 
     const maxY = Math.max(
       ...validBboxes.map(
-        (bbox) => bbox[3]
-      )
+        (bbox) => bbox[3],
+      ),
     );
 
     const highlightCenterX =
-      ((minX + maxX) / 2) * scaleX;
+      ((minX + maxX) / 2) *
+      scaleX;
 
     const highlightCenterY =
-      ((minY + maxY) / 2) * scaleY;
+      ((minY + maxY) / 2) *
+      scaleY;
 
     const runId =
       positioningRunRef.current;
@@ -304,81 +307,71 @@ export function PDFViewer({
     let frameTwo = 0;
     let frameThree = 0;
 
-    frameOne = requestAnimationFrame(() => {
-      frameTwo = requestAnimationFrame(() => {
-        frameThree = requestAnimationFrame(() => {
-          /*
-           * Ignore stale positioning work if the
-           * user clicked another evidence chunk
-           * before this pass completed.
-           */
-          if (
-            runId !==
-            positioningRunRef.current
-          ) {
-            return;
-          }
-
-          const pageRect =
-            pageElement.getBoundingClientRect();
-
-          const scrollRect =
-            scrollElement.getBoundingClientRect();
-
-          const pageLeft =
-            scrollElement.scrollLeft +
-            pageRect.left -
-            scrollRect.left;
-
-          const pageTop =
-            scrollElement.scrollTop +
-            pageRect.top -
-            scrollRect.top;
-
-          const targetLeft =
-            pageLeft +
-            highlightCenterX -
-            scrollRect.width / 2;
-
-          const targetTop =
-            pageTop +
-            highlightCenterY -
-            scrollRect.height * 0.40;
-
-          /*
-           * Jump into place while the page is hidden.
-           * This is intentional: the user should only
-           * see the final location.
-           */
-          scrollElement.scrollTo({
-            left: Math.max(
-              0,
-              targetLeft
-            ),
-            top: Math.max(
-              0,
-              targetTop
-            ),
-            behavior: "auto",
-          });
-
-          hasAutoScrolledRef.current = true;
-
-          /*
-           * Reveal after the browser has painted
-           * the final scroll position.
-           */
+    frameOne =
+      requestAnimationFrame(() => {
+        frameTwo =
           requestAnimationFrame(() => {
-            if (
-              runId ===
-              positioningRunRef.current
-            ) {
-              setIsPositioning(false);
-            }
+            frameThree =
+              requestAnimationFrame(() => {
+                if (
+                  runId !==
+                  positioningRunRef.current
+                ) {
+                  return;
+                }
+
+                const pageRect =
+                  pageElement.getBoundingClientRect();
+
+                const scrollRect =
+                  scrollElement.getBoundingClientRect();
+
+                const pageLeft =
+                  scrollElement.scrollLeft +
+                  pageRect.left -
+                  scrollRect.left;
+
+                const pageTop =
+                  scrollElement.scrollTop +
+                  pageRect.top -
+                  scrollRect.top;
+
+                const targetLeft =
+                  pageLeft +
+                  highlightCenterX -
+                  scrollRect.width / 2;
+
+                const targetTop =
+                  pageTop +
+                  highlightCenterY -
+                  scrollRect.height * 0.4;
+
+                scrollElement.scrollTo({
+                  left: Math.max(
+                    0,
+                    targetLeft,
+                  ),
+                  top: Math.max(
+                    0,
+                    targetTop,
+                  ),
+                  behavior: "auto",
+                });
+
+                hasAutoScrolledRef.current =
+                  true;
+
+                requestAnimationFrame(() => {
+                  if (
+                    runId ===
+                    positioningRunRef.current
+                  ) {
+                    setIsPositioning(false);
+                  }
+                });
+              });
           });
-        });
       });
-    });
 
     return () => {
       cancelAnimationFrame(frameOne);
@@ -396,93 +389,152 @@ export function PDFViewer({
 
   /*
    * Non-evidence pages don't need positioning.
-   * Reveal them as soon as their page is rendered.
    */
-  const handlePageRenderSuccess = () => {
-    requestAnimationFrame(() => {
-      measureRenderedPage();
+  const handlePageRenderSuccess =
+    () => {
+      requestAnimationFrame(() => {
+        measureRenderedPage();
 
-      if (!isEvidencePage) {
-        setIsPositioning(false);
-      }
-    });
-  };
+        if (!isEvidencePage) {
+          setIsPositioning(false);
+        }
+      });
+    };
 
   const goPrevious = () => {
     setPageNumber((page) =>
-      Math.max(1, page - 1)
+      Math.max(1, page - 1),
     );
   };
 
   const goNext = () => {
     setPageNumber((page) =>
-      Math.min(numPages, page + 1)
+      Math.min(numPages, page + 1),
     );
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#090909]">
-
-      {/* --------------------------------------- */}
-      {/* PDF toolbar */}
-      {/* --------------------------------------- */}
+    <div
+      className="
+        flex
+        h-full
+        min-h-0
+        flex-col
+        bg-[#080808]
+      "
+    >
+      {/* =================================================
+          PDF TOOLBAR
+      ================================================== */}
 
       <div
         className="
           relative
           flex
-          h-14
-          flex-shrink-0
+          h-16
+          shrink-0
           items-center
           border-b
-          border-white/[0.06]
-          px-5
+          border-white/[0.08]
+          bg-[#090909]
+          px-4
+          sm:px-5
         "
       >
+        {/* Previous */}
+
         <button
           type="button"
           onClick={goPrevious}
           disabled={pageNumber === 1}
           className="
+            group
             flex
+            h-9
             items-center
             gap-2
-            rounded-lg
-            px-3
-            py-2
-            text-xs
-            font-medium
-            text-zinc-400
-            transition
+            rounded-xl
+            border
+            border-white/[0.07]
+            bg-white/[0.02]
+            px-3.5
+            text-[10px]
+            font-bold
+            uppercase
+            tracking-[0.08em]
+            text-zinc-500
+            transition-all
+            duration-200
+            hover:border-white/[0.14]
             hover:bg-white/[0.06]
-            hover:text-zinc-100
+            hover:text-white
             disabled:pointer-events-none
             disabled:opacity-25
           "
         >
-          <span className="text-sm">←</span>
-          Previous
+          <span
+            className="
+              text-base
+              leading-none
+              transition-transform
+              duration-200
+              group-hover:-translate-x-0.5
+            "
+          >
+            ←
+          </span>
+
+          <span className="hidden sm:inline">
+            Previous
+          </span>
         </button>
+
+        {/* Page indicator */}
 
         <div
           className="
             absolute
             left-1/2
+            flex
+            h-9
             -translate-x-1/2
-            text-xs
-            tabular-nums
-            text-zinc-500
+            items-center
+            gap-2
+            rounded-xl
+            border
+            border-white/[0.09]
+            bg-white/[0.035]
+            px-3.5
+            font-mono
+            text-[10px]
+            font-bold
           "
         >
-          Page{" "}
-          <span className="text-zinc-300">
+          <span
+            className="
+              text-[8px]
+              font-bold
+              tracking-[0.14em]
+              text-zinc-600
+            "
+          >
+            PAGE
+          </span>
+
+          <span className="text-white">
             {pageNumber}
           </span>
-          {" "}of{" "}
-          <span className="text-zinc-300">
+
+          <span className="text-zinc-700">
+            /
+          </span>
+
+          <span className="text-zinc-500">
             {numPages || "—"}
           </span>
         </div>
+
+        {/* Next */}
 
         <button
           type="button"
@@ -492,31 +544,52 @@ export function PDFViewer({
             numPages === 0
           }
           className="
+            group
             ml-auto
             flex
+            h-9
             items-center
             gap-2
-            rounded-lg
-            px-3
-            py-2
-            text-xs
-            font-medium
-            text-zinc-400
-            transition
+            rounded-xl
+            border
+            border-white/[0.07]
+            bg-white/[0.02]
+            px-3.5
+            text-[10px]
+            font-bold
+            uppercase
+            tracking-[0.08em]
+            text-zinc-500
+            transition-all
+            duration-200
+            hover:border-white/[0.14]
             hover:bg-white/[0.06]
-            hover:text-zinc-100
+            hover:text-white
             disabled:pointer-events-none
             disabled:opacity-25
           "
         >
-          Next
-          <span className="text-sm">→</span>
+          <span className="hidden sm:inline">
+            Next
+          </span>
+
+          <span
+            className="
+              text-base
+              leading-none
+              transition-transform
+              duration-200
+              group-hover:translate-x-0.5
+            "
+          >
+            →
+          </span>
         </button>
       </div>
 
-      {/* --------------------------------------- */}
-      {/* PDF canvas / scroll viewport */}
-      {/* --------------------------------------- */}
+      {/* =================================================
+          PDF CANVAS
+      ================================================== */}
 
       <div
         ref={scrollContainerRef}
@@ -524,15 +597,30 @@ export function PDFViewer({
           min-h-0
           flex-1
           overflow-auto
-          bg-[#0d0d0d]
-          px-6
+          bg-[#101010]
+          px-5
           py-8
+          sm:px-6
+          sm:py-9
+
+          [scrollbar-color:rgba(255,255,255,0.14)_transparent]
+          [scrollbar-width:thin]
         "
       >
         <Document
           file={`${API}${file}`}
           loading={
-            <div className="pt-20 text-center text-zinc-500">
+            <div
+              className="
+                flex
+                min-h-[300px]
+                items-center
+                justify-center
+                text-[11px]
+                font-semibold
+                text-zinc-600
+              "
+            >
               Loading PDF...
             </div>
           }
@@ -544,7 +632,7 @@ export function PDFViewer({
           onLoadError={(error) => {
             console.error(
               "PDF ERROR:",
-              error
+              error,
             );
           }}
         >
@@ -556,12 +644,16 @@ export function PDFViewer({
               pb-10
             "
           >
+            {/* =================================================
+                PAPER FRAME
+            ================================================== */}
+
             <div
               className="
-                rounded-xl
+                rounded-sm
                 bg-white
-                p-3
-                shadow-[0_20px_60px_rgba(0,0,0,0.45)]
+                p-2
+                shadow-[0_28px_90px_rgba(0,0,0,0.60)]
               "
             >
               <div
@@ -587,6 +679,10 @@ export function PDFViewer({
                   }
                 />
 
+                {/* =================================================
+                    EVIDENCE HIGHLIGHTS
+                ================================================== */}
+
                 {canRenderHighlights && (
                   <div
                     className="
@@ -598,11 +694,11 @@ export function PDFViewer({
                     {bboxes.map(
                       (
                         bbox,
-                        index
+                        index,
                       ) => {
                         if (
                           !Array.isArray(
-                            bbox
+                            bbox,
                           ) ||
                           bbox.length !== 4
                         ) {
@@ -625,8 +721,8 @@ export function PDFViewer({
                           ].some(
                             (coordinate) =>
                               !Number.isFinite(
-                                coordinate
-                              )
+                                coordinate,
+                              ),
                           )
                         ) {
                           return null;
@@ -642,20 +738,23 @@ export function PDFViewer({
                         return (
                           <div
                             key={`${index}-${bbox.join(
-                              "-"
+                              "-",
                             )}`}
                             className="
                               absolute
-                              rounded-sm
-                              border-2
-                              border-amber-400
-                              bg-amber-300/30
+                              rounded-[2px]
+                              border
+                              border-primary/80
+                              bg-primary/15
+                              shadow-[0_0_14px_rgba(99,102,241,0.18)]
                             "
                             style={{
                               left:
-                                x0 * scaleX,
+                                x0 *
+                                scaleX,
                               top:
-                                y0 * scaleY,
+                                y0 *
+                                scaleY,
                               width:
                                 (x1 - x0) *
                                 scaleX,
@@ -665,7 +764,7 @@ export function PDFViewer({
                             }}
                           />
                         );
-                      }
+                      },
                     )}
                   </div>
                 )}

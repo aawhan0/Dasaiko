@@ -1,41 +1,35 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   Search,
   BookOpen,
   Command,
   LogOut,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { useCommandPalette } from '@/hooks/useCommandPalette';
-import { CommandPalette } from './CommandPalette';
-import { useWorkspaceStore } from '@/store/useWorkspaceStore';
-import { useAuth } from '@/context/AuthContext';
+import { useCommandPalette } from "@/hooks/useCommandPalette";
+import { CommandPalette } from "./CommandPalette";
+import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import { useAuth } from "@/context/AuthContext";
 
 export function TopNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [commandOpen, setCommandOpen] =
-    useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
 
-  const { documents } =
-    useWorkspaceStore();
+  const { documents } = useWorkspaceStore();
+  const { user, logout } = useAuth();
 
-  const { user, logout } =
-    useAuth();
+  useCommandPalette(() => setCommandOpen((v) => !v));
 
-  useCommandPalette(
-    () => setCommandOpen((v) => !v)
-  );
-
-  const isWorkspace =
-    location.pathname === '/workspace';
+  const isWorkspace = location.pathname === "/workspace";
 
   const handleLogout = () => {
     logout();
-    navigate('/login', {
+
+    navigate("/login", {
       replace: true,
     });
   };
@@ -44,70 +38,85 @@ export function TopNav() {
     <>
       <motion.header
         initial={{
-          y: -4,
+          y: -6,
           opacity: 0,
         }}
         animate={{
           y: 0,
           opacity: 1,
         }}
+        transition={{
+          duration: 0.35,
+          ease: "easeOut",
+        }}
         className="
+          relative
+          z-40
           flex
+          min-h-[68px]
+          shrink-0
           items-center
           justify-between
+          gap-6
+          border-b
+          border-white/[0.10]
+          bg-[#070707]/95
           px-5
           py-3
-          border-b
-          border-white/[0.06]
-          bg-[#080808]/80
-          backdrop-blur-md
-          flex-shrink-0
+          backdrop-blur-xl
+          sm:px-6
         "
       >
+        {/* =====================================================
+            LEFT
+        ====================================================== */}
 
-        {/* ---------------------------------
-            Left
-        --------------------------------- */}
-
-        <div className="flex items-center gap-3">
-
+        <div className="flex min-w-0 items-center">
           {!isWorkspace && (
             <button
-              onClick={() =>
-                navigate('/')
-              }
+              type="button"
+              onClick={() => navigate("/")}
               className="
+                group
                 flex
                 items-center
-                gap-2
+                gap-3
+                rounded-xl
+                px-2
+                py-1.5
+                transition-colors
+                duration-200
+                hover:bg-white/[0.045]
               "
             >
               <div
                 className="
-                  w-6
-                  h-6
-                  rounded-md
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border
+                  border-white/[0.12]
                   bg-gradient-to-br
                   from-primary
                   to-secondary
-                  flex
-                  items-center
-                  justify-center
+                  shadow-[0_0_24px_rgba(99,102,241,0.18)]
+                  transition-transform
+                  duration-300
+                  group-hover:scale-105
                 "
               >
-                <BookOpen
-                  className="
-                    w-3
-                    h-3
-                    text-white
-                  "
-                />
+                <BookOpen className="h-4 w-4 text-white" />
               </div>
 
               <span
                 className="
-                  text-[14px]
-                  font-semibold
+                  text-[17px]
+                  font-black
+                  tracking-[-0.03em]
                   text-white
                 "
               >
@@ -117,86 +126,107 @@ export function TopNav() {
           )}
 
           {isWorkspace && (
-            <div
-              className="
-                flex
-                items-center
-                gap-2
-              "
-            >
-              <span
-                className="
-                  text-[13px]
-                  font-medium
-                  text-zinc-400
-                "
-              >
-                Research Workbench
-              </span>
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="min-w-0">
+                <p
+                  className="
+                    truncate
+                    text-[15px]
+                    font-bold
+                    tracking-[-0.02em]
+                    text-white
+                  "
+                >
+                  Research Workbench
+                </p>
+
+                <p
+                  className="
+                    mt-0.5
+                    hidden
+                    text-[10px]
+                    font-medium
+                    text-zinc-400
+                    sm:block
+                  "
+                >
+                  Your research workspace
+                </p>
+              </div>
 
               <span
                 className="
-                  text-[10px]
-                  text-zinc-700
-                  font-mono
-                  px-2
-                  py-0.5
-                  bg-surface
+                  shrink-0
+                  rounded-lg
                   border
-                  border-white/[0.06]
-                  rounded-full
+                  border-white/[0.12]
+                  bg-white/[0.045]
+                  px-2.5
+                  py-1
+                  text-[10px]
+                  font-bold
+                  tracking-wide
+                  text-zinc-300
                 "
               >
-                {documents.length}{' '}
-                doc
-                {documents.length !== 1
-                  ? 's'
-                  : ''}
+                {documents.length}{" "}
+                {documents.length === 1 ? "DOC" : "DOCS"}
               </span>
             </div>
           )}
-
         </div>
 
-        {/* ---------------------------------
-            Center — search trigger
-        --------------------------------- */}
+        {/* =====================================================
+            CENTER — SEARCH
+        ====================================================== */}
 
         {isWorkspace && (
           <button
-            onClick={() =>
-              setCommandOpen(true)
-            }
+            type="button"
+            onClick={() => setCommandOpen(true)}
             className="
-              flex
+              group
+              absolute
+              left-1/2
+              hidden
+              h-11
+              w-[280px]
+              -translate-x-1/2
               items-center
-              gap-2
-              px-3
-              py-1.5
-              rounded-lg
+              gap-3
+              rounded-xl
               border
-              border-white/[0.08]
-              bg-surface
-              hover:border-white/15
+              border-white/[0.14]
+              bg-[#0D0D0D]
+              px-4
+              text-left
+              shadow-[0_8px_30px_rgba(0,0,0,0.28)]
               transition-all
-              text-zinc-600
-              hover:text-zinc-400
-              text-[13px]
-              min-w-[200px]
-              max-w-xs
+              duration-200
+              hover:border-white/[0.24]
+              hover:bg-[#111111]
+              md:flex
             "
           >
             <Search
               className="
-                w-3.5
-                h-3.5
+                h-4
+                w-4
+                shrink-0
+                text-zinc-400
+                transition-colors
+                group-hover:text-white
               "
             />
 
             <span
               className="
                 flex-1
-                text-left
+                text-[12px]
+                font-semibold
+                text-zinc-400
+                transition-colors
+                group-hover:text-zinc-200
               "
             >
               Search or ask...
@@ -206,73 +236,75 @@ export function TopNav() {
               className="
                 flex
                 items-center
-                gap-0.5
-                text-[10px]
+                gap-1
+                rounded-md
+                border
+                border-white/[0.10]
+                bg-white/[0.035]
+                px-1.5
+                py-1
                 font-mono
-                text-zinc-700
+                text-[9px]
+                font-semibold
+                text-zinc-500
               "
             >
-              <Command
-                className="
-                  w-3
-                  h-3
-                "
-              />
+              <Command className="h-3 w-3" />
               K
             </span>
           </button>
         )}
 
-        {/* ---------------------------------
-            Right
-        --------------------------------- */}
+        {/* =====================================================
+            RIGHT
+        ====================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            gap-2
-          "
-        >
-
+        <div className="ml-auto flex shrink-0 items-center gap-2.5">
           {!isWorkspace && (
             <>
               <button
-                onClick={() =>
-                  navigate('/workspace')
-                }
+                type="button"
+                onClick={() => navigate("/workspace")}
                 className="
-                  px-4
-                  py-1.5
-                  rounded-lg
-                  text-[13px]
-                  font-medium
-                  text-zinc-300
-                  hover:text-white
-                  hover:bg-hover
+                  hidden
+                  rounded-xl
                   border
-                  border-white/[0.06]
-                  hover:border-white/15
+                  border-white/[0.10]
+                  bg-white/[0.025]
+                  px-4
+                  py-2.5
+                  text-[12px]
+                  font-bold
+                  text-zinc-300
                   transition-all
+                  duration-200
+                  hover:border-white/[0.20]
+                  hover:bg-white/[0.06]
+                  hover:text-white
+                  sm:block
                 "
               >
                 Open Workspace
               </button>
 
               <button
-                onClick={() =>
-                  navigate('/workspace')
-                }
+                type="button"
+                onClick={() => navigate("/workspace")}
                 className="
+                  rounded-xl
+                  border
+                  border-white/[0.10]
+                  bg-white
                   px-4
-                  py-1.5
-                  rounded-lg
-                  text-[13px]
-                  font-medium
-                  bg-primary
-                  hover:bg-primary/90
-                  text-white
-                  transition-colors
+                  py-2.5
+                  text-[12px]
+                  font-bold
+                  text-black
+                  transition-all
+                  duration-200
+                  hover:scale-[1.02]
+                  hover:bg-zinc-100
+                  hover:shadow-[0_0_30px_rgba(255,255,255,0.08)]
                 "
               >
                 Get Started
@@ -281,71 +313,83 @@ export function TopNav() {
           )}
 
           {isWorkspace && user && (
-            <div
-              className="
-                flex
-                items-center
-                gap-2
-              "
-            >
-
-              {/* User information */}
+            <div className="flex items-center gap-2">
+              {/* User */}
 
               <div
                 className="
-                  hidden
-                  sm:flex
+                  flex
                   items-center
-                  gap-2
+                  gap-2.5
+                  rounded-xl
+                  border
+                  border-white/[0.10]
+                  bg-white/[0.035]
                   px-2.5
                   py-1.5
-                  rounded-lg
-                  border
-                  border-white/[0.06]
-                  bg-surface
+                  transition-colors
+                  duration-200
+                  hover:border-white/[0.18]
+                  hover:bg-white/[0.055]
                 "
-                title={
-                  user.email ?? ''
-                }
+                title={user.email ?? ""}
               >
-
                 <div
                   className="
-                    w-6
-                    h-6
-                    rounded-full
+                    flex
+                    h-7
+                    w-7
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-lg
+                    border
+                    border-white/[0.12]
                     bg-gradient-to-br
                     from-primary
                     to-secondary
-                    flex
-                    items-center
-                    justify-center
                     text-[10px]
-                    font-bold
+                    font-black
                     text-white
+                    shadow-[0_0_18px_rgba(99,102,241,0.15)]
                   "
                 >
                   {(
                     user.username?.[0] ??
                     user.email?.[0] ??
-                    'U'
+                    "U"
                   ).toUpperCase()}
                 </div>
 
-                <span
-                  className="
-                    max-w-[140px]
-                    truncate
-                    text-[12px]
-                    text-zinc-400
-                  "
-                >
-                  {user.username ??
-                    user.email ??
-                    'User'}
-                </span>
+                <div className="hidden min-w-0 sm:block">
+                  <p
+                    className="
+                      max-w-[130px]
+                      truncate
+                      text-[11px]
+                      font-bold
+                      text-zinc-200
+                    "
+                  >
+                    {user.username ?? user.email ?? "User"}
+                  </p>
 
+                  <p
+                    className="
+                      mt-0.5
+                      text-[9px]
+                      font-medium
+                      text-zinc-500
+                    "
+                  >
+                    Researcher
+                  </p>
+                </div>
               </div>
+
+              {/* Divider */}
+
+              <div className="hidden h-7 w-px bg-white/[0.10] sm:block" />
 
               {/* Sign out */}
 
@@ -355,52 +399,58 @@ export function TopNav() {
                 title="Sign out"
                 aria-label="Sign out"
                 className="
+                  group
                   flex
+                  h-10
                   items-center
                   justify-center
-                  gap-1.5
-                  px-2.5
-                  py-1.5
-                  rounded-lg
+                  gap-2
+                  rounded-xl
                   border
-                  border-white/[0.06]
+                  border-white/[0.10]
+                  bg-white/[0.025]
+                  px-3
                   text-zinc-500
-                  hover:text-zinc-200
-                  hover:bg-hover
-                  hover:border-white/15
                   transition-all
-                  text-[12px]
+                  duration-200
+                  hover:border-white/[0.20]
+                  hover:bg-white/[0.07]
+                  hover:text-white
                 "
               >
                 <LogOut
                   className="
-                    w-3.5
-                    h-3.5
+                    h-4
+                    w-4
+                    transition-transform
+                    duration-200
+                    group-hover:translate-x-0.5
                   "
                 />
 
                 <span
                   className="
                     hidden
+                    text-[11px]
+                    font-bold
                     sm:inline
                   "
                 >
                   Sign out
                 </span>
               </button>
-
             </div>
           )}
-
         </div>
-
       </motion.header>
+
+      {/* =====================================================
+          COMMAND PALETTE
+      ====================================================== */}
 
       <CommandPalette
         open={commandOpen}
-        onClose={() =>
-          setCommandOpen(false)
-        }
+        onClose={() => setCommandOpen(false)}
       />
     </>
   );

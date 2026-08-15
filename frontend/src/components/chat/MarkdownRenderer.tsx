@@ -13,7 +13,15 @@ export function MarkdownRenderer({
   content,
 }: MarkdownRendererProps) {
   return (
-    <div className="dasaiko-prose text-[14px] leading-[1.55] text-zinc-300">
+    <div
+      className="
+        dasaiko-prose
+        text-[14px]
+        font-medium
+        leading-[1.7]
+        text-zinc-300
+      "
+    >
       <ReactMarkdown
         remarkPlugins={[
           remarkGfm,
@@ -23,44 +31,59 @@ export function MarkdownRenderer({
           rehypeKatex,
         ]}
         components={{
-          /* ---------------------------------
-             Paragraphs
-          --------------------------------- */
+          /* =================================================
+             PARAGRAPHS
+          ================================================== */
 
           p: ({ children }) => (
-            <p className="mb-3 last:mb-0">
+            <p
+              className="
+                mb-4
+                last:mb-0
+              "
+            >
               {children}
             </p>
           ),
 
-          /* ---------------------------------
-             Emphasis
-          --------------------------------- */
+          /* =================================================
+             EMPHASIS
+          ================================================== */
 
           strong: ({ children }) => (
-            <strong className="font-semibold text-zinc-100">
+            <strong
+              className="
+                font-bold
+                text-zinc-100
+              "
+            >
               {children}
             </strong>
           ),
 
           em: ({ children }) => (
-            <em className="text-zinc-200">
+            <em
+              className="
+                font-medium
+                text-zinc-200
+              "
+            >
               {children}
             </em>
           ),
 
-          /* ---------------------------------
-             Lists
-          --------------------------------- */
+          /* =================================================
+             LISTS
+          ================================================== */
 
           ul: ({ children }) => (
             <ul
               className="
-                my-3
+                my-4
                 ml-5
                 list-disc
-                space-y-1
-                marker:text-zinc-500
+                space-y-1.5
+                marker:text-primary/60
               "
             >
               {children}
@@ -70,11 +93,12 @@ export function MarkdownRenderer({
           ol: ({ children }) => (
             <ol
               className="
-                my-3
+                my-4
                 ml-5
                 list-decimal
-                space-y-1
-                marker:text-zinc-500
+                space-y-1.5
+                marker:font-semibold
+                marker:text-primary/60
               "
             >
               {children}
@@ -82,28 +106,29 @@ export function MarkdownRenderer({
           ),
 
           li: ({ children }) => (
-            <li className="pl-1">
+            <li
+              className="
+                pl-1.5
+                text-zinc-300
+              "
+            >
               {children}
             </li>
           ),
 
-          /* ---------------------------------
-             Main Title
-          --------------------------------- */
+          /* =================================================
+             H1
+          ================================================== */
 
           h1: ({ children }) => (
             <h1
               className="
                 mb-5
-                mt-2
-                w-fit
-                border-b
-                border-white/[0.14]
-                pb-1
+                mt-3
                 text-xl
-                font-semibold
+                font-bold
                 leading-7
-                tracking-[-0.01em]
+                tracking-[-0.025em]
                 text-white
                 first:mt-0
               "
@@ -112,22 +137,22 @@ export function MarkdownRenderer({
             </h1>
           ),
 
-          /* ---------------------------------
-             Major Sections
-          --------------------------------- */
+          /* =================================================
+             H2
+          ================================================== */
 
           h2: ({ children }) => (
             <h2
               className="
-                mb-2
-                mt-7
-                w-fit
-                border-b-2
-                border-primary/35
-                pb-0.5
+                mb-2.5
+                mt-8
+                border-l-2
+                border-primary/60
+                pl-3
                 text-[16px]
-                font-semibold
+                font-bold
                 leading-6
+                tracking-[-0.01em]
                 text-white
                 first:mt-0
               "
@@ -136,21 +161,17 @@ export function MarkdownRenderer({
             </h2>
           ),
 
-          /* ---------------------------------
-             Subsections
-          --------------------------------- */
+          /* =================================================
+             H3
+          ================================================== */
 
           h3: ({ children }) => (
             <h3
               className="
-                mb-1.5
-                mt-5
-                w-fit
-                border-b
-                border-white/[0.10]
-                pb-0
+                mb-2
+                mt-6
                 text-sm
-                font-semibold
+                font-bold
                 leading-5
                 text-zinc-100
                 first:mt-0
@@ -160,32 +181,31 @@ export function MarkdownRenderer({
             </h3>
           ),
 
-          /* ---------------------------------
-             Blockquotes
-          --------------------------------- */
+          /* =================================================
+             BLOCKQUOTES
+          ================================================== */
 
           blockquote: ({ children }) => (
             <blockquote
               className="
-                my-4
-                rounded-lg
-                border
-                border-primary/15
+                my-5
                 border-l-2
-                border-l-primary/55
+                border-primary/50
+                rounded-r-xl
                 bg-primary/[0.035]
                 px-4
                 py-3
-                text-zinc-300
+                font-medium
+                text-zinc-400
               "
             >
               {children}
             </blockquote>
           ),
 
-          /* ---------------------------------
-             Inline Code / Code Blocks
-          --------------------------------- */
+          /* =================================================
+             INLINE CODE / CODE BLOCKS
+          ================================================== */
 
           code: ({
             className,
@@ -199,7 +219,7 @@ export function MarkdownRenderer({
               <code
                 className="
                   font-mono
-                  text-xs
+                  text-[12px]
                   leading-5
                   text-zinc-300
                 "
@@ -212,12 +232,13 @@ export function MarkdownRenderer({
                 className="
                   rounded-md
                   border
-                  border-white/[0.07]
-                  bg-white/[0.045]
+                  border-white/[0.10]
+                  bg-white/[0.055]
                   px-1.5
                   py-0.5
                   font-mono
                   text-[12px]
+                  font-medium
                   text-zinc-200
                 "
                 {...props}
@@ -230,27 +251,36 @@ export function MarkdownRenderer({
           pre: ({ children }) => (
             <pre
               className="
-                my-4
+                my-5
                 overflow-x-auto
-                rounded-lg
-                border
-                border-white/[0.07]
-                bg-white/[0.025]
+                rounded-xl
+                border-[1.5px]
+                border-white/[0.09]
+                bg-[#090909]
                 px-4
-                py-3
+                py-4
                 font-mono
+                shadow-[0_8px_25px_rgba(0,0,0,0.16)]
               "
             >
               {children}
             </pre>
           ),
 
-          /* ---------------------------------
-             Tables
-          --------------------------------- */
+          /* =================================================
+             TABLES
+          ================================================== */
 
           table: ({ children }) => (
-            <div className="my-4 overflow-x-auto">
+            <div
+              className="
+                my-5
+                overflow-x-auto
+                rounded-xl
+                border-[1.5px]
+                border-white/[0.08]
+              "
+            >
               <table
                 className="
                   w-full
@@ -265,7 +295,13 @@ export function MarkdownRenderer({
           ),
 
           thead: ({ children }) => (
-            <thead className="border-b border-white/[0.12]">
+            <thead
+              className="
+                border-b-[1.5px]
+                border-white/[0.10]
+                bg-white/[0.025]
+              "
+            >
               {children}
             </thead>
           ),
@@ -273,10 +309,13 @@ export function MarkdownRenderer({
           th: ({ children }) => (
             <th
               className="
-                px-3
-                py-2
-                font-semibold
-                text-zinc-100
+                px-3.5
+                py-2.5
+                text-[11px]
+                font-bold
+                uppercase
+                tracking-[0.06em]
+                text-zinc-200
               "
             >
               {children}
@@ -288,8 +327,9 @@ export function MarkdownRenderer({
               className="
                 border-b
                 border-white/[0.06]
-                px-3
-                py-2
+                px-3.5
+                py-2.5
+                font-medium
                 text-zinc-300
               "
             >
@@ -297,9 +337,9 @@ export function MarkdownRenderer({
             </td>
           ),
 
-          /* ---------------------------------
-             Links
-          --------------------------------- */
+          /* =================================================
+             LINKS
+          ================================================== */
 
           a: ({
             children,
@@ -310,27 +350,32 @@ export function MarkdownRenderer({
               target="_blank"
               rel="noopener noreferrer"
               className="
-                text-primary
+                font-semibold
+                text-primary-300
                 underline
                 decoration-primary/30
-                underline-offset-2
+                underline-offset-[3px]
                 transition-colors
-                hover:text-primary/80
+                duration-200
+                hover:text-primary-200
+                hover:decoration-primary/70
               "
             >
               {children}
             </a>
           ),
 
-          /* ---------------------------------
-             Divider
-          --------------------------------- */
+          /* =================================================
+             DIVIDER
+          ================================================== */
 
           hr: () => (
             <hr
               className="
-                my-6
-                border-white/[0.06]
+                my-7
+                border-0
+                border-t
+                border-white/[0.08]
               "
             />
           ),

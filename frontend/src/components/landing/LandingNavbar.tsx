@@ -1,13 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import {
   ArrowRight,
-  BookOpen,
   Menu,
   X,
   Sparkles,
 } from "lucide-react";
+
+import { DasaikoLogo } from "@/components/brand/DasaikoLogo";
 
 const navItems = [
   {
@@ -35,12 +40,7 @@ const navItems = [
 export function LandingNavbar() {
   const navigate = useNavigate();
 
-  const navRef =
-    useRef<HTMLElement>(null);
-
-  const logoRef =
-    useRef<HTMLButtonElement>(null);
-
+  const navRef = useRef<HTMLElement>(null);
   const ctaRef =
     useRef<HTMLButtonElement>(null);
 
@@ -53,29 +53,31 @@ export function LandingNavbar() {
   const [activeSection, setActiveSection] =
     useState("");
 
-  /*
-   * Navbar entrance + scroll behavior.
-   */
+  /* =========================================================
+     NAVBAR ENTRANCE
+  ========================================================= */
+
   useEffect(() => {
-    const nav =
-      navRef.current;
+    const nav = navRef.current;
 
     if (!nav) return;
 
-    gsap.fromTo(
-      nav,
-      {
-        y: -30,
-        opacity: 0,
-      },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        delay: 0.15,
-        ease: "power3.out",
-      },
-    );
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        nav,
+        {
+          y: -30,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.8,
+          delay: 0.1,
+          ease: "power3.out",
+        },
+      );
+    }, nav);
 
     let lastScrollY =
       window.scrollY;
@@ -86,10 +88,6 @@ export function LandingNavbar() {
 
       setScrolled(currentY > 40);
 
-      /*
-       * Don't hide the navbar while
-       * the mobile menu is open.
-       */
       if (!menuOpen) {
         if (
           currentY > lastScrollY &&
@@ -118,25 +116,28 @@ export function LandingNavbar() {
       { passive: true },
     );
 
-    return () =>
+    return () => {
       window.removeEventListener(
         "scroll",
         handleScroll,
       );
+
+      ctx.revert();
+    };
   }, [menuOpen]);
 
-  /*
-   * Detect active section.
-   */
+  /* =========================================================
+     ACTIVE SECTION
+  ========================================================= */
+
   useEffect(() => {
-    const sections =
-      navItems
-        .map((item) =>
-          document.getElementById(
-            item.target,
-          ),
-        )
-        .filter(Boolean);
+    const sections = navItems
+      .map((item) =>
+        document.getElementById(
+          item.target,
+        ),
+      )
+      .filter(Boolean);
 
     if (!sections.length) return;
 
@@ -164,6 +165,7 @@ export function LandingNavbar() {
         {
           rootMargin:
             "-25% 0px -55% 0px",
+
           threshold: [
             0,
             0.1,
@@ -179,13 +181,15 @@ export function LandingNavbar() {
       }
     });
 
-    return () =>
+    return () => {
       observer.disconnect();
+    };
   }, []);
 
-  /*
-   * Smooth navigation.
-   */
+  /* =========================================================
+     SCROLL TO SECTION
+  ========================================================= */
+
   const scrollToSection = (
     target: string,
   ) => {
@@ -204,38 +208,38 @@ export function LandingNavbar() {
     });
   };
 
-  /*
-   * Magnetic CTA.
-   */
-  const handleCTA =
-    (
-      event: React.MouseEvent<HTMLButtonElement>,
-    ) => {
-      const button =
-        ctaRef.current;
+  /* =========================================================
+     CTA MAGNET
+  ========================================================= */
 
-      if (!button) return;
+  const handleCTA = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    const button =
+      ctaRef.current;
 
-      const rect =
-        button.getBoundingClientRect();
+    if (!button) return;
 
-      const x =
-        event.clientX -
-        rect.left -
-        rect.width / 2;
+    const rect =
+      button.getBoundingClientRect();
 
-      const y =
-        event.clientY -
-        rect.top -
-        rect.height / 2;
+    const x =
+      event.clientX -
+      rect.left -
+      rect.width / 2;
 
-      gsap.to(button, {
-        x: x * 0.12,
-        y: y * 0.12,
-        duration: 0.25,
-        ease: "power3.out",
-      });
-    };
+    const y =
+      event.clientY -
+      rect.top -
+      rect.height / 2;
+
+    gsap.to(button, {
+      x: x * 0.08,
+      y: y * 0.08,
+      duration: 0.25,
+      ease: "power3.out",
+    });
+  };
 
   const resetCTA = () => {
     if (!ctaRef.current) return;
@@ -248,43 +252,12 @@ export function LandingNavbar() {
     });
   };
 
-  /*
-   * Logo interaction.
-   */
-  const handleLogoEnter = () => {
-    if (!logoRef.current) return;
-
-    gsap.to(
-      logoRef.current.querySelector(
-        "[data-logo-icon]",
-      ),
-      {
-        rotate: 8,
-        scale: 1.08,
-        duration: 0.35,
-        ease: "power2.out",
-      },
-    );
-  };
-
-  const handleLogoLeave = () => {
-    if (!logoRef.current) return;
-
-    gsap.to(
-      logoRef.current.querySelector(
-        "[data-logo-icon]",
-      ),
-      {
-        rotate: 0,
-        scale: 1,
-        duration: 0.5,
-        ease: "elastic.out(1, 0.5)",
-      },
-    );
-  };
-
   return (
     <>
+      {/* =====================================================
+          NAVBAR
+      ====================================================== */}
+
       <header
         ref={navRef}
         className={`
@@ -293,51 +266,42 @@ export function LandingNavbar() {
           right-0
           top-0
           z-[100]
-          px-4
-          pt-4
-          transition-all
-          duration-500
-          sm:px-6
+          px-6
+          pt-3
+          sm:px-8
+          lg:px-10
           ${
             scrolled
-              ? "pt-3"
-              : "pt-4"
+              ? "bg-[#050507]/80 backdrop-blur-xl"
+              : "bg-transparent"
           }
+          transition-colors
+          duration-500
         `}
       >
         <div
           className={`
             mx-auto
             flex
-            h-14
-            max-w-6xl
+            h-[70px]
+            max-w-[1480px]
             items-center
             justify-between
-            rounded-2xl
-            border
-            px-3
-            transition-all
-            duration-500
-            sm:px-4
+            border-b-[1.5px]
             ${
               scrolled
-                ? `
-                  border-white/[0.10]
-                  bg-[#09090c]/80
-                  shadow-2xl
-                  backdrop-blur-2xl
-                `
-                : `
-                  border-white/[0.04]
-                  bg-transparent
-                `
+                ? "border-white/[0.10]"
+                : "border-white/[0.06]"
             }
+            transition-colors
+            duration-500
           `}
         >
-          {/* Logo */}
+          {/* =================================================
+              BRAND
+          ================================================== */}
 
           <button
-            ref={logoRef}
             type="button"
             onClick={() =>
               window.scrollTo({
@@ -345,132 +309,105 @@ export function LandingNavbar() {
                 behavior: "smooth",
               })
             }
-            onMouseEnter={
-              handleLogoEnter
-            }
-            onMouseLeave={
-              handleLogoLeave
-            }
             className="
               group
               flex
               items-center
-              gap-2.5
-              px-2
+              py-2
             "
+            aria-label="Go to Dasaiko home"
           >
-            <div
-              data-logo-icon
-              className="
-                flex
-                h-8
-                w-8
-                items-center
-                justify-center
-                rounded-xl
-                bg-gradient-to-br
-                from-primary
-                to-secondary
-                shadow-glow-sm
-              "
-            >
-              <BookOpen
-                className="
-                  h-3.5
-                  w-3.5
-                  text-white
-                "
-              />
-            </div>
-
-            <span
-              className="
-                text-sm
-                font-bold
-                tracking-tight
-                text-white
-              "
-            >
-              Dasaiko
-            </span>
+            <DasaikoLogo
+              size="lg"
+              variant="gradient"
+            />
           </button>
 
-          {/* Desktop navigation */}
+          {/* =================================================
+              DESKTOP NAVIGATION
+          ================================================== */}
 
           <nav
             className="
               hidden
               items-center
-              gap-1
+              gap-8
               lg:flex
             "
           >
-            {navItems.map(
-              (item) => {
-                const active =
-                  activeSection ===
-                  item.target;
+            {navItems.map((item) => {
+              const active =
+                activeSection ===
+                item.target;
 
-                return (
-                  <button
-                    key={item.target}
-                    type="button"
-                    data-cursor="view"
-                    onClick={() =>
-                      scrollToSection(
-                        item.target,
-                      )
+              return (
+                <button
+                  key={item.target}
+                  type="button"
+                  data-cursor="view"
+                  onClick={() =>
+                    scrollToSection(
+                      item.target,
+                    )
+                  }
+                  className="
+                    group
+                    relative
+                    py-[24px]
+                    text-[13px]
+                    font-bold
+                    tracking-[-0.015em]
+                    transition-colors
+                    duration-300
+                  "
+                >
+                  <span
+                    className={
+                      active
+                        ? "text-white"
+                        : "text-zinc-500 group-hover:text-white"
                     }
-                    className="
-                      relative
-                      rounded-lg
-                      px-3
-                      py-2
-                      text-[10px]
-                      font-medium
-                      transition-colors
-                      duration-300
-                    "
                   >
-                    <span
-                      className={
-                        active
-                          ? "text-zinc-200"
-                          : "text-zinc-600 hover:text-zinc-300"
-                      }
-                    >
-                      {item.label}
-                    </span>
+                    {item.label}
+                  </span>
 
-                    {active && (
-                      <span
-                        className="
-                          absolute
-                          bottom-0.5
-                          left-1/2
-                          h-px
-                          w-4
-                          -translate-x-1/2
-                          bg-primary
-                          shadow-[0_0_8px_rgba(139,92,246,0.8)]
-                        "
-                      />
-                    )}
-                  </button>
-                );
-              },
-            )}
+                  <span
+                    className={`
+                      absolute
+                      bottom-0
+                      left-1/2
+                      h-[3px]
+                      -translate-x-1/2
+                      rounded-full
+                      bg-primary
+                      shadow-[0_0_14px_rgba(139,92,246,0.95)]
+                      transition-all
+                      duration-300
+                      ${
+                        active
+                          ? "w-7 opacity-100"
+                          : "w-0 opacity-0"
+                      }
+                    `}
+                  />
+                </button>
+              );
+            })}
           </nav>
 
-          {/* Right */}
+          {/* =================================================
+              RIGHT SIDE
+          ================================================== */}
 
           <div
             className="
               flex
               items-center
-              gap-2
+              gap-4
             "
           >
+            {/* Sign in */}
+
             <button
               type="button"
               onClick={() =>
@@ -478,19 +415,24 @@ export function LandingNavbar() {
               }
               className="
                 hidden
-                rounded-lg
-                px-3
+                px-2
                 py-2
-                text-[10px]
-                font-medium
+                text-[13px]
+                font-bold
+                tracking-[-0.01em]
                 text-zinc-500
                 transition-colors
-                hover:text-zinc-200
+                duration-300
+                hover:text-white
                 sm:block
               "
             >
               Sign in
             </button>
+
+            {/* =================================================
+                CTA
+            ================================================== */}
 
             <button
               ref={ctaRef}
@@ -499,40 +441,44 @@ export function LandingNavbar() {
               onClick={() =>
                 navigate("/login")
               }
-              onMouseMove={
-                handleCTA
-              }
-              onMouseLeave={
-                resetCTA
-              }
+              onMouseMove={handleCTA}
+              onMouseLeave={resetCTA}
               className="
                 group
                 relative
                 hidden
                 items-center
-                gap-1.5
+                gap-2.5
                 overflow-hidden
-                rounded-xl
-                bg-gradient-to-r
-                from-primary
-                to-secondary
-                px-3.5
-                py-2
-                text-[10px]
-                font-semibold
+                rounded-[13px]
+                border-[1.5px]
+                border-white/[0.14]
+                bg-white/[0.055]
+                px-5
+                py-3
+                text-[13px]
+                font-extrabold
+                tracking-[-0.015em]
                 text-white
-                shadow-glow-sm
+                shadow-[0_8px_30px_rgba(0,0,0,0.18)]
+                transition-all
+                duration-300
+                hover:border-white
+                hover:bg-white
+                hover:text-black
+                hover:shadow-[0_10px_35px_rgba(255,255,255,0.10)]
                 sm:flex
               "
             >
               <span
                 className="
+                  pointer-events-none
                   absolute
                   inset-0
                   -translate-x-full
                   bg-gradient-to-r
                   from-transparent
-                  via-white/20
+                  via-white/[0.18]
                   to-transparent
                   transition-transform
                   duration-700
@@ -544,29 +490,36 @@ export function LandingNavbar() {
                 className="
                   relative
                   z-10
-                  h-3
-                  w-3
+                  h-[15px]
+                  w-[15px]
+                  stroke-[2.2]
+                  transition-colors
+                  duration-300
+                  group-hover:text-black
                 "
               />
 
               <span className="relative z-10">
-                Start Researching
+                Start researching
               </span>
 
               <ArrowRight
                 className="
                   relative
                   z-10
-                  h-3
-                  w-3
+                  h-4
+                  w-4
+                  stroke-[2.3]
                   transition-transform
                   duration-300
-                  group-hover:translate-x-0.5
+                  group-hover:translate-x-1
                 "
               />
             </button>
 
-            {/* Mobile menu */}
+            {/* =================================================
+                MOBILE MENU
+            ================================================== */}
 
             <button
               type="button"
@@ -583,57 +536,75 @@ export function LandingNavbar() {
               }
               className="
                 flex
-                h-9
-                w-9
+                h-10
+                w-10
                 items-center
                 justify-center
                 rounded-xl
-                border
-                border-white/[0.07]
-                bg-white/[0.02]
-                text-zinc-500
+                border-[1.5px]
+                border-white/[0.10]
+                bg-white/[0.025]
+                text-zinc-400
                 transition-all
-                hover:border-white/[0.12]
-                hover:text-zinc-200
+                duration-300
+                hover:border-white/[0.18]
+                hover:bg-white/[0.07]
+                hover:text-white
                 lg:hidden
               "
             >
               {menuOpen ? (
-                <X className="h-4 w-4" />
+                <X
+                  className="
+                    h-[18px]
+                    w-[18px]
+                    stroke-[2.3]
+                  "
+                />
               ) : (
-                <Menu className="h-4 w-4" />
+                <Menu
+                  className="
+                    h-[18px]
+                    w-[18px]
+                    stroke-[2.3]
+                  "
+                />
               )}
             </button>
           </div>
         </div>
 
-        {/* Mobile dropdown */}
+        {/* =====================================================
+            MOBILE MENU
+        ====================================================== */}
 
         <div
           className={`
             mx-auto
-            mt-2
-            max-w-6xl
+            max-w-[1480px]
             overflow-hidden
-            rounded-2xl
-            border
+            border-x-[1.5px]
+            border-b-[1.5px]
             border-white/[0.08]
-            bg-[#09090c]/95
-            shadow-2xl
+            bg-[#08080b]/95
             backdrop-blur-2xl
             transition-all
             duration-500
             lg:hidden
             ${
               menuOpen
-                ? "max-h-[500px] opacity-100"
+                ? "max-h-[520px] opacity-100"
                 : "pointer-events-none max-h-0 opacity-0"
             }
           `}
         >
-          <div className="p-3">
-            {navItems.map(
-              (item) => (
+          <div className="p-4">
+            {navItems.map((item) => {
+              const active =
+                activeSection ===
+                item.target;
+
+              return (
                 <button
                   key={item.target}
                   type="button"
@@ -643,39 +614,54 @@ export function LandingNavbar() {
                     )
                   }
                   className="
+                    group
                     flex
                     w-full
                     items-center
                     justify-between
-                    rounded-xl
-                    px-4
-                    py-3
+                    border-b
+                    border-white/[0.05]
+                    px-3
+                    py-4
                     text-left
-                    text-xs
-                    text-zinc-500
-                    transition-all
-                    hover:bg-white/[0.03]
-                    hover:text-zinc-200
+                    text-sm
+                    font-bold
+                    transition-colors
+                    last:border-b-0
                   "
                 >
-                  {item.label}
+                  <span
+                    className={
+                      active
+                        ? "text-white"
+                        : "text-zinc-500 group-hover:text-white"
+                    }
+                  >
+                    {item.label}
+                  </span>
 
                   <ArrowRight
-                    className="
-                      h-3
-                      w-3
-                      text-zinc-800
-                    "
+                    className={`
+                      h-4
+                      w-4
+                      transition-all
+                      duration-300
+                      ${
+                        active
+                          ? "text-primary"
+                          : "text-zinc-700 group-hover:translate-x-1 group-hover:text-zinc-300"
+                      }
+                    `}
                   />
                 </button>
-              ),
-            )}
+              );
+            })}
 
             <div
               className="
-                my-2
+                my-4
                 h-px
-                bg-white/[0.05]
+                bg-white/[0.07]
               "
             />
 
@@ -689,21 +675,28 @@ export function LandingNavbar() {
                 w-full
                 items-center
                 justify-center
-                gap-2
+                gap-2.5
                 rounded-xl
-                bg-gradient-to-r
-                from-primary
-                to-secondary
+                bg-white
                 px-4
-                py-3
-                text-xs
-                font-semibold
-                text-white
+                py-4
+                text-sm
+                font-extrabold
+                text-black
+                transition-all
+                duration-300
+                hover:bg-zinc-200
               "
             >
-              Start Researching
+              Start researching
 
-              <ArrowRight className="h-3.5 w-3.5" />
+              <ArrowRight
+                className="
+                  h-4
+                  w-4
+                  stroke-[2.3]
+                "
+              />
             </button>
           </div>
         </div>

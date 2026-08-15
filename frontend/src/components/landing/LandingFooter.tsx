@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { DasaikoLogo } from "@/components/brand/DasaikoLogo";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -135,46 +136,10 @@ export function LandingFooter() {
                 gap-3
               "
             >
-              <div
-                className="
-                  flex
-                  h-11
-                  w-11
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border-[1.5px]
-                  border-white/[0.15]
-                  bg-gradient-to-br
-                  from-primary
-                  to-secondary
-                  shadow-[0_0_30px_rgba(139,92,246,0.18)]
-                  transition-all
-                  duration-300
-                  group-hover:scale-105
-                  group-hover:shadow-[0_0_40px_rgba(139,92,246,0.28)]
-                "
-              >
-                <BookOpen
-                  className="
-                    h-5
-                    w-5
-                    stroke-[2.5]
-                    text-white
-                  "
-                />
-              </div>
-
-              <span
-                className="
-                  text-xl
-                  font-black
-                  tracking-[-0.04em]
-                  text-white
-                "
-              >
-                Dasaiko
-              </span>
+              <DasaikoLogo
+                size="md"
+                variant="gradient"
+              />
             </button>
 
             <p

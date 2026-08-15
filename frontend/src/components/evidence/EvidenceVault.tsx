@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-
 import {
   Database,
   Sparkles,
@@ -17,229 +16,230 @@ import {
 
 import type { EvidenceChunk } from "@/types";
 
-
 export function EvidenceVault() {
-
   const {
     activeEvidence,
     messages,
   } = useWorkspaceStore();
 
+  /* =====================================================
+     FIND CURRENT EVIDENCE
+  ====================================================== */
 
   const assistantMessages =
     messages.filter(
-      (m) => m.role === "assistant"
+      (message) =>
+        message.role === "assistant",
     );
-
 
   const latestAnswer =
     assistantMessages[
       assistantMessages.length - 1
     ];
 
-
   const evidence =
     latestAnswer?.evidence ??
     activeEvidence;
 
-
   const hasEvidence =
     evidence.length > 0;
 
-
   return (
-
     <motion.aside
       variants={fadeIn}
       initial="hidden"
       animate="visible"
-
       className="
-        w-full
-        min-w-0
-        h-full
         flex
+        h-full
+        min-w-0
+        w-full
         flex-col
         overflow-hidden
-        border-l
-        border-white/[0.06]
+        border-l-[1.5px]
+        border-white/[0.07]
         bg-[#070707]
       "
     >
-
-      {/* Header */}
+      {/* =================================================
+          HEADER
+      ================================================== */}
 
       <div
         className="
           shrink-0
+          border-b-[1.5px]
+          border-white/[0.07]
           px-5
           py-5
-          border-b
-          border-white/[0.06]
         "
       >
-
         <div
           className="
             flex
-            items-center
-            gap-3
+            items-start
+            justify-between
+            gap-4
           "
         >
-
-          <div
-            className="
-              w-9
-              h-9
-              rounded-xl
-              bg-primary/10
-              flex
-              items-center
-              justify-center
-              flex-shrink-0
-            "
-          >
-
-            <Database
-              className="
-                w-4
-                h-4
-                text-primary
-              "
-            />
-
-          </div>
-
+          {/* Title */}
 
           <div className="min-w-0">
-
-            <h2
+            <div
               className="
-                text-sm
-                font-semibold
-                text-white
+                flex
+                items-center
+                gap-2.5
               "
             >
-              Research Evidence
-            </h2>
+              <div
+                className="
+                  flex
+                  h-7
+                  w-7
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-lg
+                  border
+                  border-primary/20
+                  bg-primary/[0.07]
+                "
+              >
+                <Database
+                  className="
+                    h-3.5
+                    w-3.5
+                    text-primary
+                  "
+                />
+              </div>
 
+              <h2
+                className="
+                  text-[13px]
+                  font-bold
+                  tracking-tight
+                  text-white
+                "
+              >
+                Research Evidence
+              </h2>
+            </div>
 
             <p
               className="
-                mt-1
-                text-xs
+                mt-3
+                max-w-[260px]
+                text-[10px]
+                font-medium
                 leading-5
                 text-zinc-500
               "
             >
-              Every answer is grounded in
-              retrieved paper chunks.
+              Sources retrieved to support
+              the current answer.
             </p>
-
           </div>
 
-        </div>
+          {/* Source count */}
 
-
-        {hasEvidence && (
-
-          <div
-            className="
-              mt-4
-              inline-flex
-              items-center
-              gap-2
-              rounded-full
-              bg-primary/10
-              border
-              border-primary/20
-              px-3
-              py-1.5
-              text-xs
-              text-primary
-            "
-          >
-
-            <Sparkles
+          {hasEvidence && (
+            <div
               className="
-                w-3
-                h-3
+                flex
+                shrink-0
+                items-center
+                gap-1.5
+                rounded-lg
+                border
+                border-primary/15
+                bg-primary/[0.045]
+                px-2.5
+                py-1.5
               "
-            />
+            >
+              <Sparkles
+                className="
+                  h-3
+                  w-3
+                  text-primary/80
+                "
+              />
 
-            {evidence.length} source
-            {evidence.length !== 1
-              ? "s"
-              : ""}
-
-          </div>
-
-        )}
-
+              <span
+                className="
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.12em]
+                  text-primary/80
+                "
+              >
+                {evidence.length}{" "}
+                {evidence.length === 1
+                  ? "source"
+                  : "sources"}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-
-      {/* Evidence */}
+      {/* =================================================
+          EVIDENCE CONTENT
+      ================================================== */}
 
       <div
         className="
           min-h-0
           flex-1
           overflow-y-auto
-          px-5
-          pt-4
-          pb-6
           overscroll-contain
+
+          px-4
+          py-4
+
+          [scrollbar-width:thin]
+          [scrollbar-color:rgba(255,255,255,0.10)_transparent]
         "
       >
-
         {hasEvidence ? (
-
           <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="space-y-3"
+            className="
+              space-y-2.5
+            "
           >
-
             {evidence.map(
               (
                 chunk: EvidenceChunk,
-                index: number
+                index: number,
               ) => (
-
                 <EvidenceCard
                   key={chunk.id}
                   chunk={chunk}
                   index={index}
                 />
-
-              )
+              ),
             )}
-
           </motion.div>
-
         ) : (
-
           <div
             className="
-              h-full
               flex
+              h-full
               items-center
               justify-center
               px-2
             "
           >
-
             <EvidenceEmpty />
-
           </div>
-
         )}
-
       </div>
-
     </motion.aside>
-
   );
 }

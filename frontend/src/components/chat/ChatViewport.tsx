@@ -30,9 +30,24 @@ export function ChatViewport({
         flex-1
         min-h-0
         overflow-y-auto
+        scroll-smooth
+
         px-6
-        pt-6
-        pb-6
+        py-7
+
+        sm:px-7
+        sm:py-8
+
+        lg:px-10
+        lg:py-9
+
+        bg-base
+
+        selection:bg-primary/20
+        selection:text-white
+
+        [scrollbar-width:thin]
+        [scrollbar-color:rgba(255,255,255,0.10)_transparent]
       "
     >
       <ChatMessageList

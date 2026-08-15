@@ -1,14 +1,10 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-
-import { ConversationMenu } from "@/components/conversation/ConversationMenu";
-
 import {
   LayoutDashboard,
   Settings,
   Plus,
-  BookOpen,
   MessageSquare,
   ChevronLeft,
   ChevronRight,
@@ -18,6 +14,8 @@ import { cn } from "@/utils/cn";
 import { KnowledgeLibrary } from "@/components/library/KnowledgeLibrary";
 import { PrivacyBadge } from "@/components/common/PrivacyBadge";
 import { ConversationItem } from "@/components/conversation/ConversationItem";
+import { ConversationMenu } from "@/components/conversation/ConversationMenu";
+import { DasaikoLogo } from "@/components/brand/DasaikoLogo";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
@@ -30,12 +28,9 @@ import {
 
 import { listMessages } from "@/services/messages";
 
-
 export function Sidebar() {
-
   const navigate = useNavigate();
   const location = useLocation();
-
 
   const {
     conversations,
@@ -52,23 +47,19 @@ export function Sidebar() {
     toggleSidebar,
   } = useWorkspaceStore();
 
-
   const [activeTab, setActiveTab] = useState<
     "library" | "threads"
   >("threads");
-
 
   const [
     editingConversationId,
     setEditingConversationId,
   ] = useState<string | null>(null);
 
-
   const [
     editingTitle,
     setEditingTitle,
   ] = useState("");
-
 
   const [contextMenu, setContextMenu] =
     useState<{
@@ -77,682 +68,614 @@ export function Sidebar() {
       conversationId: string;
     } | null>(null);
 
-
   const pinnedConversations =
     conversations.filter(
       (conversation) =>
-        conversation.isPinned
+        conversation.isPinned,
     );
-
 
   const otherConversations =
     conversations.filter(
       (conversation) =>
-        !conversation.isPinned
+        !conversation.isPinned,
     );
 
+  /* =========================================================
+     CREATE NEW WORKSPACE
+  ========================================================= */
 
   const handleNewWorkspace =
     async () => {
-
       try {
-
         const conversation =
           await createConversation();
 
-
-        addConversation(
-          conversation
-        );
-
+        addConversation(conversation);
 
         setActiveConversation(
-          conversation.id
+          conversation.id,
         );
-
 
         setMessages([]);
 
-
-        setActiveTab(
-          "threads"
-        );
-
+        setActiveTab("threads");
       } catch (err) {
-
         console.error(
           "Failed to create workspace",
-          err
+          err,
         );
-
       }
-
     };
 
+  /* =========================================================
+     OPEN CONVERSATION
+  ========================================================= */
 
   const handleOpenConversation =
     async (
-      conversationId: string
+      conversationId: string,
     ) => {
-
       setActiveConversation(
-        conversationId
+        conversationId,
       );
-
 
       const messages =
         await listMessages(
-          conversationId
+          conversationId,
         );
 
-
-      setMessages(
-        messages
-      );
-
+      setMessages(messages);
     };
 
+  /* =========================================================
+     PIN / UNPIN
+  ========================================================= */
 
   const handleTogglePin =
     async (
-      conversationId: string
+      conversationId: string,
     ) => {
-
       try {
-
         const updated =
           await toggleConversationPin(
-            conversationId
+            conversationId,
           );
 
-
-        updateConversation(
-          updated
-        );
-
+        updateConversation(updated);
       } catch (err) {
-
         console.error(
           "Failed to toggle pin",
-          err
+          err,
         );
-
       }
-
     };
 
+  /* =========================================================
+     RENAME
+  ========================================================= */
 
   const startRename = (
-    conversationId: string
+    conversationId: string,
   ) => {
-
     const conversation =
       conversations.find(
         (conversation) =>
           conversation.id ===
-          conversationId
+          conversationId,
       );
-
 
     if (!conversation) {
       return;
     }
 
-
     setEditingConversationId(
-      conversation.id
+      conversation.id,
     );
-
 
     setEditingTitle(
-      conversation.title
+      conversation.title,
     );
-
   };
-
 
   const cancelRename = () => {
-
-    setEditingConversationId(
-      null
-    );
-
-
+    setEditingConversationId(null);
     setEditingTitle("");
-
   };
-
 
   const handleRename =
     async () => {
-
-      if (
-        !editingConversationId
-      ) {
-
+      if (!editingConversationId) {
         return;
-
       }
-
 
       // Preserve whitespace while
       // editing. Trim only when saving.
-
       const finalTitle =
         editingTitle.trim();
 
-
       if (!finalTitle) {
-
         cancelRename();
-
         return;
-
       }
 
-
       try {
-
         const updated =
           await renameConversation(
             editingConversationId,
-            finalTitle
+            finalTitle,
           );
 
-
-        updateConversation(
-          updated
-        );
-
+        updateConversation(updated);
 
         cancelRename();
-
       } catch (err) {
-
         console.error(
           "Rename failed",
-          err
+          err,
         );
-
       }
-
     };
 
+  /* =========================================================
+     F2 RENAME SHORTCUT
+  ========================================================= */
 
   useEffect(() => {
-
     const handleKeyDown = (
-      event: KeyboardEvent
+      event: KeyboardEvent,
     ) => {
-
-      if (
-        event.key !== "F2"
-      ) {
-
+      if (event.key !== "F2") {
         return;
-
       }
 
-
-      if (
-        !activeConversationId
-      ) {
-
+      if (!activeConversationId) {
         return;
-
       }
-
 
       event.preventDefault();
 
-
       startRename(
-        activeConversationId
+        activeConversationId,
       );
-
     };
-
 
     window.addEventListener(
       "keydown",
-      handleKeyDown
+      handleKeyDown,
     );
-
 
     return () =>
       window.removeEventListener(
         "keydown",
-        handleKeyDown
+        handleKeyDown,
       );
-
   }, [
     activeConversationId,
     conversations,
   ]);
 
+  /* =========================================================
+     CONTEXT MENU CLEANUP
+  ========================================================= */
 
   useEffect(() => {
-
     const handleClick = () => {
-
       setContextMenu(null);
-
     };
-
 
     window.addEventListener(
       "click",
-      handleClick
+      handleClick,
     );
-
 
     return () =>
       window.removeEventListener(
         "click",
-        handleClick
+        handleClick,
       );
-
   }, []);
 
-
   return (
-
-    <AnimatePresence
-      initial={false}
-    >
-
+    <AnimatePresence initial={false}>
       {sidebarOpen && (
-
         <motion.aside
-
           initial={{
             width: 0,
             opacity: 0,
           }}
-
           animate={{
-            width: 280,
+            width: 292,
             opacity: 1,
           }}
-
           exit={{
             width: 0,
             opacity: 0,
           }}
-
           transition={{
             duration: 0.25,
             ease: "easeInOut",
           }}
-
           className="
             flex
-            flex-col
             h-full
-            border-r
-            border-white/[0.06]
-            bg-[#080808]
+            shrink-0
+            flex-col
             overflow-hidden
-            flex-shrink-0
+            border-r-[1.5px]
+            border-white/[0.10]
+            bg-[#070707]
           "
         >
-
-          {/* Logo */}
+          {/* =================================================
+              BRAND HEADER
+          ================================================== */}
 
           <div
             className="
               flex
+              shrink-0
               items-center
               justify-between
+              border-b-[1.5px]
+              border-white/[0.09]
               px-4
               py-4
-              border-b
-              border-white/[0.06]
-              flex-shrink-0
             "
           >
-
-            <div
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/")
+              }
               className="
+                group
                 flex
                 items-center
-                gap-2.5
+                rounded-xl
+                py-1
+                transition-opacity
+                duration-200
+                hover:opacity-90
               "
+              aria-label="Go to Dasaiko home"
             >
-
-              <div
-                className="
-                  w-7
-                  h-7
-                  rounded-lg
-                  bg-gradient-to-br
-                  from-primary
-                  to-secondary
-                  flex
-                  items-center
-                  justify-center
-                "
-              >
-
-                <BookOpen
-                  className="
-                    w-3.5
-                    h-3.5
-                    text-white
-                  "
-                />
-
-              </div>
-
-
-              <span
-                className="
-                  text-[15px]
-                  font-bold
-                  text-white
-                  tracking-tight
-                "
-              >
-                Dasaiko
-              </span>
-
-            </div>
-
-
-            <button
-              onClick={
-                toggleSidebar
-              }
-
-              className="
-                p-1.5
-                rounded-md
-                text-zinc-600
-                hover:text-zinc-400
-                hover:bg-hover
-                transition-colors
-              "
-            >
-
-              <ChevronLeft
-                className="
-                  w-4
-                  h-4
-                "
+              <DasaikoLogo
+                size="md"
+                variant="gradient"
               />
-
             </button>
 
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+              className="
+                flex
+                h-9
+                w-9
+                items-center
+                justify-center
+                rounded-xl
+                border-[1.5px]
+                border-white/[0.08]
+                bg-white/[0.025]
+                text-zinc-500
+                transition-all
+                duration-200
+                hover:border-white/[0.18]
+                hover:bg-white/[0.07]
+                hover:text-white
+              "
+            >
+              <ChevronLeft
+                className="
+                  h-4
+                  w-4
+                  stroke-[2.2]
+                "
+              />
+            </button>
           </div>
 
-
-          {/* New Workspace */}
+          {/* =================================================
+              NEW WORKSPACE
+          ================================================== */}
 
           <div
             className="
+              shrink-0
               px-3
-              pt-3
-              pb-2
-              flex-shrink-0
+              pb-3
+              pt-4
             "
           >
-
             <motion.button
-
+              type="button"
               whileHover={{
                 scale: 1.01,
               }}
-
               whileTap={{
-                scale: 0.99,
+                scale: 0.985,
               }}
-
               onClick={
                 handleNewWorkspace
               }
-
               className="
-                w-full
+                group
                 flex
+                w-full
                 items-center
-                gap-2
-                px-3
-                py-2.5
+                gap-2.5
                 rounded-xl
-                bg-primary/10
-                border
-                border-primary/20
-                text-primary
+                border-[1.5px]
+                border-primary/30
+                bg-primary/[0.10]
+                px-3.5
+                py-3
+                text-left
                 text-[13px]
-                font-medium
-                hover:bg-primary/15
+                font-bold
+                text-primary-200
+                transition-all
+                duration-200
+                hover:border-primary/50
+                hover:bg-primary/[0.16]
+                hover:shadow-[0_0_28px_rgba(99,102,241,0.10)]
               "
             >
-
-              <Plus
+              <span
                 className="
-                  w-3.5
-                  h-3.5
+                  flex
+                  h-7
+                  w-7
+                  items-center
+                  justify-center
+                  rounded-lg
+                  border
+                  border-primary/25
+                  bg-primary/[0.12]
                 "
-              />
+              >
+                <Plus
+                  className="
+                    h-4
+                    w-4
+                    stroke-[2.6]
+                    text-primary
+                  "
+                />
+              </span>
 
-              New Workspace
+              <span className="flex-1">
+                New Workspace
+              </span>
 
+              <span
+                className="
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.14em]
+                  text-primary/50
+                  transition-colors
+                  group-hover:text-primary/80
+                "
+              >
+                New
+              </span>
             </motion.button>
-
           </div>
 
-
-          {/* Tabs */}
+          {/* =================================================
+              TABS
+          ================================================== */}
 
           <div
             className="
-              flex
-              gap-1
+              shrink-0
               px-3
-              py-2
-              flex-shrink-0
+              pb-3
             "
           >
+            <div
+              className="
+                grid
+                grid-cols-2
+                gap-1
+                rounded-xl
+                border-[1.5px]
+                border-white/[0.07]
+                bg-white/[0.018]
+                p-1
+              "
+            >
+              {(
+                [
+                  "threads",
+                  "library",
+                ] as const
+              ).map((tab) => {
+                const isActive =
+                  activeTab === tab;
 
-            {(
-              [
-                "threads",
-                "library",
-              ] as const
-            ).map(
-              (tab) => (
-
-                <button
-                  key={tab}
-
-                  onClick={() =>
-                    setActiveTab(tab)
-                  }
-
-                  className={cn(
-                    `
-                      flex-1
-                      flex
-                      items-center
-                      justify-center
-                      gap-1.5
-                      py-1.5
-                      rounded-lg
-                      text-[12px]
-                      font-medium
-                      capitalize
-                    `,
-
-                    activeTab === tab
-                      ? `
-                        bg-surface
-                        text-white
-                        border
-                        border-white/[0.08]
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() =>
+                      setActiveTab(tab)
+                    }
+                    className={cn(
                       `
-                      : `
-                        text-zinc-600
-                        hover:text-zinc-400
-                      `
-                  )}
-                >
+                        flex
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-lg
+                        px-3
+                        py-2.5
+                        text-[11px]
+                        font-bold
+                        capitalize
+                        transition-all
+                        duration-200
+                      `,
+                      isActive
+                        ? `
+                          border-[1.5px]
+                          border-white/[0.12]
+                          bg-white/[0.075]
+                          text-white
+                          shadow-[0_4px_15px_rgba(0,0,0,0.18)]
+                        `
+                        : `
+                          border-[1.5px]
+                          border-transparent
+                          text-zinc-500
+                          hover:border-white/[0.07]
+                          hover:bg-white/[0.035]
+                          hover:text-zinc-200
+                        `,
+                    )}
+                  >
+                    {tab === "library" ? (
+                      <LayoutDashboard
+                        className="
+                          h-3.5
+                          w-3.5
+                          stroke-[2.2]
+                        "
+                      />
+                    ) : (
+                      <MessageSquare
+                        className="
+                          h-3.5
+                          w-3.5
+                          stroke-[2.2]
+                        "
+                      />
+                    )}
 
-                  {tab ===
-                  "library" ? (
-
-                    <LayoutDashboard
-                      className="
-                        w-3.5
-                        h-3.5
-                      "
-                    />
-
-                  ) : (
-
-                    <MessageSquare
-                      className="
-                        w-3.5
-                        h-3.5
-                      "
-                    />
-
-                  )}
-
-                  {tab}
-
-                </button>
-
-              )
-            )}
-
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-
-          {/* Content */}
+          {/* =================================================
+              CONTENT
+          ================================================== */}
 
           <div
             className="
+              min-h-0
               flex-1
               overflow-hidden
-              min-h-0
             "
           >
-
-            {activeTab ===
-            "library" ? (
-
+            {activeTab === "library" ? (
               <div
                 className="
                   h-full
+                  overflow-hidden
                   py-2
                 "
               >
-
                 <KnowledgeLibrary />
-
               </div>
-
             ) : (
-
               <div
                 className="
                   h-full
-                  py-2
-                  px-2
                   overflow-y-auto
+                  px-2
+                  py-2
                 "
               >
+                {/* =========================================
+                    PINNED
+                ========================================== */}
 
                 {pinnedConversations.length >
                   0 && (
-
                   <>
-
                     <div
                       className="
+                        mb-2
+                        flex
+                        items-center
+                        gap-2
                         px-3
-                        pb-2
                       "
                     >
+                      <span
+                        className="
+                          h-1.5
+                          w-1.5
+                          rounded-full
+                          bg-primary
+                          shadow-[0_0_10px_rgba(99,102,241,0.7)]
+                        "
+                      />
 
                       <p
                         className="
-                          text-[10px]
+                          text-[9px]
+                          font-bold
                           uppercase
-                          tracking-wider
-                          text-zinc-500
-                          font-semibold
+                          tracking-[0.18em]
+                          text-zinc-400
                         "
                       >
-                        ⭐ Pinned
+                        Pinned
                       </p>
-
                     </div>
 
-
-                    <div
-                      className="
-                        space-y-1
-                      "
-                    >
-
+                    <div className="space-y-1">
                       {pinnedConversations.map(
-                        (
-                          conversation
-                        ) => (
-
+                        (conversation) => (
                           <ConversationItem
-
                             key={
                               conversation.id
                             }
-
                             conversation={
                               conversation
                             }
-
                             isActive={
                               activeConversationId ===
                               conversation.id
                             }
-
                             isEditing={
                               editingConversationId ===
                               conversation.id
                             }
-
                             editingTitle={
                               editingTitle
                             }
-
                             onEditingTitleChange={
                               setEditingTitle
                             }
-
                             onRename={
                               handleRename
                             }
-
                             onCancelRename={
                               cancelRename
                             }
-
                             onOpen={() =>
                               handleOpenConversation(
-                                conversation.id
+                                conversation.id,
                               )
                             }
-
                             onTogglePin={() =>
                               handleTogglePin(
-                                conversation.id
+                                conversation.id,
                               )
                             }
-
                             onContextMenu={(
                               x,
-                              y
+                              y,
                             ) =>
                               setContextMenu({
                                 x,
@@ -761,112 +684,101 @@ export function Sidebar() {
                                   conversation.id,
                               })
                             }
-
                           />
-
-                        )
+                        ),
                       )}
-
                     </div>
-
 
                     <div
                       className="
-                        border-t
-                        border-white/[0.06]
-                        my-3
+                        my-4
+                        h-px
+                        bg-white/[0.07]
                       "
                     />
-
                   </>
-
                 )}
 
+                {/* =========================================
+                    ALL CHATS
+                ========================================== */}
 
                 <div
                   className="
+                    mb-2
+                    flex
+                    items-center
+                    justify-between
                     px-3
-                    pb-2
                   "
                 >
-
                   <p
                     className="
-                      text-[10px]
+                      text-[9px]
+                      font-bold
                       uppercase
-                      tracking-wider
-                      text-zinc-500
-                      font-semibold
+                      tracking-[0.18em]
+                      text-zinc-400
                     "
                   >
                     All Chats
                   </p>
 
+                  <span
+                    className="
+                      text-[9px]
+                      font-mono
+                      font-semibold
+                      text-zinc-600
+                    "
+                  >
+                    {otherConversations.length}
+                  </span>
                 </div>
 
-
-                <div
-                  className="
-                    space-y-1
-                  "
-                >
-
+                <div className="space-y-1">
                   {otherConversations.map(
-                    (
-                      conversation
-                    ) => (
-
+                    (conversation) => (
                       <ConversationItem
-
                         key={
                           conversation.id
                         }
-
                         conversation={
                           conversation
                         }
-
                         isActive={
                           activeConversationId ===
                           conversation.id
                         }
-
                         isEditing={
                           editingConversationId ===
                           conversation.id
                         }
-
                         editingTitle={
                           editingTitle
                         }
-
                         onEditingTitleChange={
                           setEditingTitle
                         }
-
                         onRename={
                           handleRename
                         }
-
                         onCancelRename={
                           cancelRename
                         }
-
                         onOpen={() =>
                           handleOpenConversation(
-                            conversation.id
+                            conversation.id,
                           )
                         }
-
                         onTogglePin={() =>
                           handleTogglePin(
-                            conversation.id
+                            conversation.id,
                           )
                         }
-
                         onContextMenu={(
                           x,
-                          y
+                          y,
                         ) =>
                           setContextMenu({
                             x,
@@ -875,245 +787,262 @@ export function Sidebar() {
                               conversation.id,
                           })
                         }
-
                       />
-
-                    )
+                    ),
                   )}
-
                 </div>
 
+                {/* Empty state */}
+
+                {conversations.length ===
+                  0 && (
+                  <div
+                    className="
+                      mx-2
+                      mt-8
+                      rounded-xl
+                      border-[1.5px]
+                      border-dashed
+                      border-white/[0.08]
+                      px-4
+                      py-7
+                      text-center
+                    "
+                  >
+                    <MessageSquare
+                      className="
+                        mx-auto
+                        h-5
+                        w-5
+                        text-zinc-700
+                      "
+                    />
+
+                    <p
+                      className="
+                        mt-3
+                        text-[11px]
+                        font-bold
+                        text-zinc-400
+                      "
+                    >
+                      No research yet
+                    </p>
+
+                    <p
+                      className="
+                        mt-1
+                        text-[10px]
+                        font-medium
+                        leading-5
+                        text-zinc-600
+                      "
+                    >
+                      Start a workspace to begin
+                      researching.
+                    </p>
+                  </div>
+                )}
               </div>
-
             )}
-
           </div>
 
-
-          {/* Bottom */}
+          {/* =================================================
+              BOTTOM
+          ================================================== */}
 
           <div
             className="
+              shrink-0
+              space-y-2
+              border-t-[1.5px]
+              border-white/[0.09]
               px-3
               py-3
-              border-t
-              border-white/[0.06]
-              space-y-1
-              flex-shrink-0
             "
           >
-
             <button
+              type="button"
               onClick={() =>
-                navigate(
-                  "/settings"
-                )
+                navigate("/settings")
               }
-
               className={cn(
                 `
-                  w-full
+                  group
                   flex
+                  w-full
                   items-center
                   gap-2.5
+                  rounded-xl
+                  border-[1.5px]
                   px-3
-                  py-2
-                  rounded-lg
-                  text-[13px]
-                  transition-colors
+                  py-2.5
+                  text-[12px]
+                  font-bold
+                  transition-all
+                  duration-200
                 `,
-
                 location.pathname ===
                   "/settings"
-
                   ? `
+                    border-white/[0.14]
+                    bg-white/[0.07]
                     text-white
-                    bg-hover
                   `
-
                   : `
+                    border-transparent
                     text-zinc-500
-                    hover:text-zinc-300
-                    hover:bg-hover
-                  `
+                    hover:border-white/[0.09]
+                    hover:bg-white/[0.04]
+                    hover:text-white
+                  `,
               )}
             >
-
               <Settings
                 className="
-                  w-4
                   h-4
+                  w-4
+                  stroke-[2.2]
+                  transition-transform
+                  duration-300
+                  group-hover:rotate-45
                 "
               />
 
-              Settings
-
+              <span>
+                Settings
+              </span>
             </button>
 
-
-            <div
-              className="pt-2"
-            >
-
+            <div className="pt-1">
               <PrivacyBadge />
-
             </div>
-
           </div>
-
         </motion.aside>
-
       )}
 
-
-      {/* Conversation Context Menu */}
+      {/* =====================================================
+          CONVERSATION CONTEXT MENU
+      ====================================================== */}
 
       {contextMenu && (
-
         <ConversationMenu
-
           x={contextMenu.x}
-
           y={contextMenu.y}
-
           isPinned={
             conversations.find(
               (c) =>
                 c.id ===
-                contextMenu.conversationId
+                contextMenu.conversationId,
             )?.isPinned ?? false
           }
-
           onRename={() => {
-
             startRename(
-              contextMenu.conversationId
+              contextMenu.conversationId,
             );
 
             setContextMenu(null);
-
           }}
-
           onTogglePin={() => {
-
             handleTogglePin(
-              contextMenu.conversationId
+              contextMenu.conversationId,
             );
 
             setContextMenu(null);
-
           }}
-
           onDelete={async () => {
-
             if (!contextMenu) {
               return;
             }
 
-
             const conversationId =
               contextMenu.conversationId;
 
-
             try {
-
               await deleteConversation(
-                conversationId
+                conversationId,
               );
-
 
               removeConversation(
-                conversationId
+                conversationId,
               );
-
 
               if (
                 activeConversationId ===
                 conversationId
               ) {
-
                 setActiveConversation(
-                  null
+                  null,
                 );
 
                 setMessages([]);
-
               }
-
             } catch (error) {
-
               console.error(
                 "Error deleting conversation:",
-                error
+                error,
               );
-
             }
 
-
             setContextMenu(null);
-
           }}
-
         />
-
       )}
-
     </AnimatePresence>
-
   );
 }
 
+/* =========================================================
+   COLLAPSED SIDEBAR TOGGLE
+========================================================= */
 
 export function SidebarToggle() {
-
   const {
     sidebarOpen,
     toggleSidebar,
   } = useWorkspaceStore();
 
-
   if (sidebarOpen) {
     return null;
   }
 
-
   return (
-
     <button
-      onClick={
-        toggleSidebar
-      }
-
+      type="button"
+      onClick={toggleSidebar}
+      aria-label="Open sidebar"
+      title="Open sidebar"
       className="
         absolute
         left-4
         top-1/2
-        -translate-y-1/2
         z-20
-        w-8
-        h-8
-        rounded-lg
-        bg-surface
-        border
-        border-white/[0.08]
         flex
+        h-10
+        w-10
+        -translate-y-1/2
         items-center
         justify-center
+        rounded-xl
+        border-[1.5px]
+        border-white/[0.10]
+        bg-[#0D0D0D]
         text-zinc-500
-        hover:text-zinc-300
-        hover:border-white/20
-        shadow-card
+        shadow-[0_8px_25px_rgba(0,0,0,0.25)]
+        transition-all
+        duration-200
+        hover:border-white/[0.22]
+        hover:bg-white/[0.08]
+        hover:text-white
       "
     >
-
       <ChevronRight
         className="
-          w-4
           h-4
+          w-4
+          stroke-[2.3]
         "
       />
-
     </button>
-
   );
 }

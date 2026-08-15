@@ -1,4 +1,7 @@
-import { useRef, useEffect } from "react";
+import {
+  useRef,
+  useEffect,
+} from "react";
 import { motion } from "framer-motion";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
@@ -10,22 +13,23 @@ import { MessageInput } from "./MessageInput";
 import { fadeIn } from "@/utils/animations";
 
 export function ResearchWorkbench() {
-  const { messages, documents } =
-    useWorkspaceStore();
+  const {
+    messages,
+    documents,
+  } = useWorkspaceStore();
 
   const scrollRef =
-    useRef<HTMLDivElement | null>(null);
+    useRef<HTMLDivElement | null>(
+      null,
+    );
 
   const shouldAutoScroll =
     useRef(true);
 
-  /*
-   * Keep track of whether the user is near
-   * the bottom of the chat.
-   *
-   * If they manually scroll upward, we stop
-   * forcing the viewport back to the bottom.
-   */
+  /* =====================================================
+     SCROLL POSITION
+  ====================================================== */
+
   const handleScroll = () => {
     const container =
       scrollRef.current;
@@ -43,11 +47,10 @@ export function ResearchWorkbench() {
       distanceFromBottom < 80;
   };
 
-  /*
-   * Scroll to the bottom when a new message
-   * is added, but only if the user hasn't
-   * intentionally scrolled upward.
-   */
+  /* =====================================================
+     SCROLL WHEN MESSAGE COUNT CHANGES
+  ====================================================== */
+
   useEffect(() => {
     const container =
       scrollRef.current;
@@ -65,14 +68,10 @@ export function ResearchWorkbench() {
     });
   }, [messages.length]);
 
-  /*
-   * During streaming the number of messages
-   * does NOT change — only message.content
-   * changes.
-   *
-   * We therefore need to react to the actual
-   * message content changing as well.
-   */
+  /* =====================================================
+     SCROLL DURING STREAMING
+  ====================================================== */
+
   useEffect(() => {
     const container =
       scrollRef.current;
@@ -94,6 +93,10 @@ export function ResearchWorkbench() {
     ]?.content,
   ]);
 
+  /* =====================================================
+     EMPTY WORKSPACE
+  ====================================================== */
+
   const isEmpty =
     messages.length === 0 &&
     documents.length === 0;
@@ -105,8 +108,8 @@ export function ResearchWorkbench() {
       animate="visible"
       className="
         flex
-        flex-1
         min-h-0
+        flex-1
         flex-col
         overflow-hidden
         bg-base
@@ -116,31 +119,99 @@ export function ResearchWorkbench() {
         <EmptyState />
       ) : (
         <>
+          {/* =================================================
+              CONVERSATION
+          ================================================== */}
+
           <div
             ref={scrollRef}
             onScroll={handleScroll}
             className="
-              flex-1
               min-h-0
+              flex-1
               overflow-y-auto
-              px-8
-              py-8
+
+              px-5
+              py-7
+
+              sm:px-7
+              sm:py-8
+
+              lg:px-8
+              lg:py-9
+
+              [scrollbar-width:thin]
+              [scrollbar-color:rgba(255,255,255,0.10)_transparent]
             "
           >
-            <div className="mx-auto w-full max-w-5xl space-y-8">
+            <div
+              className="
+                mx-auto
+                w-full
+                max-w-4xl
+                space-y-8
+              "
+            >
               {messages.map(
                 (message) => (
                   <ChatBlock
-                    key={message.id}
-                    message={message}
+                    key={
+                      message.id
+                    }
+                    message={
+                      message
+                    }
                   />
-                )
+                ),
               )}
             </div>
           </div>
 
-          <div className="shrink-0 px-6 pb-6 pt-3">
-            <MessageInput />
+          {/* =================================================
+              COMPOSER AREA
+          ================================================== */}
+
+          <div
+            className="
+              relative
+              shrink-0
+              bg-base
+
+              px-5
+              pb-5
+              pt-3
+
+              sm:px-7
+              sm:pb-6
+
+              lg:px-8
+            "
+          >
+            {/* Subtle separation from conversation */}
+
+            <div
+              className="
+                pointer-events-none
+                absolute
+                inset-x-0
+                top-0
+                h-px
+                bg-gradient-to-r
+                from-transparent
+                via-white/[0.06]
+                to-transparent
+              "
+            />
+
+            <div
+              className="
+                mx-auto
+                w-full
+                max-w-4xl
+              "
+            >
+              <MessageInput />
+            </div>
           </div>
         </>
       )}

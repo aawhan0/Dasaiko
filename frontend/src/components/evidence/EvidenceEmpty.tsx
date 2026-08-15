@@ -12,24 +12,104 @@ export function EvidenceEmpty() {
       variants={fadeInUp}
       initial="hidden"
       animate="visible"
-      className="flex h-full flex-col items-center justify-center px-8 text-center"
+      className="
+        flex
+        h-full
+        w-full
+        flex-col
+        items-center
+        justify-center
+        px-6
+        text-center
+      "
     >
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10">
-        <BookOpen className="h-7 w-7 text-primary" />
+      {/* =================================================
+          ICON
+      ================================================== */}
+
+      <div
+        className="
+          flex
+          h-10
+          w-10
+          items-center
+          justify-center
+          rounded-xl
+          border-[1.5px]
+          border-white/[0.08]
+          bg-white/[0.025]
+        "
+      >
+        <BookOpen
+          className="
+            h-4
+            w-4
+            text-zinc-500
+          "
+        />
       </div>
 
-      <h3 className="text-base font-semibold text-white">
-        Research Evidence
+      {/* =================================================
+          TITLE
+      ================================================== */}
+
+      <h3
+        className="
+          mt-4
+          text-[12px]
+          font-bold
+          tracking-tight
+          text-zinc-300
+        "
+      >
+        No evidence yet
       </h3>
 
-      <p className="mt-2 max-w-[240px] text-sm leading-6 text-zinc-500">
-        Ask a question about an uploaded paper.
-        Relevant research evidence will appear here.
+      {/* =================================================
+          DESCRIPTION
+      ================================================== */}
+
+      <p
+        className="
+          mt-2
+          max-w-[230px]
+          text-[10px]
+          font-medium
+          leading-5
+          text-zinc-600
+        "
+      >
+        Ask a question about your uploaded
+        research. Relevant passages will
+        appear here.
       </p>
 
-      <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
-        <Sparkles className="h-3 w-3" />
-        AI Grounded Responses
+      {/* =================================================
+          SIGNAL
+      ================================================== */}
+
+      <div
+        className="
+          mt-5
+          flex
+          items-center
+          gap-2
+          text-[9px]
+          font-bold
+          uppercase
+          tracking-[0.14em]
+          text-zinc-600
+        "
+      >
+        <Sparkles
+          className="
+            h-3
+            w-3
+            text-primary/50
+          "
+        />
+
+        Evidence-backed answers
       </div>
     </motion.div>
   );

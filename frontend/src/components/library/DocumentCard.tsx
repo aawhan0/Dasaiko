@@ -15,13 +15,21 @@ interface DocumentCardProps {
   document: Document;
   isActive?: boolean;
   onClick?: () => void;
-  onContextMenu: (left: number, top: number) => void;
+  onContextMenu: (
+    left: number,
+    top: number,
+  ) => void;
 }
 
-const statusDot: Record<Document["status"], string> = {
+const statusDot: Record<
+  Document["status"],
+  string
+> = {
   ready: "bg-emerald-400",
-  processing: "bg-amber-400 animate-pulse",
-  uploading: "bg-indigo-400 animate-pulse",
+  processing:
+    "bg-amber-400 animate-pulse",
+  uploading:
+    "bg-indigo-400 animate-pulse",
   error: "bg-red-400",
 };
 
@@ -31,6 +39,12 @@ export function DocumentCard({
   onClick,
   onContextMenu,
 }: DocumentCardProps) {
+  const displayName = (
+    document.name ?? ""
+  )
+    .replace(/\.pdf$/i, "")
+    .replace(/\.(txt|docx|md)$/i, "");
+
   return (
     <motion.div
       variants={staggerItem}
@@ -38,7 +52,10 @@ export function DocumentCard({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
+        if (
+          e.key === "Enter" ||
+          e.key === " "
+        ) {
           e.preventDefault();
           onClick?.();
         }
@@ -51,63 +68,88 @@ export function DocumentCard({
 
         onContextMenu(
           rect.right + 20,
-          rect.top + 8
+          rect.top + 6,
         );
       }}
       className={cn(
-        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg border transition-all cursor-pointer group",
+        /*
+         * Compact document row.
+         *
+         * Avoids the large rounded-card
+         * appearance.
+         */
+        "group flex w-full cursor-pointer items-center gap-2.5 rounded-md border px-2.5 py-1.5 transition-colors duration-150",
+
         isActive
-          ? "bg-primary/10 border-primary/20"
-          : "border-transparent hover:bg-hover"
+          ? "border-primary/20 bg-primary/[0.07]"
+          : "border-transparent hover:bg-white/[0.025]",
       )}
     >
+      {/* Document icon */}
+
       <div
         className={cn(
-          "w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0",
+          "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
           isActive
-            ? "bg-primary/15 border-primary/30"
-            : "bg-surface border-white/[0.06]"
+            ? "border-primary/20 bg-primary/[0.08]"
+            : "border-white/[0.06] bg-white/[0.02]",
         )}
       >
         <FileText
           className={cn(
-            "w-4 h-4",
-            isActive ? "text-primary" : "text-zinc-500"
+            "h-3.5 w-3.5",
+            isActive
+              ? "text-primary"
+              : "text-zinc-600",
           )}
         />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
+      {/* Document information */}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
           <span
             className={cn(
-              "text-[13px] font-medium truncate",
-              isActive ? "text-white" : "text-zinc-300"
+              "truncate text-[11px] font-medium",
+              isActive
+                ? "text-zinc-100"
+                : "text-zinc-400",
             )}
           >
-            {(document.name ?? "")
-              .replace(/\.pdf$/i, "")
-              .replace(/\.(txt|docx|md)$/i, "")}
+            {displayName}
           </span>
 
           <span
             className={cn(
-              "w-1.5 h-1.5 rounded-full flex-shrink-0",
-              statusDot[document.status]
+              "h-1.5 w-1.5 shrink-0 rounded-full",
+              statusDot[document.status],
             )}
           />
         </div>
 
-        <div className="flex items-center gap-3 text-[10px] text-zinc-500">
+        <div
+          className="
+            mt-0.5
+            flex
+            items-center
+            gap-2
+            text-[9px]
+            leading-3
+            text-zinc-600
+          "
+        >
           <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {formatRelativeDate(document.uploadedAt)}
+            <Clock className="h-2.5 w-2.5" />
+            {formatRelativeDate(
+              document.uploadedAt,
+            )}
           </span>
 
           {document.pageCount > 0 && (
             <span className="flex items-center gap-1">
-              <Layers className="w-3 h-3" />
-              {document.pageCount} pages
+              <Layers className="h-2.5 w-2.5" />
+              {document.pageCount}p
             </span>
           )}
         </div>

@@ -31,7 +31,8 @@ export function ConversationItem({
   onTogglePin,
   onContextMenu,
 }: ConversationItemProps) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef =
+    useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (isEditing) {
@@ -60,32 +61,60 @@ export function ConversationItem({
       onContextMenu={(e) => {
         e.preventDefault();
 
-        const rect = e.currentTarget.getBoundingClientRect();
+        const rect =
+          e.currentTarget.getBoundingClientRect();
 
-        onContextMenu(rect.right + 20, rect.top + 8);
+        onContextMenu(
+          rect.right + 20,
+          rect.top + 6,
+        );
       }}
       className={cn(
-        "group w-full cursor-pointer text-left px-3 py-2.5 rounded-lg border transition-all duration-200",
+        /*
+         * Compact conversation row.
+         *
+         * No white active state.
+         * No oversized card.
+         */
+        "group w-full cursor-pointer rounded-md border px-2.5 py-1.5 text-left transition-colors duration-150",
+
         isEditing
-          ? "border-primary shadow-[0_0_18px_rgba(124,58,237,0.35)] bg-primary/10"
+          ? "border-primary/30 bg-primary/[0.06]"
           : isActive
-          ? "bg-primary/10 border-primary/20"
-          : "border-transparent hover:bg-hover"
+          ? "border-primary/20 bg-primary/[0.07]"
+          : "border-transparent hover:bg-white/[0.025]",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-2 min-w-0">
+      <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          {/* Pinned indicator */}
+
           {conversation.isPinned && (
-            <Pin className="w-3 h-3 text-yellow-400 mt-1 flex-shrink-0" />
+            <Pin
+              className="
+                h-3
+                w-3
+                shrink-0
+                text-zinc-500
+              "
+            />
           )}
+
+          {/* Title / editing */}
 
           {isEditing ? (
             <input
               autoFocus
               ref={inputRef}
               value={editingTitle}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => onEditingTitleChange(e.target.value)}
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+              onChange={(e) =>
+                onEditingTitleChange(
+                  e.target.value,
+                )
+              }
               onBlur={onRename}
               onKeyDown={(e) => {
                 e.stopPropagation();
@@ -103,21 +132,25 @@ export function ConversationItem({
               }}
               className="
                 w-full
-                bg-transparent
                 border-none
-                outline-none
-                text-[13px]
-                font-semibold
+                bg-transparent
+                text-[12px]
+                font-medium
                 text-white
-                placeholder:text-zinc-500
+                outline-none
+                placeholder:text-zinc-600
               "
-              style={{ caretColor: "#8b5cf6" }}
+              style={{
+                caretColor: "#6366f1",
+              }}
             />
           ) : (
             <p
               className={cn(
-                "text-[13px] font-medium truncate",
-                isActive ? "text-white" : "text-zinc-300"
+                "min-w-0 truncate text-[12px] font-medium",
+                isActive
+                  ? "text-zinc-100"
+                  : "text-zinc-400",
               )}
             >
               {conversation.title}
@@ -125,26 +158,51 @@ export function ConversationItem({
           )}
         </div>
 
+        {/* Pin action */}
+
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onTogglePin();
           }}
-          className="opacity-0 group-hover:opacity-100 text-zinc-600 hover:text-yellow-400 transition"
+          aria-label={
+            conversation.isPinned
+              ? "Unpin conversation"
+              : "Pin conversation"
+          }
+          className="
+            shrink-0
+            rounded-md
+            p-1
+            text-zinc-700
+            opacity-0
+            transition-all
+            duration-150
+            hover:bg-white/[0.04]
+            hover:text-zinc-400
+            group-hover:opacity-100
+          "
         >
-          <Pin className="w-3.5 h-3.5" />
+          <Pin className="h-3 w-3" />
         </button>
       </div>
 
+      {/* Metadata */}
+
       <p
         className={cn(
-          "text-[10px] text-zinc-600 mt-1 font-mono transition-opacity duration-200",
-          isEditing ? "opacity-40" : "opacity-100"
+          "mt-0.5 text-[9px] font-mono leading-3.5 text-zinc-600",
+          isEditing
+            ? "opacity-40"
+            : "opacity-100",
         )}
       >
-        {conversation.messageCount} msgs ·{" "}
-        {formatRelativeDate(conversation.lastActivityAt)}
+        {conversation.messageCount} msgs
+        {" · "}
+        {formatRelativeDate(
+          conversation.lastActivityAt,
+        )}
       </p>
     </div>
   );
