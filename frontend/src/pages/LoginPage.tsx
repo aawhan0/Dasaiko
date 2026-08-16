@@ -3,6 +3,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+
 import {
   ArrowRight,
   Check,
@@ -10,13 +11,16 @@ import {
   Mail,
   Sparkles,
 } from "lucide-react";
+
 import {
   useLocation,
   useNavigate,
 } from "react-router-dom";
 
 import { useAuth } from "@/context/AuthContext";
-import { DasaikoLogo } from "@/components/brand/DasaikoLogo";
+import GradientWaves from "@/components/GradientWaves";
+
+type AuthMode = "signin" | "signup";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -27,6 +31,9 @@ export function LoginPage() {
     isAuthenticated,
   } = useAuth();
 
+  const [mode, setMode] =
+    useState<AuthMode>("signin");
+
   const [email, setEmail] =
     useState("");
 
@@ -34,6 +41,9 @@ export function LoginPage() {
     useState("");
 
   const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
     useState("");
 
   const [isSubmitting, setIsSubmitting] =
@@ -55,7 +65,19 @@ export function LoginPage() {
   ]);
 
   /* =========================================================
-     LOGIN
+     SWITCH AUTH MODE
+  ========================================================= */
+
+  const handleModeChange = (
+    nextMode: AuthMode,
+  ) => {
+    setMode(nextMode);
+    setError("");
+    setSuccess("");
+  };
+
+  /* =========================================================
+     AUTH SUBMIT
   ========================================================= */
 
   async function handleSubmit(
@@ -64,49 +86,115 @@ export function LoginPage() {
     event.preventDefault();
 
     setError("");
+    setSuccess("");
     setIsSubmitting(true);
 
     try {
-      await login(
-        email.trim(),
-        password,
+      /* ===============================================
+         SIGN IN
+      ================================================ */
+
+      if (mode === "signin") {
+        await login(
+          email.trim(),
+          password,
+        );
+
+        const destination =
+          (
+            location.state as
+              | { from?: string }
+              | null
+          )?.from ?? "/workspace";
+
+        navigate(destination, {
+          replace: true,
+        });
+
+        return;
+      }
+
+      /* ===============================================
+         SIGN UP
+      ================================================ */
+
+      const apiBase =
+        import.meta.env
+          .VITE_API_URL ??
+        "http://127.0.0.1:8000";
+
+      const response =
+        await fetch(
+          `${apiBase}/auth/register`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              email: email.trim(),
+              password,
+            }),
+          },
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data?.detail ??
+            data?.message ??
+            "Unable to create your account. Please try again.",
+        );
+      }
+
+      /* ===============================================
+         REGISTRATION SUCCESS
+      ================================================ */
+
+      setMode("signin");
+      setPassword("");
+
+      setSuccess(
+        "Account created successfully. You can now sign in.",
       );
-
-      const destination =
-        (
-          location.state as
-            | { from?: string }
-            | null
-        )?.from ?? "/workspace";
-
-      navigate(destination, {
-        replace: true,
-      });
     } catch (
       requestError: unknown
     ) {
-      const errorResponse =
-        requestError as {
-          response?: {
-            data?: {
-              detail?: string;
-              message?: string;
-            };
-          };
-        };
-
-      const message =
-        errorResponse.response?.data
-          ?.detail ??
-        errorResponse.response?.data
-          ?.message ??
-        "Unable to sign in. Please check your credentials and try again.";
-
-      setError(message);
+      if (
+        requestError instanceof Error
+      ) {
+        setError(
+          requestError.message,
+        );
+      } else {
+        setError(
+          mode === "signin"
+            ? "Unable to sign in. Please check your credentials and try again."
+            : "Unable to create your account. Please try again.",
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  /* =========================================================
+     CONTENT
+  ========================================================= */
+
+  const isSignIn =
+    mode === "signin";
+
+  const heading = isSignIn
+    ? "Welcome back."
+    : "Create your account.";
+
+  const description = isSignIn
+    ? "Sign in to continue your research and pick up where you left off."
+    : "Create your account and start building your evidence-backed research workspace.";
 
   return (
     <main
@@ -119,7 +207,7 @@ export function LoginPage() {
       "
     >
       {/* =====================================================
-          BACKGROUND ATMOSPHERE
+          GLOBAL BACKGROUND ATMOSPHERE
       ====================================================== */}
 
       <div
@@ -134,6 +222,7 @@ export function LoginPage() {
           bg-primary/[0.07]
           blur-[180px]
         "
+        aria-hidden="true"
       />
 
       <div
@@ -145,9 +234,10 @@ export function LoginPage() {
           h-[420px]
           w-[420px]
           rounded-full
-          bg-secondary/[0.045]
+          bg-primary/[0.035]
           blur-[160px]
         "
+        aria-hidden="true"
       />
 
       <div
@@ -157,6 +247,7 @@ export function LoginPage() {
           inset-0
           bg-[radial-gradient(circle_at_35%_45%,rgba(139,92,246,0.08),transparent_35%)]
         "
+        aria-hidden="true"
       />
 
       {/* =====================================================
@@ -172,6 +263,7 @@ export function LoginPage() {
           lg:grid-cols-[1.08fr_0.92fr]
         "
       >
+
         {/* ===================================================
             LEFT VISUAL PANEL
         ==================================================== */}
@@ -185,27 +277,92 @@ export function LoginPage() {
             border-white/[0.07]
             lg:flex
             lg:flex-col
-            lg:justify-between
             lg:px-16
-            lg:py-14
+            lg:py-12
             xl:px-24
           "
         >
-          {/* Decorative grid */}
+
+          {/* =================================================
+              GRADIENT WAVES
+          ================================================== */}
 
           <div
             className="
               pointer-events-none
               absolute
               inset-0
-              opacity-30
+              z-0
+              overflow-hidden
+            "
+            aria-hidden="true"
+          >
+            <GradientWaves
+              horizonColor="#120020"
+              waveColor="#6D28D9"
+              crestColor="#C084FC"
+              speed={0.16}
+              amplitude={3.2}
+              waveScale={0.48}
+              waveRatio={0.82}
+              swell={34}
+              turbulence={12}
+              tilt={1.08}
+              zoom={1}
+              height={5.8}
+              fogDepth={14}
+              detail="high"
+              brightness={1.15}
+              opacity={0.78}
+              mouseInteraction={false}
+              parallaxStrength={0}
+              grain={true}
+              grainIntensity={0.018}
+              className="absolute inset-0"
+            />
+
+            {/* Soft readability layer */}
+
+            <div
+              className="
+                absolute
+                inset-0
+                bg-[linear-gradient(180deg,rgba(5,5,7,0.30)_0%,rgba(5,5,7,0.12)_42%,rgba(5,5,7,0.48)_100%)]
+              "
+            />
+
+            {/* Edge vignette */}
+
+            <div
+              className="
+                absolute
+                inset-0
+                bg-[radial-gradient(ellipse_at_center,transparent_5%,rgba(5,5,7,0.18)_58%,rgba(5,5,7,0.62)_100%)]
+              "
+            />
+          </div>
+
+          {/* =================================================
+              SUBTLE GRID
+          ================================================== */}
+
+          <div
+            className="
+              pointer-events-none
+              absolute
+              inset-0
+              z-[1]
+              opacity-20
               [background-image:linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)]
               [background-size:72px_72px]
               [mask-image:radial-gradient(circle_at_center,black,transparent_75%)]
             "
+            aria-hidden="true"
           />
 
-          {/* Purple glow */}
+          {/* =================================================
+              CENTRAL PURPLE GLOW
+          ================================================== */}
 
           <div
             className="
@@ -213,6 +370,7 @@ export function LoginPage() {
               absolute
               left-1/2
               top-1/2
+              z-[1]
               h-[600px]
               w-[600px]
               -translate-x-1/2
@@ -221,264 +379,308 @@ export function LoginPage() {
               bg-primary/[0.045]
               blur-[150px]
             "
+            aria-hidden="true"
           />
 
-          {/* ===============================================
-              BRAND
-          ================================================ */}
-
-          <button
-            type="button"
-            onClick={() =>
-              navigate("/")
-            }
-            className="
-              group
-              relative
-              z-10
-              flex
-              w-fit
-              items-center
-            "
-            aria-label="Go to Dasaiko home"
-          >
-            <DasaikoLogo
-              size="lg"
-              variant="gradient"
-              showTagline
-            />
-          </button>
-
-          {/* ===============================================
-              CENTRAL VISUAL
-          ================================================ */}
+          {/* =================================================
+              TOP BRAND
+          ================================================== */}
 
           <div
             className="
               relative
               z-10
-              max-w-[650px]
+              flex
+              w-full
+              items-center
+            "
+          >
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/")
+              }
+              aria-label="Dasaiko home"
+              className="
+                flex
+                w-fit
+                items-center
+                transition-opacity
+                duration-300
+                hover:opacity-80
+              "
+            >
+              <img
+                src="/assets/brand/dasaiko-wordmark-transparent-bg.png"
+                alt="Dasaiko"
+                className="
+                  h-auto
+                  w-[145px]
+                  object-contain
+                  object-left
+                "
+              />
+            </button>
+          </div>
+
+          {/* =================================================
+              MAIN LEFT CONTENT
+          ================================================== */}
+
+          <div
+            className="
+              relative
+              z-10
+              flex
+              flex-1
+              items-center
             "
           >
             <div
               className="
-                mb-7
-                flex
-                items-center
-                gap-3
+                w-full
+                max-w-[650px]
               "
             >
-              <span
-                className="
-                  h-2
-                  w-2
-                  rounded-full
-                  bg-primary
-                  shadow-[0_0_14px_rgba(139,92,246,0.8)]
-                "
-              />
 
-              <span
-                className="
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-[0.24em]
-                  text-zinc-500
-                "
-              >
-                Evidence-first research
-              </span>
-            </div>
-
-            <h2
-              className="
-                text-[54px]
-                font-extrabold
-                leading-[0.95]
-                tracking-[-0.065em]
-                text-white
-                xl:text-[68px]
-              "
-            >
-              Your research,
-              <br />
-
-              <span className="text-zinc-600">
-                with receipts.
-              </span>
-            </h2>
-
-            <p
-              className="
-                mt-7
-                max-w-[500px]
-                text-[15px]
-                font-medium
-                leading-7
-                text-zinc-500
-              "
-            >
-              Bring papers, documents, questions,
-              and evidence together in one workspace
-              built for serious research.
-            </p>
-
-            {/* =============================================
-                ABSTRACT EVIDENCE VISUAL
-            ============================================== */}
-
-            <div
-              className="
-                relative
-                mt-12
-                h-[180px]
-                max-w-[520px]
-                overflow-hidden
-                rounded-[20px]
-                border-[1.5px]
-                border-white/[0.09]
-                bg-white/[0.018]
-              "
-            >
-              {/* Header */}
+              {/* ===========================================
+                  EYEBROW
+              ============================================ */}
 
               <div
                 className="
+                  mb-7
                   flex
                   items-center
-                  justify-between
-                  border-b
-                  border-white/[0.06]
-                  px-5
-                  py-4
+                  gap-3
                 "
               >
+                <span
+                  className="
+                    h-2
+                    w-2
+                    rounded-full
+                    bg-primary
+                    shadow-[0_0_14px_rgba(139,92,246,0.8)]
+                  "
+                />
+
+                <span
+                  className="
+                    text-[10px]
+                    font-bold
+                    uppercase
+                    tracking-[0.24em]
+                    text-zinc-500
+                  "
+                >
+                  Evidence-first research
+                </span>
+              </div>
+
+              {/* ===========================================
+                  HERO
+              ============================================ */}
+
+              <h2
+                className="
+                  text-[54px]
+                  font-extrabold
+                  leading-[0.95]
+                  tracking-[-0.065em]
+                  text-white
+                  xl:text-[68px]
+                "
+              >
+                Your research,
+                <br />
+
+                <span className="text-zinc-600">
+                  with receipts.
+                </span>
+              </h2>
+
+              <p
+                className="
+                  mt-7
+                  max-w-[500px]
+                  text-[15px]
+                  font-medium
+                  leading-7
+                  text-zinc-500
+                "
+              >
+                Bring papers, documents, questions,
+                and evidence together in one workspace
+                built for serious research.
+              </p>
+
+              {/* ===========================================
+                  RESEARCH CONTEXT CARD
+              ============================================ */}
+
+              <div
+                className="
+                  relative
+                  mt-12
+                  h-[180px]
+                  max-w-[520px]
+                  overflow-hidden
+                  rounded-[20px]
+                  border-[1.5px]
+                  border-white/[0.09]
+                  bg-black/[0.28]
+                  backdrop-blur-sm
+                "
+              >
+
+                {/* Card header */}
+
                 <div
                   className="
                     flex
                     items-center
-                    gap-2.5
+                    justify-between
+                    border-b
+                    border-white/[0.06]
+                    px-5
+                    py-4
                   "
                 >
+
                   <div
                     className="
                       flex
-                      h-7
-                      w-7
                       items-center
-                      justify-center
-                      rounded-lg
-                      border
-                      border-primary/20
-                      bg-primary/[0.08]
+                      gap-2.5
                     "
                   >
-                    <Sparkles
+                    <div
                       className="
-                        h-3.5
-                        w-3.5
-                        text-primary
+                        flex
+                        h-7
+                        w-7
+                        items-center
+                        justify-center
+                        rounded-lg
+                        border
+                        border-primary/20
+                        bg-primary/[0.08]
                       "
-                    />
+                    >
+                      <Sparkles
+                        className="
+                          h-3.5
+                          w-3.5
+                          text-primary
+                        "
+                      />
+                    </div>
+
+                    <span
+                      className="
+                        text-[10px]
+                        font-bold
+                        uppercase
+                        tracking-[0.16em]
+                        text-zinc-500
+                      "
+                    >
+                      Research context
+                    </span>
                   </div>
 
                   <span
                     className="
-                      text-[10px]
+                      rounded-full
+                      border
+                      border-emerald-400/20
+                      bg-emerald-400/[0.06]
+                      px-2.5
+                      py-1
+                      text-[8px]
                       font-bold
                       uppercase
-                      tracking-[0.16em]
-                      text-zinc-500
+                      tracking-[0.12em]
+                      text-emerald-400/80
                     "
                   >
-                    Research context
+                    Verified
                   </span>
                 </div>
 
-                <span
+                {/* Evidence lines */}
+
+                <div
                   className="
-                    rounded-full
-                    border
-                    border-emerald-400/20
-                    bg-emerald-400/[0.06]
-                    px-2.5
-                    py-1
-                    text-[8px]
-                    font-bold
-                    uppercase
-                    tracking-[0.12em]
-                    text-emerald-400/80
+                    space-y-4
+                    px-5
+                    py-5
                   "
                 >
-                  Verified
-                </span>
+                  <div
+                    className="
+                      h-2
+                      w-[58%]
+                      rounded-full
+                      bg-white/[0.13]
+                    "
+                  />
+
+                  <div
+                    className="
+                      h-1.5
+                      w-[82%]
+                      rounded-full
+                      bg-white/[0.055]
+                    "
+                  />
+
+                  <div
+                    className="
+                      h-1.5
+                      w-[70%]
+                      rounded-full
+                      bg-white/[0.055]
+                    "
+                  />
+
+                  <div
+                    className="
+                      mt-5
+                      h-[30px]
+                      w-[88%]
+                      rounded-lg
+                      border-l-2
+                      border-primary
+                      bg-primary/[0.08]
+                    "
+                  />
+                </div>
+
+                {/* Card glow */}
+
+                <div
+                  className="
+                    pointer-events-none
+                    absolute
+                    bottom-[-80px]
+                    right-[-40px]
+                    h-40
+                    w-40
+                    rounded-full
+                    bg-primary/[0.15]
+                    blur-[70px]
+                  "
+                  aria-hidden="true"
+                />
               </div>
-
-              {/* Evidence lines */}
-
-              <div className="space-y-4 px-5 py-5">
-                <div
-                  className="
-                    h-2
-                    w-[58%]
-                    rounded-full
-                    bg-white/[0.13]
-                  "
-                />
-
-                <div
-                  className="
-                    h-1.5
-                    w-[82%]
-                    rounded-full
-                    bg-white/[0.055]
-                  "
-                />
-
-                <div
-                  className="
-                    h-1.5
-                    w-[70%]
-                    rounded-full
-                    bg-white/[0.055]
-                  "
-                />
-
-                <div
-                  className="
-                    mt-5
-                    h-[30px]
-                    w-[88%]
-                    rounded-lg
-                    border-l-2
-                    border-primary
-                    bg-primary/[0.08]
-                  "
-                />
-              </div>
-
-              {/* Glow */}
-
-              <div
-                className="
-                  pointer-events-none
-                  absolute
-                  bottom-[-80px]
-                  right-[-40px]
-                  h-40
-                  w-40
-                  rounded-full
-                  bg-primary/[0.12]
-                  blur-[70px]
-                "
-              />
             </div>
           </div>
 
-          {/* ===============================================
+          {/* =================================================
               BOTTOM SIGNAL
-          ================================================ */}
+          ================================================== */}
 
           <div
             className="
@@ -519,7 +721,7 @@ export function LoginPage() {
         </section>
 
         {/* ===================================================
-            RIGHT LOGIN PANEL
+            RIGHT AUTH PANEL
         ==================================================== */}
 
         <section
@@ -541,34 +743,12 @@ export function LoginPage() {
               max-w-[460px]
             "
           >
+
             {/* =============================================
-                FORM HEADER
+                AUTH HEADER
             ============================================== */}
 
-            <div className="mb-9">
-              <div
-                className="
-                  mb-5
-                  flex
-                  h-11
-                  w-11
-                  items-center
-                  justify-center
-                  rounded-[13px]
-                  border-[1.5px]
-                  border-primary/25
-                  bg-primary/[0.09]
-                  text-primary
-                "
-              >
-                <LockKeyhole
-                  className="
-                    h-5
-                    w-5
-                    stroke-[2.2]
-                  "
-                />
-              </div>
+            <div className="mb-7">
 
               <h1
                 className="
@@ -580,7 +760,7 @@ export function LoginPage() {
                   sm:text-[48px]
                 "
               >
-                Welcome back.
+                {heading}
               </h1>
 
               <p
@@ -593,9 +773,89 @@ export function LoginPage() {
                   text-zinc-500
                 "
               >
-                Sign in to continue your research
-                and pick up where you left off.
+                {description}
               </p>
+            </div>
+
+            {/* =============================================
+                SIGN IN / SIGN UP SWITCHER
+            ============================================== */}
+
+            <div
+              className="
+                mb-7
+                grid
+                grid-cols-2
+                rounded-[13px]
+                border
+                border-white/[0.08]
+                bg-white/[0.02]
+                p-1
+              "
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  handleModeChange(
+                    "signin",
+                  )
+                }
+                className={`
+                  rounded-[10px]
+                  px-4
+                  py-2.5
+                  text-xs
+                  font-bold
+                  transition-all
+                  duration-300
+                  ${
+                    isSignIn
+                      ? `
+                        bg-white
+                        text-black
+                        shadow-[0_5px_20px_rgba(255,255,255,0.06)]
+                      `
+                      : `
+                        text-zinc-600
+                        hover:text-zinc-300
+                      `
+                  }
+                `}
+              >
+                Sign in
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleModeChange(
+                    "signup",
+                  )
+                }
+                className={`
+                  rounded-[10px]
+                  px-4
+                  py-2.5
+                  text-xs
+                  font-bold
+                  transition-all
+                  duration-300
+                  ${
+                    !isSignIn
+                      ? `
+                        bg-white
+                        text-black
+                        shadow-[0_5px_20px_rgba(255,255,255,0.06)]
+                      `
+                      : `
+                        text-zinc-600
+                        hover:text-zinc-300
+                      `
+                  }
+                `}
+              >
+                Sign up
+              </button>
             </div>
 
             {/* =============================================
@@ -606,6 +866,7 @@ export function LoginPage() {
               onSubmit={handleSubmit}
               className="space-y-5"
             >
+
               {/* EMAIL */}
 
               <div className="space-y-2.5">
@@ -643,9 +904,12 @@ export function LoginPage() {
                     autoComplete="email"
                     required
                     value={email}
-                    onChange={(event) =>
+                    onChange={(
+                      event,
+                    ) =>
                       setEmail(
-                        event.target.value,
+                        event.target
+                          .value,
                       )
                     }
                     placeholder="you@example.com"
@@ -708,15 +972,26 @@ export function LoginPage() {
                   <input
                     id="password"
                     type="password"
-                    autoComplete="current-password"
+                    autoComplete={
+                      isSignIn
+                        ? "current-password"
+                        : "new-password"
+                    }
                     required
                     value={password}
-                    onChange={(event) =>
+                    onChange={(
+                      event,
+                    ) =>
                       setPassword(
-                        event.target.value,
+                        event.target
+                          .value,
                       )
                     }
-                    placeholder="Enter your password"
+                    placeholder={
+                      isSignIn
+                        ? "Enter your password"
+                        : "Create a password"
+                    }
                     className="
                       h-[58px]
                       w-full
@@ -760,6 +1035,27 @@ export function LoginPage() {
                   "
                 >
                   {error}
+                </div>
+              )}
+
+              {/* SUCCESS */}
+
+              {success && (
+                <div
+                  className="
+                    rounded-[14px]
+                    border-[1.5px]
+                    border-emerald-500/20
+                    bg-emerald-500/[0.06]
+                    px-4
+                    py-3.5
+                    text-xs
+                    font-medium
+                    leading-5
+                    text-emerald-300
+                  "
+                >
+                  {success}
                 </div>
               )}
 
@@ -814,8 +1110,12 @@ export function LoginPage() {
 
                 <span className="relative">
                   {isSubmitting
-                    ? "Signing in..."
-                    : "Sign in"}
+                    ? isSignIn
+                      ? "Signing in..."
+                      : "Creating account..."
+                    : isSignIn
+                      ? "Sign in"
+                      : "Create account"}
                 </span>
 
                 {!isSubmitting && (
@@ -835,7 +1135,7 @@ export function LoginPage() {
             </form>
 
             {/* =============================================
-                SMALL FOOTER
+                BOTTOM AUTH FOOTER
             ============================================== */}
 
             <div
@@ -886,6 +1186,7 @@ export function LoginPage() {
                 Back home
               </button>
             </div>
+
           </div>
         </section>
       </div>

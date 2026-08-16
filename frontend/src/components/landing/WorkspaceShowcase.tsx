@@ -467,34 +467,16 @@ export function WorkspaceShowcase() {
                     py-4
                   "
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="
-                        flex
-                        h-7
-                        w-7
-                        items-center
-                        justify-center
-                        rounded-lg
-                        bg-gradient-to-br
-                        from-primary
-                        to-secondary
-                      "
-                    >
-                      <BookOpen className="h-3.5 w-3.5 text-white" />
-                    </div>
-
-                    <span
-                      className="
-                        text-[14px]
-                        font-bold
-                        tracking-tight
-                        text-white
-                      "
-                    >
-                      Dasaiko
-                    </span>
-                  </div>
+                  <img
+                    src="/assets/brand/dasaiko-wordmark-transparent-bg.png"
+                    alt="Dasaiko"
+                    className="
+                      h-auto
+                      w-[105px]
+                      object-contain
+                      object-left
+                    "
+                  />
 
                   <span className="text-sm text-zinc-600">
                     ‹
@@ -641,9 +623,9 @@ export function WorkspaceShowcase() {
 
                   <div className="space-y-4 px-2">
                     {[
-                      "New Workspace",
-                      "New Workspace",
-                      "New Workspace",
+                      "DPR Overview",
+                      "RAG vs Fine-Tuning",
+                      "Transformer Architecture",
                     ].map((item, index) => (
                       <div key={`${item}-${index}`}>
                         <p className="text-[10px] font-medium text-zinc-300">

@@ -3,16 +3,17 @@ import {
   useRef,
   useState,
 } from "react";
+
 import { useNavigate } from "react-router-dom";
+
 import gsap from "gsap";
+
 import {
   ArrowRight,
   Menu,
   X,
   Sparkles,
 } from "lucide-react";
-
-import { DasaikoLogo } from "@/components/brand/DasaikoLogo";
 
 const navItems = [
   {
@@ -317,9 +318,18 @@ export function LandingNavbar() {
             "
             aria-label="Go to Dasaiko home"
           >
-            <DasaikoLogo
-              size="lg"
-              variant="gradient"
+            <img
+              src="/assets/brand/dasaiko-wordmark-transparent-bg.png"
+              alt="Dasaiko"
+              className="
+                block
+                h-auto
+                w-[128px]
+                object-contain
+                transition-transform
+                duration-300
+                group-hover:scale-[1.02]
+              "
             />
           </button>
 
@@ -430,9 +440,7 @@ export function LandingNavbar() {
               Sign in
             </button>
 
-            {/* =================================================
-                CTA
-            ================================================== */}
+            {/* CTA */}
 
             <button
               ref={ctaRef}
@@ -517,9 +525,7 @@ export function LandingNavbar() {
               />
             </button>
 
-            {/* =================================================
-                MOBILE MENU
-            ================================================== */}
+            {/* MOBILE MENU */}
 
             <button
               type="button"

@@ -76,52 +76,19 @@ export function TopNav() {
             <button
               type="button"
               onClick={() => navigate("/")}
+              aria-label="Dasaiko home"
               className="
-                group
                 flex
                 items-center
-                gap-3
-                rounded-xl
-                px-2
-                py-1.5
-                transition-colors
-                duration-200
-                hover:bg-white/[0.045]
+                transition-opacity
+                hover:opacity-80
               "
             >
-              <div
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border
-                  border-white/[0.12]
-                  bg-gradient-to-br
-                  from-primary
-                  to-secondary
-                  shadow-[0_0_24px_rgba(99,102,241,0.18)]
-                  transition-transform
-                  duration-300
-                  group-hover:scale-105
-                "
-              >
-                <BookOpen className="h-4 w-4 text-white" />
-              </div>
-
-              <span
-                className="
-                  text-[17px]
-                  font-black
-                  tracking-[-0.03em]
-                  text-white
-                "
-              >
-                Dasaiko
-              </span>
+              <img
+                src="/assets/brand/dasaiko-horizontal.png"
+                alt="Dasaiko"
+                className="h-7 w-auto object-contain"
+              />
             </button>
           )}
 

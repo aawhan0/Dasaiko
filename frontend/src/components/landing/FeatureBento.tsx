@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import {
-  ArrowUpRight,
   BookOpen,
   Brain,
   FileSearch,
@@ -450,52 +449,6 @@ function FeatureCard({
 
       <FeatureVisual index={index} />
 
-      {/* =================================================
-          ARROW
-      ================================================== */}
-
-      <div
-        className="
-          absolute
-          bottom-6
-          right-6
-
-          flex
-          h-10
-          w-10
-          items-center
-          justify-center
-
-          rounded-full
-
-          border-[1.5px]
-          border-white/[0.12]
-
-          bg-white/[0.025]
-
-          text-zinc-500
-
-          transition-all
-          duration-500
-
-          group-hover:border-black
-          group-hover:bg-black
-          group-hover:text-white
-        "
-      >
-        <ArrowUpRight
-          className="
-            h-[17px]
-            w-[17px]
-
-            transition-transform
-            duration-300
-
-            group-hover:translate-x-0.5
-            group-hover:-translate-y-0.5
-          "
-        />
-      </div>
 
       {/* =================================================
           BOTTOM ACCENT

@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { DasaikoLogo } from "@/components/brand/DasaikoLogo";
+
 import {
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
 } from "lucide-react";
 
 export function LandingFooter() {
@@ -39,23 +38,20 @@ export function LandingFooter() {
   const socialClass = `
     group
     flex
-    h-11
-    w-11
+    h-9
+    w-9
     items-center
     justify-center
-    rounded-xl
-    border-[1.5px]
-    border-white/[0.10]
-    bg-white/[0.025]
-    text-xs
-    font-black
-    text-zinc-400
+    rounded-lg
+    border
+    border-white/[0.06]
+    bg-white/[0.015]
     transition-all
     duration-300
-    hover:border-white
-    hover:bg-white
-    hover:text-black
     hover:-translate-y-0.5
+    hover:border-primary/30
+    hover:bg-primary/[0.05]
+    hover:shadow-[0_0_20px_rgba(139,92,246,0.12)]
   `;
 
   return (
@@ -109,6 +105,7 @@ export function LandingFooter() {
       />
 
       <div className="relative z-10 mx-auto max-w-7xl">
+
         {/* =================================================
             MAIN FOOTER GRID
         ================================================== */}
@@ -121,6 +118,7 @@ export function LandingFooter() {
             lg:gap-20
           "
         >
+
           {/* =================================================
               BRAND
           ================================================== */}
@@ -129,16 +127,24 @@ export function LandingFooter() {
             <button
               type="button"
               onClick={scrollTop}
+              aria-label="Dasaiko home"
               className="
                 group
                 flex
                 items-center
-                gap-3
+                transition-opacity
+                duration-300
+                hover:opacity-80
               "
             >
-              <DasaikoLogo
-                size="md"
-                variant="gradient"
+              <img
+                src="/assets/brand/dasaiko-wordmark-transparent-bg.png"
+                alt="Dasaiko"
+                className="
+                  h-auto
+                  w-[210px]
+                  object-contain
+                "
               />
             </button>
 
@@ -223,7 +229,9 @@ export function LandingFooter() {
             <div className="mt-6 space-y-4">
               <button
                 type="button"
-                onClick={() => scrollTo("features")}
+                onClick={() =>
+                  scrollTo("features")
+                }
                 className={linkClass}
               >
                 Features
@@ -241,7 +249,9 @@ export function LandingFooter() {
 
               <button
                 type="button"
-                onClick={() => scrollTo("evidence")}
+                onClick={() =>
+                  scrollTo("evidence")
+                }
                 className={linkClass}
               >
                 Evidence
@@ -249,7 +259,9 @@ export function LandingFooter() {
 
               <button
                 type="button"
-                onClick={() => navigate("/login")}
+                onClick={() =>
+                  navigate("/login")
+                }
                 className={linkClass}
               >
                 Sign in
@@ -274,7 +286,8 @@ export function LandingFooter() {
               Connect
             </h3>
 
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex items-center gap-3">
+
               {/* GitHub */}
 
               <a
@@ -285,7 +298,23 @@ export function LandingFooter() {
                 data-cursor="view"
                 className={socialClass}
               >
-                GH
+                <img
+                  src="/assets/social/github.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="
+                    h-[18px]
+                    w-[18px]
+                    object-contain
+                    brightness-0
+                    invert
+                    opacity-70
+                    transition-all
+                    duration-300
+                    group-hover:scale-105
+                    group-hover:opacity-100
+                  "
+                />
               </a>
 
               {/* LinkedIn */}
@@ -294,12 +323,29 @@ export function LandingFooter() {
                 href="https://www.linkedin.com/in/aawhanvyas/"
                 target="_blank"
                 rel="noreferrer"
-                aria-label="LinkedIn"
+                aria-label="Dasaiko LinkedIn profile"
                 data-cursor="view"
                 className={socialClass}
               >
-                in
+                <img
+                  src="/assets/social/linkedin.svg"
+                  alt=""
+                  aria-hidden="true"
+                  className="
+                    h-[18px]
+                    w-[18px]
+                    object-contain
+                    brightness-0
+                    invert
+                    opacity-70
+                    transition-all
+                    duration-300
+                    group-hover:scale-105
+                    group-hover:opacity-100
+                  "
+                />
               </a>
+
             </div>
 
             <p
@@ -319,14 +365,12 @@ export function LandingFooter() {
         </div>
 
         {/* =================================================
-            DIVIDER
+            BOTTOM
         ================================================== */}
 
         <div
           className="
             mt-16
-            border-t-[1.5px]
-            border-white/[0.09]
             pt-7
           "
         >
@@ -340,6 +384,7 @@ export function LandingFooter() {
               sm:justify-between
             "
           >
+
             {/* Copyright */}
 
             <p
@@ -386,8 +431,10 @@ export function LandingFooter() {
                 "
               />
             </button>
+
           </div>
         </div>
+
       </div>
     </footer>
   );
