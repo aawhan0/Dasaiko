@@ -18,6 +18,8 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { VerifyEmailPage } from "@/pages/VerifyEmailPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { WorkspacePage } from "@/pages/WorkspacePage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -64,6 +66,20 @@ export function App() {
                   path="/verify-email"
                   element={
                     <VerifyEmailPage />
+                  }
+                />
+
+                <Route
+                  path="/forgot-password"
+                  element={
+                    <ForgotPasswordPage />
+                  }
+                />
+
+                <Route
+                  path="/reset-password"
+                  element={
+                    <ResetPasswordPage />
                   }
                 />
 

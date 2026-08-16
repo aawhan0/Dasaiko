@@ -1,4 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import (
+    BaseModel,
+    EmailStr,
+    Field,
+)
 
 
 class UserRegister(BaseModel):
@@ -34,6 +38,25 @@ class ResendVerificationRequest(BaseModel):
     email: EmailStr
 
 
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmRequest(BaseModel):
+    email: EmailStr
+
+    code: str = Field(
+        min_length=6,
+        max_length=6,
+        pattern=r"^\d{6}$",
+    )
+
+    new_password: str = Field(
+        min_length=8,
+        max_length=128,
+    )
+
+
 class UserResponse(BaseModel):
     id: int
     username: str
@@ -63,3 +86,11 @@ class VerificationResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class PasswordResetResponse(BaseModel):
+    message: str
+
+
+class PasswordResetConfirmResponse(BaseModel):
+    message: str

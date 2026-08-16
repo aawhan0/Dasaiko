@@ -20,6 +20,10 @@ from app.db.dependencies import (
 )
 
 from app.schemas.auth import (
+    PasswordResetConfirmRequest,
+    PasswordResetConfirmResponse,
+    PasswordResetRequest,
+    PasswordResetResponse,
     RegistrationResponse,
     ResendVerificationRequest,
     TokenResponse,
@@ -43,6 +47,11 @@ router = APIRouter(
     prefix="/auth",
     tags=["Authentication"],
 )
+
+
+# ==================================================
+# REGISTER
+# ==================================================
 
 
 @router.post(
@@ -108,6 +117,11 @@ def register(
     )
 
 
+# ==================================================
+# VERIFY EMAIL
+# ==================================================
+
+
 @router.post(
     "/verify-email",
     response_model=VerificationResponse,
@@ -166,6 +180,11 @@ def verify_email(
         token_type="bearer",
         user=verified_user,
     )
+
+
+# ==================================================
+# RESEND EMAIL VERIFICATION
+# ==================================================
 
 
 @router.post(
@@ -254,6 +273,119 @@ def resend_verification(
     )
 
 
+# ==================================================
+# FORGOT PASSWORD
+# ==================================================
+
+
+@router.post(
+    "/forgot-password",
+    response_model=PasswordResetResponse,
+)
+def forgot_password(
+    request: PasswordResetRequest,
+    db: Session = Depends(get_db),
+):
+
+    try:
+
+        otp_code = (
+            AuthService.create_password_reset_otp(
+                db=db,
+                email=request.email,
+            )
+        )
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_429_TOO_MANY_REQUESTS
+            ),
+            detail=str(error),
+        )
+
+    # ------------------------------------------------
+    # Deliberately do not reveal whether the account
+    # exists.
+    # ------------------------------------------------
+
+    if otp_code is not None:
+
+        try:
+
+            EmailService.send_password_reset_otp(
+                recipient=request.email,
+                otp=otp_code,
+            )
+
+        except Exception:
+
+            raise HTTPException(
+                status_code=(
+                    status.HTTP_503_SERVICE_UNAVAILABLE
+                ),
+                detail=(
+                    "Could not send the "
+                    "password reset email. "
+                    "Please try again later."
+                ),
+            )
+
+    return PasswordResetResponse(
+        message=(
+            "If an account exists for this "
+            "email address, a password reset "
+            "code has been sent."
+        )
+    )
+
+
+# ==================================================
+# RESET PASSWORD
+# ==================================================
+
+
+@router.post(
+    "/reset-password",
+    response_model=PasswordResetConfirmResponse,
+)
+def reset_password(
+    request: PasswordResetConfirmRequest,
+    db: Session = Depends(get_db),
+):
+
+    try:
+
+        AuthService.reset_password(
+            db=db,
+            email=request.email,
+            code=request.code,
+            new_password=request.new_password,
+        )
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
+        )
+
+    return PasswordResetConfirmResponse(
+        message=(
+            "Password reset successfully. "
+            "You can now sign in."
+        )
+    )
+
+
+# ==================================================
+# LOGIN
+# ==================================================
+
+
 @router.post(
     "/login",
     response_model=TokenResponse,
@@ -302,6 +434,11 @@ def login(
         token_type="bearer",
         user=user,
     )
+
+
+# ==================================================
+# CURRENT USER
+# ==================================================
 
 
 @router.get(

@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     resend_api_key: str
     resend_from_email: str
 
+    frontend_base_url: str = "http://localhost:5173"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

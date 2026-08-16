@@ -27,19 +27,25 @@ export interface VerificationResponse {
   user: AuthUser;
 }
 
-export interface VerifyEmailRequest {
-  email: string;
-  code: string;
-}
-
 export interface ResendVerificationResponse {
   message: string;
   email: string;
   email_verified: boolean;
 }
 
+export interface PasswordResetResponse {
+  message: string;
+}
+
+export interface PasswordResetConfirmResponse {
+  message: string;
+}
+
 export const PENDING_VERIFICATION_EMAIL_KEY =
   "dasaiko.pendingVerificationEmail";
+
+export const PASSWORD_RESET_EMAIL_KEY =
+  "dasaiko.passwordResetEmail";
 
 export async function register(
   username: string,
@@ -99,6 +105,38 @@ export async function resendVerification(
       "/auth/resend-verification",
       {
         email,
+      },
+    );
+
+  return response.data;
+}
+
+export async function requestPasswordReset(
+  email: string,
+): Promise<PasswordResetResponse> {
+  const response =
+    await api.post<PasswordResetResponse>(
+      "/auth/forgot-password",
+      {
+        email,
+      },
+    );
+
+  return response.data;
+}
+
+export async function resetPassword(
+  email: string,
+  code: string,
+  newPassword: string,
+): Promise<PasswordResetConfirmResponse> {
+  const response =
+    await api.post<PasswordResetConfirmResponse>(
+      "/auth/reset-password",
+      {
+        email,
+        code,
+        new_password: newPassword,
       },
     );
 

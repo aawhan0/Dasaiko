@@ -4,12 +4,21 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+
 from app.db.transaction import transactional
+
 from app.models.user import User
-from app.services.otp_service import OTPService
+
+from app.services.otp_service import (
+    OTPService,
+)
 
 
 class AuthService:
+
+    # ==================================================
+    # USER LOOKUPS
+    # ==================================================
 
     @staticmethod
     def get_user_by_email(
@@ -38,6 +47,10 @@ class AuthService:
             )
             .first()
         )
+
+    # ==================================================
+    # REGISTRATION
+    # ==================================================
 
     @staticmethod
     @transactional
@@ -96,6 +109,10 @@ class AuthService:
 
         return user, otp_code
 
+    # ==================================================
+    # AUTHENTICATION
+    # ==================================================
+
     @staticmethod
     def authenticate_user(
         db: Session,
@@ -130,66 +147,51 @@ class AuthService:
 
         return user
 
+    # ==================================================
+    # EMAIL VERIFICATION
+    # ==================================================
+
     @staticmethod
+    @transactional
     def verify_email(
         db: Session,
         user_id: int,
         code: str,
     ) -> User:
 
-        try:
+        user = (
+            db.query(User)
+            .filter(
+                User.id == user_id
+            )
+            .first()
+        )
 
-            user = (
-                db.query(User)
-                .filter(
-                    User.id == user_id
-                )
-                .first()
+        if user is None:
+            raise ValueError(
+                "User not found."
             )
 
-            if user is None:
-                raise ValueError(
-                    "User not found."
-                )
-
-            if user.email_verified:
-                raise ValueError(
-                    "Email is already verified."
-                )
-
-            OTPService.verify_otp(
-                db=db,
-                user_id=user.id,
-                purpose=(
-                    OTPService.EMAIL_VERIFICATION
-                ),
-                code=code,
+        if user.email_verified:
+            raise ValueError(
+                "Email is already verified."
             )
 
-            user.email_verified = True
+        OTPService.verify_otp(
+            db=db,
+            user_id=user.id,
+            purpose=(
+                OTPService.EMAIL_VERIFICATION
+            ),
+            code=code,
+        )
 
-            db.flush()
+        user.email_verified = True
 
-            db.commit()
+        db.flush()
+        db.refresh(user)
 
-            db.refresh(user)
-
-            return user
-
-        except ValueError:
-
-            # Important:
-            # Persist OTP attempt/expiration
-            # changes before returning the error.
-            db.commit()
-
-            raise
-
-        except Exception:
-
-            db.rollback()
-
-            raise
+        return user
 
     @staticmethod
     @transactional
@@ -222,3 +224,83 @@ class AuthService:
                 email,
             )
         )
+
+    # ==================================================
+    # PASSWORD RESET
+    # ==================================================
+
+    @staticmethod
+    @transactional
+    def create_password_reset_otp(
+        db: Session,
+        email: str,
+    ) -> str | None:
+
+        user = (
+            AuthService.get_user_by_email(
+                db,
+                email,
+            )
+        )
+
+        if user is None:
+            return None
+
+        if not user.is_active:
+            return None
+
+        _, otp_code = (
+            OTPService.create_otp(
+                db=db,
+                user_id=user.id,
+                purpose=(
+                    OTPService.PASSWORD_RESET
+                ),
+            )
+        )
+
+        return otp_code
+
+    @staticmethod
+    @transactional
+    def reset_password(
+        db: Session,
+        email: str,
+        code: str,
+        new_password: str,
+    ) -> User:
+
+        user = (
+            AuthService.get_user_by_email(
+                db,
+                email,
+            )
+        )
+
+        if user is None:
+            raise ValueError(
+                "Invalid password reset request."
+            )
+
+        if not user.is_active:
+            raise ValueError(
+                "Invalid password reset request."
+            )
+
+        OTPService.verify_otp(
+            db=db,
+            user_id=user.id,
+            purpose=(
+                OTPService.PASSWORD_RESET
+            ),
+            code=code,
+        )
+
+        user.hashed_password = (
+            hash_password(new_password)
+        )
+
+        db.flush()
+        db.refresh(user)
+
+        return user

@@ -33,15 +33,14 @@ class OTPService:
     def hash_code(
         code: str,
     ) -> str:
+
         key = settings.jwt_secret_key.encode(
             "utf-8"
         )
 
         message = (
             f"dasaiko-otp:{code}"
-        ).encode(
-            "utf-8"
-        )
+        ).encode("utf-8")
 
         return hmac.new(
             key,
@@ -54,6 +53,7 @@ class OTPService:
         code: str,
         code_hash: str,
     ) -> bool:
+
         expected_hash = (
             OTPService.hash_code(code)
         )
@@ -77,7 +77,6 @@ class OTPService:
             .filter(
                 EmailVerificationOTP.user_id
                 == user_id,
-
                 EmailVerificationOTP.purpose
                 == purpose,
             )
@@ -121,14 +120,10 @@ class OTPService:
 
             if now < cooldown_until:
 
-                remaining_seconds = max(
-                    1,
-                    int(
-                        (
-                            cooldown_until
-                            - now
-                        ).total_seconds()
-                    ),
+                remaining_seconds = int(
+                    (
+                        cooldown_until - now
+                    ).total_seconds()
                 )
 
                 raise ValueError(
@@ -137,9 +132,7 @@ class OTPService:
                     "before requesting another OTP."
                 )
 
-        # ---------------------------------
-        # Invalidate previous OTPs
-        # ---------------------------------
+        # Invalidate previous unused OTPs.
 
         (
             db.query(
@@ -148,38 +141,29 @@ class OTPService:
             .filter(
                 EmailVerificationOTP.user_id
                 == user_id,
-
                 EmailVerificationOTP.purpose
                 == purpose,
-
                 EmailVerificationOTP.used_at
                 .is_(None),
             )
             .update(
                 {
-                    EmailVerificationOTP.used_at: now
+                    EmailVerificationOTP.used_at: now,
                 },
                 synchronize_session=False,
             )
         )
 
-        # ---------------------------------
-        # Generate new OTP
-        # ---------------------------------
-
-        code = OTPService.generate_code()
+        code = (
+            OTPService.generate_code()
+        )
 
         otp = EmailVerificationOTP(
             user_id=user_id,
-
             code_hash=(
-                OTPService.hash_code(
-                    code
-                )
+                OTPService.hash_code(code)
             ),
-
             purpose=purpose,
-
             expires_at=(
                 now
                 + timedelta(
@@ -189,14 +173,12 @@ class OTPService:
                     )
                 )
             ),
-
             attempts=0,
             used_at=None,
             created_at=now,
         )
 
         db.add(otp)
-
         db.flush()
         db.refresh(otp)
 
@@ -217,10 +199,8 @@ class OTPService:
             .filter(
                 EmailVerificationOTP.user_id
                 == user_id,
-
                 EmailVerificationOTP.purpose
                 == purpose,
-
                 EmailVerificationOTP.used_at
                 .is_(None),
             )
@@ -237,24 +217,14 @@ class OTPService:
 
         now = datetime.utcnow()
 
-        # ---------------------------------
-        # Expiration
-        # ---------------------------------
-
         if now >= otp.expires_at:
 
             otp.used_at = now
-
-            db.flush()
 
             raise ValueError(
                 "OTP has expired. "
                 "Please request a new one."
             )
-
-        # ---------------------------------
-        # Attempt limit
-        # ---------------------------------
 
         if otp.attempts >= (
             OTPService.MAX_ATTEMPTS
@@ -262,16 +232,10 @@ class OTPService:
 
             otp.used_at = now
 
-            db.flush()
-
             raise ValueError(
                 "Too many incorrect attempts. "
                 "Please request a new OTP."
             )
-
-        # ---------------------------------
-        # Verify code
-        # ---------------------------------
 
         if not OTPService.verify_code(
             code,
@@ -285,15 +249,9 @@ class OTPService:
             ):
                 otp.used_at = now
 
-            db.flush()
-
             raise ValueError(
                 "Invalid OTP."
             )
-
-        # ---------------------------------
-        # Successful verification
-        # ---------------------------------
 
         otp.used_at = now
 
