@@ -47,6 +47,17 @@ export const PENDING_VERIFICATION_EMAIL_KEY =
 export const PASSWORD_RESET_EMAIL_KEY =
   "dasaiko.passwordResetEmail";
 
+/**
+ * Start Google OAuth authentication.
+ *
+ * The browser is redirected to the FastAPI backend,
+ * which then redirects the user to Google.
+ */
+export function loginWithGoogle(): void {
+  window.location.href =
+    "http://127.0.0.1:8000/auth/google";
+}
+
 export async function register(
   username: string,
   email: string,

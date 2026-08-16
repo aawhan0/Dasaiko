@@ -18,6 +18,11 @@ class Settings(BaseSettings):
 
     frontend_base_url: str = "http://localhost:5173"
 
+    # Google OAuth
+    google_client_id: str
+    google_client_secret: str
+    google_redirect_uri: str
+
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

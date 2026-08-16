@@ -16,11 +16,17 @@ import {
   type AuthUser,
 } from "@/services/auth";
 
-import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import {
+  useWorkspaceStore,
+} from "@/store/useWorkspaceStore";
+
 
 interface AuthContextValue {
+
   user: AuthUser | null;
+
   isLoading: boolean;
+
   isAuthenticated: boolean;
 
   login: (
@@ -36,31 +42,49 @@ interface AuthContextValue {
   logout: () => void;
 }
 
+
 const AuthContext =
   createContext<AuthContextValue | null>(
     null,
   );
 
+
 const SELECTED_DOCUMENT_STORAGE_KEY =
   "dasaiko.selectedDocumentByConversation";
+
 
 export function AuthProvider({
   children,
 }: {
   children: ReactNode;
 }) {
+
   const {
     clearWorkspace,
   } = useWorkspaceStore();
 
-  const [user, setUser] =
-    useState<AuthUser | null>(null);
 
-  const [isLoading, setIsLoading] =
-    useState(true);
+  const [
+    user,
+    setUser,
+  ] = useState<AuthUser | null>(
+    null,
+  );
+
+
+  const [
+    isLoading,
+    setIsLoading,
+  ] = useState(true);
+
+
+  /*
+   * Clear all local authentication state.
+   */
 
   const clearAuth =
     useCallback(() => {
+
       localStorage.removeItem(
         "token",
       );
@@ -72,75 +96,147 @@ export function AuthProvider({
       clearWorkspace();
 
       setUser(null);
-    }, [clearWorkspace]);
+
+    }, [
+      clearWorkspace,
+    ]);
+
+
+  /*
+   * Restore authentication whenever
+   * the application starts.
+   *
+   * This is also what makes Google OAuth
+   * work after GoogleCallbackPage stores
+   * the JWT in localStorage.
+   */
 
   useEffect(() => {
+
     let mounted = true;
 
+
     async function restoreSession() {
+
       const token =
-        localStorage.getItem("token");
+        localStorage.getItem(
+          "token",
+        );
+
 
       if (!token) {
+
         if (mounted) {
+
           setIsLoading(false);
+
         }
 
         return;
       }
 
+
       try {
+
         const currentUser =
           await getCurrentUser();
 
+
         if (mounted) {
-          setUser(currentUser);
+
+          setUser(
+            currentUser,
+          );
+
         }
+
       } catch {
-        clearAuth();
-      } finally {
+
         if (mounted) {
-          setIsLoading(false);
+
+          clearAuth();
+
         }
+
+      } finally {
+
+        if (mounted) {
+
+          setIsLoading(false);
+
+        }
+
       }
+
     }
+
 
     restoreSession();
 
+
+    /*
+     * Axios/API layer can dispatch this when
+     * the backend returns 401.
+     */
+
     const handleUnauthorized =
       () => {
+
         clearAuth();
+
       };
+
+
+    /*
+     * Normal application logout event.
+     */
 
     const handleLogout =
       () => {
+
         clearAuth();
+
       };
+
 
     window.addEventListener(
       "dasaiko:unauthorized",
       handleUnauthorized,
     );
 
+
     window.addEventListener(
       "dasaiko:logout",
       handleLogout,
     );
 
+
     return () => {
+
       mounted = false;
+
 
       window.removeEventListener(
         "dasaiko:unauthorized",
         handleUnauthorized,
       );
 
+
       window.removeEventListener(
         "dasaiko:logout",
         handleLogout,
       );
+
     };
-  }, [clearAuth]);
+
+  }, [
+    clearAuth,
+  ]);
+
+
+  /*
+   * Normal email/password login.
+   */
 
   const login =
     useCallback(
@@ -148,21 +244,32 @@ export function AuthProvider({
         email: string,
         password: string,
       ) => {
+
         const result =
           await loginRequest(
             email,
             password,
           );
 
+
         localStorage.setItem(
           "token",
           result.access_token,
         );
 
-        setUser(result.user);
+
+        setUser(
+          result.user,
+        );
+
       },
       [],
     );
+
+
+  /*
+   * Email verification.
+   */
 
   const verifyEmail =
     useCallback(
@@ -170,24 +277,36 @@ export function AuthProvider({
         email: string,
         code: string,
       ) => {
+
         const result =
           await verifyEmailRequest(
             email,
             code,
           );
 
+
         localStorage.setItem(
           "token",
           result.access_token,
         );
 
-        setUser(result.user);
+
+        setUser(
+          result.user,
+        );
+
       },
       [],
     );
 
+
+  /*
+   * Normal logout.
+   */
+
   const logout =
     useCallback(() => {
+
       logoutRequest();
 
       clearWorkspace();
@@ -197,18 +316,29 @@ export function AuthProvider({
       );
 
       setUser(null);
-    }, [clearWorkspace]);
+
+    }, [
+      clearWorkspace,
+    ]);
+
 
   const value =
     useMemo(
       () => ({
+
         user,
+
         isLoading,
+
         isAuthenticated:
           user !== null,
+
         login,
+
         verifyEmail,
+
         logout,
+
       }),
       [
         user,
@@ -219,6 +349,7 @@ export function AuthProvider({
       ],
     );
 
+
   return (
     <AuthContext.Provider
       value={value}
@@ -228,15 +359,23 @@ export function AuthProvider({
   );
 }
 
+
 export function useAuth(): AuthContextValue {
+
   const context =
-    useContext(AuthContext);
+    useContext(
+      AuthContext,
+    );
+
 
   if (!context) {
+
     throw new Error(
       "useAuth must be used inside AuthProvider",
     );
+
   }
+
 
   return context;
 }

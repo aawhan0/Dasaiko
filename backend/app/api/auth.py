@@ -5,7 +5,13 @@ from fastapi import (
     status,
 )
 
+from fastapi.responses import RedirectResponse
+
 from sqlalchemy.orm import Session
+
+from app.core.config import (
+    settings,
+)
 
 from app.core.dependencies import (
     get_current_user,
@@ -40,6 +46,10 @@ from app.services.auth_service import (
 
 from app.services.email_service import (
     EmailService,
+)
+
+from app.services.google_auth_service import (
+    GoogleAuthService,
 )
 
 
@@ -433,6 +443,87 @@ def login(
         access_token=token,
         token_type="bearer",
         user=user,
+    )
+
+
+# ==================================================
+# GOOGLE AUTHENTICATION
+# ==================================================
+
+
+@router.get(
+    "/google",
+)
+def google_login():
+
+    authorization_url = (
+        GoogleAuthService.get_authorization_url()
+    )
+
+    return RedirectResponse(
+        url=authorization_url
+    )
+
+
+@router.get(
+    "/google/callback",
+)
+def google_callback(
+    code: str,
+    db: Session = Depends(get_db),
+):
+
+    try:
+
+        google_user = (
+            GoogleAuthService.authenticate(
+                code
+            )
+        )
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_401_UNAUTHORIZED
+            ),
+            detail=str(error),
+        )
+
+    try:
+
+        user = (
+            AuthService.authenticate_google_user(
+                db=db,
+                google_id=(
+                    google_user["google_id"]
+                ),
+                email=google_user["email"],
+                name=google_user.get("name"),
+            )
+        )
+
+    except ValueError as error:
+
+        raise HTTPException(
+            status_code=(
+                status.HTTP_409_CONFLICT
+            ),
+            detail=str(error),
+        )
+
+    token = create_access_token(
+        user_id=user.id,
+    )
+
+    redirect_url = (
+        f"{settings.frontend_base_url}"
+        f"/auth/google/callback"
+        f"?token={token}"
+    )
+
+    return RedirectResponse(
+        url=redirect_url
     )
 
 

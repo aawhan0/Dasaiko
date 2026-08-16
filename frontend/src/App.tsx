@@ -9,20 +9,58 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 
-import { WorkspaceProvider } from "@/store/useWorkspaceStore";
-import { UploadProvider } from "@/store/useUploadStore";
-import { AuthProvider } from "@/context/AuthContext";
+import {
+  WorkspaceProvider,
+} from "@/store/useWorkspaceStore";
 
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import {
+  UploadProvider,
+} from "@/store/useUploadStore";
 
-import { LandingPage } from "@/pages/LandingPage";
-import { LoginPage } from "@/pages/LoginPage";
-import { VerifyEmailPage } from "@/pages/VerifyEmailPage";
-import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
-import { WorkspacePage } from "@/pages/WorkspacePage";
-import { SettingsPage } from "@/pages/SettingsPage";
-import { NotFoundPage } from "@/pages/NotFoundPage";
+import {
+  AuthProvider,
+} from "@/context/AuthContext";
+
+import {
+  ProtectedRoute,
+} from "@/components/auth/ProtectedRoute";
+
+import {
+  LandingPage,
+} from "@/pages/LandingPage";
+
+import {
+  LoginPage,
+} from "@/pages/LoginPage";
+
+import {
+  VerifyEmailPage,
+} from "@/pages/VerifyEmailPage";
+
+import {
+  ForgotPasswordPage,
+} from "@/pages/ForgotPasswordPage";
+
+import {
+  ResetPasswordPage,
+} from "@/pages/ResetPasswordPage";
+
+import {
+  GoogleCallbackPage,
+} from "@/pages/GoogleCallbackPage";
+
+import {
+  WorkspacePage,
+} from "@/pages/WorkspacePage";
+
+import {
+  SettingsPage,
+} from "@/pages/SettingsPage";
+
+import {
+  NotFoundPage,
+} from "@/pages/NotFoundPage";
+
 
 const queryClient =
   new QueryClient({
@@ -30,23 +68,34 @@ const queryClient =
       queries: {
         staleTime:
           1000 * 60 * 5,
-        refetchOnWindowFocus: false,
+
+        refetchOnWindowFocus:
+          false,
       },
     },
   });
 
+
 export function App() {
+
   return (
     <QueryClientProvider
       client={queryClient}
     >
+
       <BrowserRouter>
+
         <WorkspaceProvider>
+
           <UploadProvider>
+
             <AuthProvider>
+
               <Routes>
 
-                {/* Public */}
+                {/* =========================================
+                    PUBLIC ROUTES
+                ========================================== */}
 
                 <Route
                   path="/"
@@ -55,12 +104,14 @@ export function App() {
                   }
                 />
 
+
                 <Route
                   path="/login"
                   element={
                     <LoginPage />
                   }
                 />
+
 
                 <Route
                   path="/verify-email"
@@ -69,12 +120,14 @@ export function App() {
                   }
                 />
 
+
                 <Route
                   path="/forgot-password"
                   element={
                     <ForgotPasswordPage />
                   }
                 />
+
 
                 <Route
                   path="/reset-password"
@@ -83,13 +136,33 @@ export function App() {
                   }
                 />
 
-                {/* Protected */}
+
+                {/* =========================================
+                    GOOGLE OAUTH CALLBACK
+
+                    Backend redirects here:
+
+                    /auth/google/callback?token=JWT
+                ========================================== */}
+
+                <Route
+                  path="/auth/google/callback"
+                  element={
+                    <GoogleCallbackPage />
+                  }
+                />
+
+
+                {/* =========================================
+                    PROTECTED ROUTES
+                ========================================== */}
 
                 <Route
                   element={
                     <ProtectedRoute />
                   }
                 >
+
                   <Route
                     path="/workspace"
                     element={
@@ -97,15 +170,20 @@ export function App() {
                     }
                   />
 
+
                   <Route
                     path="/settings"
                     element={
                       <SettingsPage />
                     }
                   />
+
                 </Route>
 
-                {/* Fallback */}
+
+                {/* =========================================
+                    FALLBACK
+                ========================================== */}
 
                 <Route
                   path="*"
@@ -115,12 +193,18 @@ export function App() {
                 />
 
               </Routes>
+
             </AuthProvider>
+
           </UploadProvider>
+
         </WorkspaceProvider>
+
       </BrowserRouter>
+
     </QueryClientProvider>
   );
 }
+
 
 export default App;

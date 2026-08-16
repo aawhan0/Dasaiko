@@ -7,6 +7,8 @@ import {
 import {
   ArrowRight,
   Check,
+  Eye,
+  EyeOff,
   LockKeyhole,
   Mail,
   Sparkles,
@@ -19,8 +21,10 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "@/context/AuthContext";
+
 import {
   PENDING_VERIFICATION_EMAIL_KEY,
+  loginWithGoogle,
   register as registerRequest,
 } from "@/services/auth";
 
@@ -49,6 +53,9 @@ export function LoginPage() {
   const [password, setPassword] =
     useState("");
 
+  const [showPassword, setShowPassword] =
+    useState(false);
+
   const [error, setError] =
     useState("");
 
@@ -57,6 +64,10 @@ export function LoginPage() {
 
   const [isSubmitting, setIsSubmitting] =
     useState(false);
+
+  /* =========================================================
+     REDIRECT IF ALREADY AUTHENTICATED
+  ========================================================= */
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -69,13 +80,33 @@ export function LoginPage() {
     navigate,
   ]);
 
+  /* =========================================================
+     SWITCH AUTH MODE
+  ========================================================= */
+
   const handleModeChange = (
     nextMode: AuthMode,
   ) => {
     setMode(nextMode);
     setError("");
     setSuccess("");
+    setShowPassword(false);
   };
+
+  /* =========================================================
+     GOOGLE LOGIN
+  ========================================================= */
+
+  const handleGoogleLogin = () => {
+    setError("");
+    setSuccess("");
+
+    loginWithGoogle();
+  };
+
+  /* =========================================================
+     AUTH SUBMIT
+  ========================================================= */
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -120,6 +151,7 @@ export function LoginPage() {
            *
            * Send the user directly to verification.
            */
+
           if (
             requestError?.response?.status ===
               403 &&
@@ -215,6 +247,10 @@ export function LoginPage() {
     }
   }
 
+  /* =========================================================
+     CONTENT
+  ========================================================= */
+
   const isSignIn =
     mode === "signin";
 
@@ -236,6 +272,10 @@ export function LoginPage() {
         text-white
       "
     >
+      {/* =====================================================
+          GLOBAL BACKGROUND ATMOSPHERE
+      ====================================================== */}
+
       <div
         className="
           pointer-events-none
@@ -386,6 +426,8 @@ export function LoginPage() {
             aria-hidden="true"
           />
 
+          {/* BRAND */}
+
           <div
             className="
               relative
@@ -422,6 +464,8 @@ export function LoginPage() {
               />
             </button>
           </div>
+
+          {/* LEFT CONTENT */}
 
           <div
             className="
@@ -501,6 +545,8 @@ export function LoginPage() {
                 and evidence together in one workspace
                 built for serious research.
               </p>
+
+              {/* RESEARCH CONTEXT CARD */}
 
               <div
                 className="
@@ -653,6 +699,8 @@ export function LoginPage() {
             </div>
           </div>
 
+          {/* BOTTOM LABEL */}
+
           <div
             className="
               relative
@@ -714,6 +762,8 @@ export function LoginPage() {
               max-w-[460px]
             "
           >
+            {/* HEADING */}
+
             <div className="mb-7">
               <h1
                 className="
@@ -741,6 +791,8 @@ export function LoginPage() {
                 {description}
               </p>
             </div>
+
+            {/* AUTH MODE */}
 
             <div
               className="
@@ -819,6 +871,118 @@ export function LoginPage() {
               </button>
             </div>
 
+            {/* GOOGLE */}
+
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                disabled={isSubmitting}
+                className="
+                  group
+                  flex
+                  h-[58px]
+                  w-full
+                  items-center
+                  justify-center
+                  gap-3
+                  rounded-[15px]
+                  border-[1.5px]
+                  border-white/[0.10]
+                  bg-white/[0.025]
+                  text-sm
+                  font-bold
+                  text-zinc-200
+                  transition-all
+                  duration-300
+                  hover:border-white/[0.18]
+                  hover:bg-white/[0.045]
+                  hover:text-white
+                  active:scale-[0.99]
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="
+                    h-5
+                    w-5
+                    transition-transform
+                    duration-300
+                    group-hover:scale-105
+                  "
+                  aria-hidden="true"
+                >
+                  <path
+                    fill="#4285F4"
+                    d="M21.35 12.23c0-.79-.07-1.55-.23-2.27H12v4.3h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.42Z"
+                  />
+
+                  <path
+                    fill="#34A853"
+                    d="M12 21.67c2.63 0 4.84-.87 6.45-2.35l-3.14-2.45c-.87.58-1.98.92-3.31.92-2.54 0-4.69-1.72-5.46-4.03H3.3v2.53A9.75 9.75 0 0 0 12 21.67Z"
+                  />
+
+                  <path
+                    fill="#FBBC05"
+                    d="M6.54 13.76A5.86 5.86 0 0 1 6.23 12c0-.61.11-1.2.31-1.76V7.71H3.3A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.05 1.05 4.29l3.24-2.53Z"
+                  />
+
+                  <path
+                    fill="#EA4335"
+                    d="M12 6.21c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.27 14.63 2.33 12 2.33a9.75 9.75 0 0 0-8.7 5.38l3.24 2.53c.77-2.31 2.92-4.03 5.46-4.03Z"
+                  />
+                </svg>
+
+                <span>
+                  Continue with Google
+                </span>
+              </button>
+            </div>
+
+            {/* DIVIDER */}
+
+            <div
+              className="
+                mb-6
+                flex
+                items-center
+                gap-4
+              "
+            >
+              <div
+                className="
+                  h-px
+                  flex-1
+                  bg-white/[0.07]
+                "
+              />
+
+              <span
+                className="
+                  whitespace-nowrap
+                  text-[9px]
+                  font-bold
+                  uppercase
+                  tracking-[0.18em]
+                  text-zinc-700
+                "
+              >
+                or continue with email
+              </span>
+
+              <div
+                className="
+                  h-px
+                  flex-1
+                  bg-white/[0.07]
+                "
+              />
+            </div>
+
+            {/* FORM */}
+
             <form
               onSubmit={handleSubmit}
               className="space-y-5"
@@ -867,8 +1031,7 @@ export function LoginPage() {
                         event,
                       ) =>
                         setUsername(
-                          event.target
-                            .value,
+                          event.target.value,
                         )
                       }
                       placeholder="Choose a username"
@@ -939,8 +1102,7 @@ export function LoginPage() {
                       event,
                     ) =>
                       setEmail(
-                        event.target
-                          .value,
+                        event.target.value,
                       )
                     }
                     placeholder="you@example.com"
@@ -972,19 +1134,47 @@ export function LoginPage() {
               {/* PASSWORD */}
 
               <div className="space-y-2.5">
-                <label
-                  htmlFor="password"
+                <div
                   className="
-                    block
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.18em]
-                    text-zinc-500
+                    flex
+                    items-center
+                    justify-between
                   "
                 >
-                  Password
-                </label>
+                  <label
+                    htmlFor="password"
+                    className="
+                      block
+                      text-[10px]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-zinc-500
+                    "
+                  >
+                    Password
+                  </label>
+
+                  {isSignIn && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          "/forgot-password",
+                        )
+                      }
+                      className="
+                        text-[11px]
+                        font-semibold
+                        text-primary
+                        transition-colors
+                        hover:text-primary/80
+                      "
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
 
                 <div className="relative">
                   <LockKeyhole
@@ -1002,7 +1192,11 @@ export function LoginPage() {
 
                   <input
                     id="password"
-                    type="password"
+                    type={
+                      showPassword
+                        ? "text"
+                        : "password"
+                    }
                     autoComplete={
                       isSignIn
                         ? "current-password"
@@ -1014,8 +1208,7 @@ export function LoginPage() {
                       event,
                     ) =>
                       setPassword(
-                        event.target
-                          .value,
+                        event.target.value,
                       )
                     }
                     placeholder={
@@ -1031,7 +1224,7 @@ export function LoginPage() {
                       border-white/[0.10]
                       bg-[#08080b]
                       pl-12
-                      pr-4
+                      pr-12
                       text-sm
                       font-medium
                       text-white
@@ -1045,8 +1238,80 @@ export function LoginPage() {
                       focus:ring-primary/[0.07]
                     "
                   />
+
+                  <button
+                    type="button"
+                    aria-label={
+                      showPassword
+                        ? "Release to hide password"
+                        : "Hold to reveal password"
+                    }
+                    onPointerDown={(
+                      event,
+                    ) => {
+                      event.preventDefault();
+                      setShowPassword(true);
+                    }}
+                    onPointerUp={() =>
+                      setShowPassword(false)
+                    }
+                    onPointerCancel={() =>
+                      setShowPassword(false)
+                    }
+                    onPointerLeave={() =>
+                      setShowPassword(false)
+                    }
+                    className="
+                      absolute
+                      right-3
+                      top-1/2
+                      flex
+                      h-9
+                      w-9
+                      -translate-y-1/2
+                      items-center
+                      justify-center
+                      rounded-lg
+                      text-zinc-600
+                      transition-all
+                      duration-200
+                      hover:bg-white/[0.04]
+                      hover:text-zinc-300
+                      focus:outline-none
+                      focus:ring-2
+                      focus:ring-primary/20
+                    "
+                  >
+                    {showPassword ? (
+                      <EyeOff
+                        className="
+                          h-4
+                          w-4
+                        "
+                      />
+                    ) : (
+                      <Eye
+                        className="
+                          h-4
+                          w-4
+                        "
+                      />
+                    )}
+                  </button>
                 </div>
+
+                <p
+                  className="
+                    text-[10px]
+                    font-medium
+                    text-zinc-700
+                  "
+                >
+                  Hold the eye icon to reveal your password.
+                </p>
               </div>
+
+              {/* ERROR */}
 
               {error && (
                 <div
@@ -1067,6 +1332,8 @@ export function LoginPage() {
                 </div>
               )}
 
+              {/* SUCCESS */}
+
               {success && (
                 <div
                   className="
@@ -1085,6 +1352,8 @@ export function LoginPage() {
                   {success}
                 </div>
               )}
+
+              {/* SUBMIT */}
 
               <button
                 type="submit"
@@ -1158,6 +1427,8 @@ export function LoginPage() {
                 )}
               </button>
             </form>
+
+            {/* FOOTER */}
 
             <div
               className="

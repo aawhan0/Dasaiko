@@ -48,6 +48,20 @@ class AuthService:
             .first()
         )
 
+    @staticmethod
+    def get_user_by_google_id(
+        db: Session,
+        google_id: str,
+    ) -> User | None:
+
+        return (
+            db.query(User)
+            .filter(
+                User.google_id == google_id
+            )
+            .first()
+        )
+
     # ==================================================
     # REGISTRATION
     # ==================================================
@@ -89,6 +103,7 @@ class AuthService:
             hashed_password=(
                 hash_password(password)
             ),
+            google_id=None,
             is_active=True,
             email_verified=False,
         )
@@ -139,6 +154,11 @@ class AuthService:
                 "address before signing in."
             )
 
+        # Google-only accounts do not have
+        # a local password.
+        if user.hashed_password is None:
+            return None
+
         if not verify_password(
             password,
             user.hashed_password,
@@ -146,6 +166,157 @@ class AuthService:
             return None
 
         return user
+
+    # ==================================================
+    # GOOGLE AUTHENTICATION
+    # ==================================================
+
+    @staticmethod
+    @transactional
+    def authenticate_google_user(
+        db: Session,
+        google_id: str,
+        email: str,
+        name: str | None = None,
+    ) -> User:
+
+        normalized_email = email.lower().strip()
+
+        # ----------------------------------------------
+        # 1. Existing Google-linked account
+        # ----------------------------------------------
+
+        user = (
+            AuthService.get_user_by_google_id(
+                db,
+                google_id,
+            )
+        )
+
+        if user is not None:
+
+            if not user.is_active:
+                raise ValueError(
+                    "This account is inactive."
+                )
+
+            return user
+
+        # ----------------------------------------------
+        # 2. Existing Dasaiko account with same email
+        # ----------------------------------------------
+
+        user = (
+            AuthService.get_user_by_email(
+                db,
+                normalized_email,
+            )
+        )
+
+        if user is not None:
+
+            if not user.is_active:
+                raise ValueError(
+                    "This account is inactive."
+                )
+
+            # If the account is already linked to
+            # another Google account, don't overwrite it.
+            if (
+                user.google_id is not None
+                and user.google_id != google_id
+            ):
+                raise ValueError(
+                    "This email is already linked "
+                    "to another Google account."
+                )
+
+            # Link the existing Dasaiko account
+            # to this Google identity.
+            user.google_id = google_id
+
+            # Google has already verified the email.
+            user.email_verified = True
+
+            db.flush()
+            db.refresh(user)
+
+            return user
+
+        # ----------------------------------------------
+        # 3. Brand-new Google account
+        # ----------------------------------------------
+
+        username = (
+            AuthService.generate_unique_username(
+                db=db,
+                email=normalized_email,
+                name=name,
+            )
+        )
+
+        user = User(
+            username=username,
+            email=normalized_email,
+            hashed_password=None,
+            google_id=google_id,
+            is_active=True,
+            email_verified=True,
+        )
+
+        db.add(user)
+        db.flush()
+        db.refresh(user)
+
+        return user
+
+    @staticmethod
+    def generate_unique_username(
+        db: Session,
+        email: str,
+        name: str | None = None,
+    ) -> str:
+
+        # Prefer Google's display name when available.
+        # Otherwise use the email prefix.
+        base = (
+            name.strip()
+            if name and name.strip()
+            else email.split("@")[0]
+        )
+
+        username = "".join(
+            character
+            for character in base.lower()
+            if character.isalnum()
+        )
+
+        if not username:
+            username = "user"
+
+        username = username[:40]
+
+        candidate = username
+        counter = 1
+
+        while (
+            AuthService.get_user_by_username(
+                db,
+                candidate,
+            )
+            is not None
+        ):
+
+            suffix = str(counter)
+
+            candidate = (
+                f"{username[:40 - len(suffix)]}"
+                f"{suffix}"
+            )
+
+            counter += 1
+
+        return candidate
 
     # ==================================================
     # EMAIL VERIFICATION
