@@ -12,6 +12,7 @@ import {
   getCurrentUser,
   login as loginRequest,
   logout as logoutRequest,
+  verifyEmail as verifyEmailRequest,
   type AuthUser,
 } from "@/services/auth";
 
@@ -21,10 +22,17 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+
   login: (
     email: string,
     password: string,
   ) => Promise<void>;
+
+  verifyEmail: (
+    email: string,
+    code: string,
+  ) => Promise<void>;
+
   logout: () => void;
 }
 
@@ -156,6 +164,28 @@ export function AuthProvider({
       [],
     );
 
+  const verifyEmail =
+    useCallback(
+      async (
+        email: string,
+        code: string,
+      ) => {
+        const result =
+          await verifyEmailRequest(
+            email,
+            code,
+          );
+
+        localStorage.setItem(
+          "token",
+          result.access_token,
+        );
+
+        setUser(result.user);
+      },
+      [],
+    );
+
   const logout =
     useCallback(() => {
       logoutRequest();
@@ -177,12 +207,14 @@ export function AuthProvider({
         isAuthenticated:
           user !== null,
         login,
+        verifyEmail,
         logout,
       }),
       [
         user,
         isLoading,
         login,
+        verifyEmail,
         logout,
       ],
     );

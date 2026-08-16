@@ -5,12 +5,58 @@ export interface AuthUser {
   username: string;
   email: string;
   is_active: boolean;
+  email_verified: boolean;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   access_token: string;
   token_type: string;
   user: AuthUser;
+}
+
+export interface RegistrationResponse {
+  message: string;
+  email: string;
+  email_verified: boolean;
+}
+
+export interface VerificationResponse {
+  message: string;
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+}
+
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface ResendVerificationResponse {
+  message: string;
+  email: string;
+  email_verified: boolean;
+}
+
+export const PENDING_VERIFICATION_EMAIL_KEY =
+  "dasaiko.pendingVerificationEmail";
+
+export async function register(
+  username: string,
+  email: string,
+  password: string,
+): Promise<RegistrationResponse> {
+  const response =
+    await api.post<RegistrationResponse>(
+      "/auth/register",
+      {
+        username,
+        email,
+        password,
+      },
+    );
+
+  return response.data;
 }
 
 export async function login(
@@ -23,6 +69,36 @@ export async function login(
       {
         email,
         password,
+      },
+    );
+
+  return response.data;
+}
+
+export async function verifyEmail(
+  email: string,
+  code: string,
+): Promise<VerificationResponse> {
+  const response =
+    await api.post<VerificationResponse>(
+      "/auth/verify-email",
+      {
+        email,
+        code,
+      },
+    );
+
+  return response.data;
+}
+
+export async function resendVerification(
+  email: string,
+): Promise<ResendVerificationResponse> {
+  const response =
+    await api.post<ResendVerificationResponse>(
+      "/auth/resend-verification",
+      {
+        email,
       },
     );
 

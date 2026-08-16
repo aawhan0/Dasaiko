@@ -20,11 +20,26 @@ class UserLogin(BaseModel):
     password: str
 
 
+class VerifyEmailRequest(BaseModel):
+    email: EmailStr
+
+    code: str = Field(
+        min_length=6,
+        max_length=6,
+        pattern=r"^\d{6}$",
+    )
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
 class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
     is_active: bool
+    email_verified: bool
 
     model_config = {
         "from_attributes": True,
@@ -32,6 +47,19 @@ class UserResponse(BaseModel):
 
 
 class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
+
+class RegistrationResponse(BaseModel):
+    message: str
+    email: EmailStr
+    email_verified: bool
+
+
+class VerificationResponse(BaseModel):
+    message: str
     access_token: str
     token_type: str = "bearer"
     user: UserResponse

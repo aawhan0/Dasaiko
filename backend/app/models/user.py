@@ -42,6 +42,12 @@ class User(Base):
         nullable=False,
     )
 
+    email_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
@@ -63,6 +69,12 @@ class User(Base):
 
     conversations = relationship(
         "Conversation",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    email_verification_otps = relationship(
+        "EmailVerificationOTP",
         back_populates="user",
         cascade="all, delete-orphan",
     )

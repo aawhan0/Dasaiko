@@ -1,61 +1,103 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 
-import { WorkspaceProvider } from '@/store/useWorkspaceStore';
-import { UploadProvider } from '@/store/useUploadStore';
-import { AuthProvider } from '@/context/AuthContext';
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { WorkspaceProvider } from "@/store/useWorkspaceStore";
+import { UploadProvider } from "@/store/useUploadStore";
+import { AuthProvider } from "@/context/AuthContext";
 
-import { LandingPage } from '@/pages/LandingPage';
-import { LoginPage } from '@/pages/LoginPage';
-import { WorkspacePage } from '@/pages/WorkspacePage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { NotFoundPage } from '@/pages/NotFoundPage';
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5,
-      refetchOnWindowFocus: false,
+import { LandingPage } from "@/pages/LandingPage";
+import { LoginPage } from "@/pages/LoginPage";
+import { VerifyEmailPage } from "@/pages/VerifyEmailPage";
+import { WorkspacePage } from "@/pages/WorkspacePage";
+import { SettingsPage } from "@/pages/SettingsPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
+
+const queryClient =
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime:
+          1000 * 60 * 5,
+        refetchOnWindowFocus: false,
+      },
     },
-  },
-});
+  });
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <QueryClientProvider
+      client={queryClient}
+    >
       <BrowserRouter>
         <WorkspaceProvider>
           <UploadProvider>
             <AuthProvider>
               <Routes>
+
+                {/* Public */}
+
                 <Route
                   path="/"
-                  element={<LandingPage />}
+                  element={
+                    <LandingPage />
+                  }
                 />
 
                 <Route
                   path="/login"
-                  element={<LoginPage />}
+                  element={
+                    <LoginPage />
+                  }
                 />
 
-                <Route element={<ProtectedRoute />}>
+                <Route
+                  path="/verify-email"
+                  element={
+                    <VerifyEmailPage />
+                  }
+                />
+
+                {/* Protected */}
+
+                <Route
+                  element={
+                    <ProtectedRoute />
+                  }
+                >
                   <Route
                     path="/workspace"
-                    element={<WorkspacePage />}
+                    element={
+                      <WorkspacePage />
+                    }
                   />
 
                   <Route
                     path="/settings"
-                    element={<SettingsPage />}
+                    element={
+                      <SettingsPage />
+                    }
                   />
                 </Route>
 
+                {/* Fallback */}
+
                 <Route
                   path="*"
-                  element={<NotFoundPage />}
+                  element={
+                    <NotFoundPage />
+                  }
                 />
+
               </Routes>
             </AuthProvider>
           </UploadProvider>

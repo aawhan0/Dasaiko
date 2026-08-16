@@ -10,6 +10,7 @@ import {
   LockKeyhole,
   Mail,
   Sparkles,
+  User,
 } from "lucide-react";
 
 import {
@@ -18,6 +19,11 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "@/context/AuthContext";
+import {
+  PENDING_VERIFICATION_EMAIL_KEY,
+  register as registerRequest,
+} from "@/services/auth";
+
 import GradientWaves from "@/components/GradientWaves";
 
 type AuthMode = "signin" | "signup";
@@ -34,6 +40,9 @@ export function LoginPage() {
   const [mode, setMode] =
     useState<AuthMode>("signin");
 
+  const [username, setUsername] =
+    useState("");
+
   const [email, setEmail] =
     useState("");
 
@@ -49,10 +58,6 @@ export function LoginPage() {
   const [isSubmitting, setIsSubmitting] =
     useState(false);
 
-  /* =========================================================
-     REDIRECT IF ALREADY AUTHENTICATED
-  ========================================================= */
-
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/workspace", {
@@ -64,10 +69,6 @@ export function LoginPage() {
     navigate,
   ]);
 
-  /* =========================================================
-     SWITCH AUTH MODE
-  ========================================================= */
-
   const handleModeChange = (
     nextMode: AuthMode,
   ) => {
@@ -75,10 +76,6 @@ export function LoginPage() {
     setError("");
     setSuccess("");
   };
-
-  /* =========================================================
-     AUTH SUBMIT
-  ========================================================= */
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -89,81 +86,118 @@ export function LoginPage() {
     setSuccess("");
     setIsSubmitting(true);
 
+    const normalizedEmail =
+      email.trim().toLowerCase();
+
     try {
       /* ===============================================
          SIGN IN
       ================================================ */
 
       if (mode === "signin") {
-        await login(
-          email.trim(),
-          password,
-        );
+        try {
+          await login(
+            normalizedEmail,
+            password,
+          );
 
-        const destination =
-          (
-            location.state as
-              | { from?: string }
-              | null
-          )?.from ?? "/workspace";
+          const destination =
+            (
+              location.state as
+                | { from?: string }
+                | null
+            )?.from ?? "/workspace";
 
-        navigate(destination, {
-          replace: true,
-        });
+          navigate(destination, {
+            replace: true,
+          });
 
-        return;
+          return;
+        } catch (requestError: any) {
+          /*
+           * Backend returns 403 when the credentials
+           * are valid but the email is not verified.
+           *
+           * Send the user directly to verification.
+           */
+          if (
+            requestError?.response?.status ===
+              403 &&
+            requestError?.response?.data?.detail
+              ?.toLowerCase()
+              .includes("verify")
+          ) {
+            localStorage.setItem(
+              PENDING_VERIFICATION_EMAIL_KEY,
+              normalizedEmail,
+            );
+
+            navigate(
+              "/verify-email",
+              {
+                replace: true,
+                state: {
+                  email: normalizedEmail,
+                },
+              },
+            );
+
+            return;
+          }
+
+          throw requestError;
+        }
       }
 
       /* ===============================================
          SIGN UP
       ================================================ */
 
-      const apiBase =
-        import.meta.env
-          .VITE_API_URL ??
-        "http://127.0.0.1:8000";
+      const result =
+        await registerRequest(
+          username.trim(),
+          normalizedEmail,
+          password,
+        );
 
-      const response =
-        await fetch(
-          `${apiBase}/auth/register`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              email: email.trim(),
-              password,
-            }),
+      localStorage.setItem(
+        PENDING_VERIFICATION_EMAIL_KEY,
+        result.email,
+      );
+
+      navigate(
+        "/verify-email",
+        {
+          replace: true,
+          state: {
+            email: result.email,
           },
-        );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data?.detail ??
-            data?.message ??
-            "Unable to create your account. Please try again.",
-        );
-      }
-
-      /* ===============================================
-         REGISTRATION SUCCESS
-      ================================================ */
-
-      setMode("signin");
-      setPassword("");
-
-      setSuccess(
-        "Account created successfully. You can now sign in.",
+        },
       );
     } catch (
-      requestError: unknown
+      requestError: any
     ) {
+      const detail =
+        requestError?.response?.data
+          ?.detail;
+
       if (
+        Array.isArray(detail)
+      ) {
+        setError(
+          detail
+            .map(
+              (item: any) =>
+                item?.msg ??
+                "Invalid input.",
+            )
+            .join(" "),
+        );
+      } else if (
+        typeof detail === "string"
+      ) {
+        setError(detail);
+      } else if (
         requestError instanceof Error
       ) {
         setError(
@@ -180,10 +214,6 @@ export function LoginPage() {
       setIsSubmitting(false);
     }
   }
-
-  /* =========================================================
-     CONTENT
-  ========================================================= */
 
   const isSignIn =
     mode === "signin";
@@ -206,10 +236,6 @@ export function LoginPage() {
         text-white
       "
     >
-      {/* =====================================================
-          GLOBAL BACKGROUND ATMOSPHERE
-      ====================================================== */}
-
       <div
         className="
           pointer-events-none
@@ -250,10 +276,6 @@ export function LoginPage() {
         aria-hidden="true"
       />
 
-      {/* =====================================================
-          MAIN SPLIT LAYOUT
-      ====================================================== */}
-
       <div
         className="
           relative
@@ -263,7 +285,6 @@ export function LoginPage() {
           lg:grid-cols-[1.08fr_0.92fr]
         "
       >
-
         {/* ===================================================
             LEFT VISUAL PANEL
         ==================================================== */}
@@ -282,11 +303,6 @@ export function LoginPage() {
             xl:px-24
           "
         >
-
-          {/* =================================================
-              GRADIENT WAVES
-          ================================================== */}
-
           <div
             className="
               pointer-events-none
@@ -321,8 +337,6 @@ export function LoginPage() {
               className="absolute inset-0"
             />
 
-            {/* Soft readability layer */}
-
             <div
               className="
                 absolute
@@ -330,8 +344,6 @@ export function LoginPage() {
                 bg-[linear-gradient(180deg,rgba(5,5,7,0.30)_0%,rgba(5,5,7,0.12)_42%,rgba(5,5,7,0.48)_100%)]
               "
             />
-
-            {/* Edge vignette */}
 
             <div
               className="
@@ -341,10 +353,6 @@ export function LoginPage() {
               "
             />
           </div>
-
-          {/* =================================================
-              SUBTLE GRID
-          ================================================== */}
 
           <div
             className="
@@ -359,10 +367,6 @@ export function LoginPage() {
             "
             aria-hidden="true"
           />
-
-          {/* =================================================
-              CENTRAL PURPLE GLOW
-          ================================================== */}
 
           <div
             className="
@@ -381,10 +385,6 @@ export function LoginPage() {
             "
             aria-hidden="true"
           />
-
-          {/* =================================================
-              TOP BRAND
-          ================================================== */}
 
           <div
             className="
@@ -423,10 +423,6 @@ export function LoginPage() {
             </button>
           </div>
 
-          {/* =================================================
-              MAIN LEFT CONTENT
-          ================================================== */}
-
           <div
             className="
               relative
@@ -442,11 +438,6 @@ export function LoginPage() {
                 max-w-[650px]
               "
             >
-
-              {/* ===========================================
-                  EYEBROW
-              ============================================ */}
-
               <div
                 className="
                   mb-7
@@ -477,10 +468,6 @@ export function LoginPage() {
                   Evidence-first research
                 </span>
               </div>
-
-              {/* ===========================================
-                  HERO
-              ============================================ */}
 
               <h2
                 className="
@@ -515,10 +502,6 @@ export function LoginPage() {
                 built for serious research.
               </p>
 
-              {/* ===========================================
-                  RESEARCH CONTEXT CARD
-              ============================================ */}
-
               <div
                 className="
                   relative
@@ -533,9 +516,6 @@ export function LoginPage() {
                   backdrop-blur-sm
                 "
               >
-
-                {/* Card header */}
-
                 <div
                   className="
                     flex
@@ -547,7 +527,6 @@ export function LoginPage() {
                     py-4
                   "
                 >
-
                   <div
                     className="
                       flex
@@ -609,8 +588,6 @@ export function LoginPage() {
                   </span>
                 </div>
 
-                {/* Evidence lines */}
-
                 <div
                   className="
                     space-y-4
@@ -658,8 +635,6 @@ export function LoginPage() {
                   />
                 </div>
 
-                {/* Card glow */}
-
                 <div
                   className="
                     pointer-events-none
@@ -677,10 +652,6 @@ export function LoginPage() {
               </div>
             </div>
           </div>
-
-          {/* =================================================
-              BOTTOM SIGNAL
-          ================================================== */}
 
           <div
             className="
@@ -743,13 +714,7 @@ export function LoginPage() {
               max-w-[460px]
             "
           >
-
-            {/* =============================================
-                AUTH HEADER
-            ============================================== */}
-
             <div className="mb-7">
-
               <h1
                 className="
                   text-[42px]
@@ -776,10 +741,6 @@ export function LoginPage() {
                 {description}
               </p>
             </div>
-
-            {/* =============================================
-                SIGN IN / SIGN UP SWITCHER
-            ============================================== */}
 
             <div
               className="
@@ -858,14 +819,84 @@ export function LoginPage() {
               </button>
             </div>
 
-            {/* =============================================
-                FORM
-            ============================================== */}
-
             <form
               onSubmit={handleSubmit}
               className="space-y-5"
             >
+              {/* USERNAME */}
+
+              {!isSignIn && (
+                <div className="space-y-2.5">
+                  <label
+                    htmlFor="username"
+                    className="
+                      block
+                      text-[10px]
+                      font-bold
+                      uppercase
+                      tracking-[0.18em]
+                      text-zinc-500
+                    "
+                  >
+                    Username
+                  </label>
+
+                  <div className="relative">
+                    <User
+                      className="
+                        pointer-events-none
+                        absolute
+                        left-4
+                        top-1/2
+                        h-[17px]
+                        w-[17px]
+                        -translate-y-1/2
+                        text-zinc-700
+                      "
+                    />
+
+                    <input
+                      id="username"
+                      type="text"
+                      autoComplete="username"
+                      required={!isSignIn}
+                      minLength={3}
+                      maxLength={50}
+                      value={username}
+                      onChange={(
+                        event,
+                      ) =>
+                        setUsername(
+                          event.target
+                            .value,
+                        )
+                      }
+                      placeholder="Choose a username"
+                      className="
+                        h-[58px]
+                        w-full
+                        rounded-[15px]
+                        border-[1.5px]
+                        border-white/[0.10]
+                        bg-[#08080b]
+                        pl-12
+                        pr-4
+                        text-sm
+                        font-medium
+                        text-white
+                        outline-none
+                        transition-all
+                        duration-300
+                        placeholder:text-zinc-700
+                        hover:border-white/[0.17]
+                        focus:border-primary/60
+                        focus:ring-4
+                        focus:ring-primary/[0.07]
+                      "
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* EMAIL */}
 
@@ -1017,8 +1048,6 @@ export function LoginPage() {
                 </div>
               </div>
 
-              {/* ERROR */}
-
               {error && (
                 <div
                   className="
@@ -1038,8 +1067,6 @@ export function LoginPage() {
                 </div>
               )}
 
-              {/* SUCCESS */}
-
               {success && (
                 <div
                   className="
@@ -1058,8 +1085,6 @@ export function LoginPage() {
                   {success}
                 </div>
               )}
-
-              {/* SUBMIT */}
 
               <button
                 type="submit"
@@ -1134,10 +1159,6 @@ export function LoginPage() {
               </button>
             </form>
 
-            {/* =============================================
-                BOTTOM AUTH FOOTER
-            ============================================== */}
-
             <div
               className="
                 mt-8
@@ -1186,7 +1207,6 @@ export function LoginPage() {
                 Back home
               </button>
             </div>
-
           </div>
         </section>
       </div>
