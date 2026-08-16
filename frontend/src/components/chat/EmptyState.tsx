@@ -1,39 +1,20 @@
-import { motion } from "framer-motion";
+import {
+  motion,
+} from "framer-motion";
+
+import {
+  MessageInput,
+} from "./MessageInput";
+
 import {
   fadeInUp,
-  staggerContainer,
-  staggerItem,
 } from "@/utils/animations";
-import { UploadZone } from "@/components/upload/UploadZone";
-import {
-  Sparkles,
-  FileSearch,
-  BrainCircuit,
-} from "lucide-react";
 
-const FEATURES = [
-  {
-    icon: FileSearch,
-    label: "Document-native AI",
-    description:
-      "Every answer cites specific pages and passages.",
-  },
-  {
-    icon: BrainCircuit,
-    label: "Deep analysis",
-    description:
-      "Ask complex questions across multiple documents.",
-  },
-  {
-    icon: Sparkles,
-    label: "Evidence-first",
-    description:
-      "See exactly where every claim comes from.",
-  },
-];
 
 export function EmptyState() {
+
   return (
+
     <motion.div
       variants={fadeInUp}
       initial="hidden"
@@ -41,261 +22,165 @@ export function EmptyState() {
       className="
         flex
         h-full
+        min-h-0
         w-full
-        flex-col
         items-center
         justify-center
-        overflow-y-auto
+        overflow-hidden
         px-6
-        py-12
-        sm:px-8
-        lg:px-10
       "
     >
+
       <div
         className="
+          flex
           w-full
           max-w-3xl
+          -translate-y-[4vh]
+          flex-col
+          items-center
         "
       >
-        {/* =================================================
-            INTRO
-        ================================================== */}
-
-        <div className="text-center">
-          <div
-            className="
-              inline-flex
-              items-center
-              gap-2
-              rounded-full
-              border-[1.5px]
-              border-primary/20
-              bg-primary/[0.06]
-              px-3.5
-              py-2
-            "
-          >
-            <Sparkles
-              className="
-                h-3.5
-                w-3.5
-                text-primary
-              "
-            />
-
-            <span
-              className="
-                text-[10px]
-                font-bold
-                uppercase
-                tracking-[0.16em]
-                text-primary/80
-              "
-            >
-              Research workspace
-            </span>
-          </div>
-
-          <h2
-            className="
-              mt-6
-              text-3xl
-              font-bold
-              leading-[1.05]
-              tracking-[-0.04em]
-              text-white
-              sm:text-4xl
-              lg:text-5xl
-            "
-          >
-            Upload your sources.
-            <br />
-
-            <span className="text-zinc-500">
-              Start understanding.
-            </span>
-          </h2>
-
-          <p
-            className="
-              mx-auto
-              mt-5
-              max-w-xl
-              text-sm
-              font-medium
-              leading-7
-              text-zinc-400
-              sm:text-[15px]
-            "
-          >
-            Add PDFs, research papers, or technical
-            documents. Dasaiko indexes them into your
-            research workspace so you can ask questions
-            with evidence you can actually inspect.
-          </p>
-        </div>
 
         {/* =================================================
-            UPLOAD
-        ================================================== */}
-
-        <div
-          className="
-            mt-9
-            rounded-2xl
-            border-[1.5px]
-            border-white/[0.09]
-            bg-white/[0.015]
-            p-2
-            shadow-[0_12px_40px_rgba(0,0,0,0.16)]
-          "
-        >
-          <UploadZone />
-        </div>
-
-        {/* =================================================
-            CAPABILITIES
+            DASAIKO / RESEARCH WORKSPACE IDENTITY
         ================================================== */}
 
         <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
+          initial={{
+            opacity: 0,
+            y: 10,
+            scale: 0.97,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            scale: 1,
+          }}
+          transition={{
+            duration: 0.4,
+            ease: [
+              0.22,
+              1,
+              0.36,
+              1,
+            ],
+          }}
           className="
-            mt-5
-            grid
-            grid-cols-1
-            gap-2
-            sm:grid-cols-3
-          "
-        >
-          {FEATURES.map(
-            ({
-              icon: Icon,
-              label,
-              description,
-            }) => (
-              <motion.div
-                key={label}
-                variants={staggerItem}
-                className="
-                  group
-                  rounded-xl
-                  border-[1.5px]
-                  border-white/[0.06]
-                  bg-white/[0.015]
-                  px-4
-                  py-4
-                  transition-all
-                  duration-200
-
-                  hover:border-white/[0.14]
-                  hover:bg-white/[0.04]
-                "
-              >
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                  "
-                >
-                  <div
-                    className="
-                      flex
-                      h-8
-                      w-8
-                      shrink-0
-                      items-center
-                      justify-center
-                      rounded-lg
-                      border
-                      border-primary/20
-                      bg-primary/[0.07]
-                    "
-                  >
-                    <Icon
-                      className="
-                        h-3.5
-                        w-3.5
-                        text-primary
-                      "
-                    />
-                  </div>
-
-                  <p
-                    className="
-                      text-[11px]
-                      font-bold
-                      tracking-tight
-                      text-zinc-300
-                      transition-colors
-                      group-hover:text-white
-                    "
-                  >
-                    {label}
-                  </p>
-                </div>
-
-                <p
-                  className="
-                    mt-3
-                    text-[10px]
-                    font-medium
-                    leading-5
-                    text-zinc-500
-                  "
-                >
-                  {description}
-                </p>
-              </motion.div>
-            ),
-          )}
-        </motion.div>
-
-        {/* =================================================
-            FOOT SIGNAL
-        ================================================== */}
-
-        <div
-          className="
-            mt-6
             flex
             items-center
             justify-center
-            gap-3
           "
         >
-          <span
-            className="
-              h-px
-              w-10
-              bg-white/[0.07]
-            "
-          />
 
-          <span
+          {/* =================================================
+              DASAIKO MARK
+          ================================================== */}
+
+          <div
             className="
-              text-[9px]
-              font-bold
-              uppercase
-              tracking-[0.18em]
-              text-zinc-600
+              flex
+              h-16
+              w-16
+              shrink-0
+              items-center
+              justify-center
             "
           >
-            Documents · Retrieval · Evidence
-          </span>
+
+            <img
+              src="/assets/brand/dasaiko-mark-white.png"
+              alt="Dasaiko"
+              className="
+                h-14
+                w-14
+                object-contain
+              "
+            />
+
+          </div>
+
+
+          {/* =================================================
+              DIAGONAL SLASH
+          ================================================== */}
+
+          <span
+            aria-hidden="true"
+            className="
+              mx-6
+              block
+              h-12
+              w-[2px]
+              shrink-0
+              origin-center
+              rotate-[28deg]
+              rounded-full
+              bg-white/30
+              shadow-[0_0_8px_rgba(255,255,255,0.20)]
+            "
+          />
+
+
+          {/* =================================================
+              RESEARCH WORKSPACE
+          ================================================== */}
 
           <span
             className="
-              h-px
-              w-10
-              bg-white/[0.07]
+              whitespace-nowrap
+              text-[21px]
+              font-medium
+              tracking-[-0.02em]
+              text-zinc-200
             "
+          >
+            Research Workspace
+          </span>
+
+        </motion.div>
+
+
+        {/* =================================================
+            MESSAGE INPUT
+        ================================================== */}
+
+        <motion.div
+          initial={{
+            opacity: 0,
+            y: 14,
+          }}
+          animate={{
+            opacity: 1,
+            y: 0,
+          }}
+          transition={{
+            duration: 0.4,
+            delay: 0.08,
+            ease: [
+              0.22,
+              1,
+              0.36,
+              1,
+            ],
+          }}
+          className="
+            mt-11
+            flex
+            w-full
+            justify-center
+          "
+        >
+
+          <MessageInput
+            centered
           />
-        </div>
+
+        </motion.div>
+
       </div>
+
     </motion.div>
+
   );
 }

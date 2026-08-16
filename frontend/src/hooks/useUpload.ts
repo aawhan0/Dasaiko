@@ -1,4 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import {
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 
 import type { UploadFile } from "@/types";
 
@@ -9,6 +14,7 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
 import { uploadDocument } from "@/services/documents";
 
+
 export function useUpload() {
   const {
     addFiles,
@@ -17,7 +23,12 @@ export function useUpload() {
     queue,
   } = useUploadStore();
 
-  const { addDocument } = useWorkspaceStore();
+  const {
+    addDocument,
+    setSelectedDocumentId,
+    sidebarOpen,
+    toggleSidebar,
+  } = useWorkspaceStore();
 
   const [isDragOver, setIsDragOver] =
     useState(false);
@@ -25,22 +36,26 @@ export function useUpload() {
   const processingRef =
     useRef<Set<string>>(new Set());
 
+
   useEffect(() => {
     const uploading = queue.filter(
       (file) =>
         file.status === "uploading" &&
-        !processingRef.current.has(file.id)
+        !processingRef.current.has(file.id),
     );
 
     uploading.forEach((upload) => {
       processingRef.current.add(upload.id);
 
-      simulateUpload(
+      processUpload({
         upload,
         updateProgress,
         setStatus,
-        addDocument
-      ).finally(() => {
+        addDocument,
+        setSelectedDocumentId,
+        sidebarOpen,
+        toggleSidebar,
+      }).finally(() => {
         processingRef.current.delete(upload.id);
       });
     });
@@ -49,55 +64,71 @@ export function useUpload() {
     updateProgress,
     setStatus,
     addDocument,
+    setSelectedDocumentId,
+    sidebarOpen,
+    toggleSidebar,
   ]);
+
 
   const handleFiles = useCallback(
     (files: FileList | File[]) => {
-      const valid = Array.from(files).filter(
-        isAcceptedFile
+      const validFiles = Array.from(files).filter(
+        isAcceptedFile,
       );
 
-      if (valid.length > 0) {
-        addFiles(valid);
+      if (validFiles.length > 0) {
+        addFiles(validFiles);
       }
     },
-    [addFiles]
+    [addFiles],
   );
 
+
   const onDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
+    (event: React.DragEvent) => {
+      event.preventDefault();
 
       setIsDragOver(false);
 
-      handleFiles(e.dataTransfer.files);
+      handleFiles(
+        event.dataTransfer.files,
+      );
     },
-    [handleFiles]
+    [handleFiles],
   );
 
+
   const onDragOver = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
+    (event: React.DragEvent) => {
+      event.preventDefault();
 
       setIsDragOver(true);
     },
-    []
+    [],
   );
+
 
   const onDragLeave = useCallback(() => {
     setIsDragOver(false);
   }, []);
 
+
   const onFileInputChange = useCallback(
     (
-      e: React.ChangeEvent<HTMLInputElement>
+      event: React.ChangeEvent<HTMLInputElement>,
     ) => {
-      if (e.target.files) {
-        handleFiles(e.target.files);
+      if (event.target.files) {
+        handleFiles(event.target.files);
       }
+
+      /*
+       * Allow the same file to be selected again.
+       */
+      event.target.value = "";
     },
-    [handleFiles]
+    [handleFiles],
   );
+
 
   return {
     isDragOver,
@@ -109,67 +140,160 @@ export function useUpload() {
   };
 }
 
-async function simulateUpload(
-  upload: UploadFile,
+
+/* =========================================================
+   UPLOAD PROCESS
+========================================================= */
+
+interface ProcessUploadParams {
+  upload: UploadFile;
+
   updateProgress: (
     id: string,
-    progress: number
-  ) => void,
+    progress: number,
+  ) => void;
+
   setStatus: (
     id: string,
     status: UploadFile["status"],
-    error?: string
-  ) => void,
-  addDocument: (
-    doc: ReturnType<typeof uploadDocument> extends Promise<infer T>
-      ? T
-      : never
-  ) => void
-) {
-  try {
-    console.log("========== START UPLOAD ==========");
-    console.log(upload);
+    error?: string,
+  ) => void;
 
-    for (let p = 10; p <= 90; p += 10) {
-      await delay(150);
-      updateProgress(upload.id, p);
+  addDocument: (
+    doc: Awaited<
+      ReturnType<typeof uploadDocument>
+    >,
+  ) => void;
+
+  setSelectedDocumentId: (
+    id: number | null,
+  ) => void;
+
+  sidebarOpen: boolean;
+
+  toggleSidebar: () => void;
+}
+
+
+async function processUpload({
+  upload,
+  updateProgress,
+  setStatus,
+  addDocument,
+  setSelectedDocumentId,
+  sidebarOpen,
+  toggleSidebar,
+}: ProcessUploadParams) {
+  try {
+    /*
+     * Upload has started.
+     */
+    updateProgress(
+      upload.id,
+      0,
+    );
+
+
+    /*
+     * Send the document to the backend.
+     */
+    const document =
+      await uploadDocument(
+        upload.file,
+      );
+
+
+    /*
+     * Backend has accepted and processed
+     * the document.
+     */
+    setStatus(
+      upload.id,
+      "processing",
+    );
+
+    updateProgress(
+      upload.id,
+      100,
+    );
+
+
+    /*
+     * Add the document to the workspace.
+     */
+    addDocument(
+      document,
+    );
+
+
+    /*
+     * Select the document so the sidebar
+     * immediately reflects what was uploaded.
+     */
+    const documentId =
+      Number(document.id);
+
+    if (
+      Number.isFinite(documentId)
+    ) {
+      setSelectedDocumentId(
+        documentId,
+      );
     }
 
-    console.log("Calling backend...");
 
-    const doc = await uploadDocument(upload.file);
+    /*
+     * Open the sidebar automatically
+     * after the upload succeeds.
+     */
+    if (!sidebarOpen) {
+      toggleSidebar();
+    }
 
-    console.log("Backend returned:");
-    console.log(doc);
 
-    updateProgress(upload.id, 100);
+    /*
+     * Upload is completely finished.
+     */
+    setStatus(
+      upload.id,
+      "ready",
+    );
 
-    console.log("Calling addDocument()");
-
-    addDocument(doc);
-
-    console.log("addDocument() completed");
-
-    await delay(500);
-
-    setStatus(upload.id, "ready");
-
-    console.log("Upload finished.");
-    console.log("========== END UPLOAD ==========");
   } catch (error) {
-    console.error("UPLOAD FAILED");
-    console.error(error);
+    console.error(
+      "Document upload failed:",
+      error,
+    );
 
     setStatus(
       upload.id,
       "error",
-      "Upload failed. Please try again."
+      getUploadErrorMessage(error),
     );
   }
 }
 
-function delay(ms: number) {
-  return new Promise((resolve) =>
-    setTimeout(resolve, ms)
-  );
+
+/* =========================================================
+   ERROR HANDLING
+========================================================= */
+
+function getUploadErrorMessage(
+  error: unknown,
+): string {
+  if (
+    error instanceof Error &&
+    error.message
+  ) {
+    return error.message;
+  }
+
+  if (
+    typeof error === "string" &&
+    error.length > 0
+  ) {
+    return error;
+  }
+
+  return "Upload failed. Please try again.";
 }

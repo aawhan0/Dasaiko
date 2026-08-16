@@ -1,5 +1,10 @@
 import { useEffect } from "react";
 
+import {
+  AnimatePresence,
+  motion,
+} from "framer-motion";
+
 import { AppShell } from "@/components/layout/AppShell";
 import { PDFBottomSheet } from "@/components/pdf/PDFBottomSheet";
 
@@ -20,8 +25,15 @@ export function WorkspacePage() {
     setConversations,
     setActiveConversation,
     setMessages,
+
+    conversations,
+    messages,
   } = useWorkspaceStore();
 
+
+  /* =====================================================
+     LOAD WORKSPACE
+  ====================================================== */
 
   useEffect(() => {
 
@@ -32,9 +44,9 @@ export function WorkspacePage() {
 
       try {
 
-        // -----------------------------------------
-        // Documents
-        // -----------------------------------------
+        /* -----------------------------------------------
+           Documents
+        ------------------------------------------------ */
 
         const docs =
           await listDocuments();
@@ -48,11 +60,11 @@ export function WorkspacePage() {
         setDocuments(docs);
 
 
-        // -----------------------------------------
-        // Conversations
-        // -----------------------------------------
+        /* -----------------------------------------------
+           Conversations
+        ------------------------------------------------ */
 
-        const conversations =
+        const loadedConversations =
           await listConversations();
 
 
@@ -62,30 +74,30 @@ export function WorkspacePage() {
 
 
         setConversations(
-          conversations
+          loadedConversations,
         );
 
 
-        // -----------------------------------------
-        // Restore latest conversation
-        // -----------------------------------------
+        /* -----------------------------------------------
+           Restore latest conversation
+        ------------------------------------------------ */
 
         if (
-          conversations.length > 0
+          loadedConversations.length > 0
         ) {
 
           const latestConversation =
-            conversations[0];
+            loadedConversations[0];
 
 
           setActiveConversation(
-            latestConversation.id
+            latestConversation.id,
           );
 
 
-          const messages =
+          const loadedMessages =
             await listMessages(
-              latestConversation.id
+              latestConversation.id,
             );
 
 
@@ -94,23 +106,27 @@ export function WorkspacePage() {
           }
 
 
-          setMessages(messages);
+          setMessages(
+            loadedMessages,
+          );
 
         } else {
 
-          setActiveConversation(null);
+          setActiveConversation(
+            null,
+          );
 
           setMessages([]);
 
         }
 
-      } catch (err) {
+      } catch (error) {
 
         if (!cancelled) {
 
           console.error(
             "Failed to load workspace:",
-            err
+            error,
           );
 
         }
@@ -129,49 +145,130 @@ export function WorkspacePage() {
 
     };
 
-    // IMPORTANT:
-    // Workspace initialization should happen once.
-    // The store setters must remain stable.
-    // They should NOT cause this effect to reload
-    // the workspace after every state update.
 
+    // Workspace initialization intentionally runs once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
 
+  /* =====================================================
+     DETERMINE WHEN EVIDENCE PANEL SHOULD EXIST
+  ====================================================== */
+
+  const hasAssistantResponse =
+    messages.some(
+      (message) =>
+        message.role === "assistant" &&
+        Boolean(
+          message.content?.trim(),
+        ),
+    );
+
+
   return (
-  <>
     <AppShell>
 
-      <div className="flex min-w-0 min-h-0 flex-1">
+      <div
+        className="
+          flex
+          min-h-0
+          min-w-0
+          flex-1
+          overflow-hidden
+        "
+      >
 
-        {/* --------------------------------------- */}
-        {/* Central Workbench */}
-        {/* --------------------------------------- */}
+        {/* =================================================
+            CENTRAL WORKBENCH
+        ================================================= */}
 
-        <div className="relative flex min-w-0 flex-1 overflow-hidden">
+        <div
+          className="
+            relative
+            flex
+            min-h-0
+            min-w-0
+            flex-1
+            overflow-hidden
+          "
+        >
 
           <ResearchWorkbench />
 
-          {/* PDF Viewer Overlay */}
+
+          {/* -----------------------------------------------
+              PDF VIEWER
+          ------------------------------------------------ */}
+
           <PDFBottomSheet />
 
         </div>
 
 
-        {/* --------------------------------------- */}
-        {/* Evidence */}
-        {/* --------------------------------------- */}
+        {/* =================================================
+            EVIDENCE PANEL
+        ================================================= */}
 
-        <div className="w-[400px] flex-shrink-0 border-l border-white/[0.06]">
+        <AnimatePresence
+          initial={false}
+        >
 
-          <EvidenceVault />
+          {hasAssistantResponse && (
 
-        </div>
+            <motion.div
+              key="research-evidence"
+
+              initial={{
+                width: 0,
+                opacity: 0,
+                x: 80,
+              }}
+
+              animate={{
+                width: 400,
+                opacity: 1,
+                x: 0,
+              }}
+
+              exit={{
+                width: 0,
+                opacity: 0,
+                x: 80,
+              }}
+
+              transition={{
+                duration: 0.4,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+
+              className="
+                relative
+                h-full
+                shrink-0
+                overflow-hidden
+              "
+            >
+
+              <div
+                className="
+                  h-full
+                  w-[400px]
+                "
+              >
+
+                <EvidenceVault />
+
+              </div>
+
+            </motion.div>
+
+          )}
+
+        </AnimatePresence>
 
       </div>
 
     </AppShell>
-  </>
-);
+  );
 }

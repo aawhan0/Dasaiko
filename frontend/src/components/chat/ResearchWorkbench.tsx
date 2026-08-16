@@ -2,58 +2,101 @@ import {
   useRef,
   useEffect,
 } from "react";
-import { motion } from "framer-motion";
 
-import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import {
+  motion,
+} from "framer-motion";
 
-import { ChatBlock } from "./ChatBlock";
-import { EmptyState } from "./EmptyState";
-import { MessageInput } from "./MessageInput";
+import {
+  useWorkspaceStore,
+} from "@/store/useWorkspaceStore";
 
-import { fadeIn } from "@/utils/animations";
+import {
+  ChatBlock,
+} from "./ChatBlock";
+
+import {
+  MessageInput,
+} from "./MessageInput";
+
+import {
+  EmptyState,
+} from "./EmptyState";
+
+import {
+  fadeIn,
+} from "@/utils/animations";
+
 
 export function ResearchWorkbench() {
+
   const {
     messages,
-    documents,
   } = useWorkspaceStore();
+
 
   const scrollRef =
     useRef<HTMLDivElement | null>(
       null,
     );
 
+
   const shouldAutoScroll =
     useRef(true);
+
+
+  /*
+   * =====================================================
+   * CONVERSATION STATE
+   *
+   * IMPORTANT:
+   *
+   * Documents do NOT determine whether we are in
+   * conversation mode.
+   *
+   * The first actual user message does.
+   * =====================================================
+   */
+
+  const hasConversation =
+    messages.length > 0;
+
 
   /* =====================================================
      SCROLL POSITION
   ====================================================== */
 
   const handleScroll = () => {
+
     const container =
       scrollRef.current;
+
 
     if (!container) {
       return;
     }
+
 
     const distanceFromBottom =
       container.scrollHeight -
       container.scrollTop -
       container.clientHeight;
 
+
     shouldAutoScroll.current =
-      distanceFromBottom < 80;
+      distanceFromBottom < 100;
   };
+
 
   /* =====================================================
      SCROLL WHEN MESSAGE COUNT CHANGES
   ====================================================== */
 
   useEffect(() => {
+
     const container =
       scrollRef.current;
+
 
     if (
       !container ||
@@ -62,19 +105,30 @@ export function ResearchWorkbench() {
       return;
     }
 
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "smooth",
+
+    requestAnimationFrame(() => {
+
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "smooth",
+      });
+
     });
-  }, [messages.length]);
+
+  }, [
+    messages.length,
+  ]);
+
 
   /* =====================================================
      SCROLL DURING STREAMING
   ====================================================== */
 
   useEffect(() => {
+
     const container =
       scrollRef.current;
+
 
     if (
       !container ||
@@ -83,42 +137,68 @@ export function ResearchWorkbench() {
       return;
     }
 
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: "auto",
+
+    requestAnimationFrame(() => {
+
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: "auto",
+      });
+
     });
+
   }, [
     messages[
       messages.length - 1
     ]?.content,
   ]);
 
-  /* =====================================================
-     EMPTY WORKSPACE
-  ====================================================== */
 
-  const isEmpty =
-    messages.length === 0 &&
-    documents.length === 0;
+  /*
+   * =====================================================
+   * FRESH WORKSPACE
+   *
+   * Only the absence of messages determines this.
+   *
+   * This means uploading a document does NOT instantly
+   * destroy the beautiful initial workspace layout.
+   * =====================================================
+   */
+
+  const showEmptyState =
+    !hasConversation;
+
 
   return (
-    <motion.div
+
+    <motion.section
       variants={fadeIn}
       initial="hidden"
       animate="visible"
       className="
+        relative
         flex
         min-h-0
+        min-w-0
         flex-1
         flex-col
         overflow-hidden
         bg-base
       "
     >
-      {isEmpty ? (
+
+      {/* =================================================
+          INITIAL / PRE-CONVERSATION STATE
+      ================================================== */}
+
+      {showEmptyState ? (
+
         <EmptyState />
+
       ) : (
+
         <>
+
           {/* =================================================
               CONVERSATION
           ================================================== */}
@@ -141,9 +221,10 @@ export function ResearchWorkbench() {
               lg:py-9
 
               [scrollbar-width:thin]
-              [scrollbar-color:rgba(255,255,255,0.10)_transparent]
+              [scrollbar-color:rgba(255,255,255,0.08)_transparent]
             "
           >
+
             <div
               className="
                 mx-auto
@@ -152,8 +233,10 @@ export function ResearchWorkbench() {
                 space-y-8
               "
             >
+
               {messages.map(
                 (message) => (
+
                   <ChatBlock
                     key={
                       message.id
@@ -162,18 +245,40 @@ export function ResearchWorkbench() {
                       message
                     }
                   />
+
                 ),
               )}
+
             </div>
+
           </div>
 
+
           {/* =================================================
-              COMPOSER AREA
+              NORMAL CONVERSATION COMPOSER
           ================================================== */}
 
-          <div
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: 12,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+            }}
+            transition={{
+              duration: 0.28,
+              ease: [
+                0.22,
+                1,
+                0.36,
+                1,
+              ],
+            }}
             className="
               relative
+              z-10
               shrink-0
               bg-base
 
@@ -187,7 +292,10 @@ export function ResearchWorkbench() {
               lg:px-8
             "
           >
-            {/* Subtle separation from conversation */}
+
+            {/* =================================================
+                TOP SEPARATOR
+            ================================================== */}
 
             <div
               className="
@@ -198,23 +306,33 @@ export function ResearchWorkbench() {
                 h-px
                 bg-gradient-to-r
                 from-transparent
-                via-white/[0.06]
+                via-white/[0.055]
                 to-transparent
               "
             />
 
+
             <div
               className="
-                mx-auto
+                flex
                 w-full
-                max-w-4xl
+                justify-center
               "
             >
-              <MessageInput />
+
+              <MessageInput
+                centered={false}
+              />
+
             </div>
-          </div>
+
+          </motion.div>
+
         </>
+
       )}
-    </motion.div>
+
+    </motion.section>
+
   );
 }

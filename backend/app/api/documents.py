@@ -2,7 +2,9 @@ from fastapi import (
     APIRouter,
     Depends,
     File,
+    HTTPException,
     UploadFile,
+    status,
 )
 
 from sqlalchemy.orm import Session
@@ -56,7 +58,6 @@ def create_document(
         get_current_user
     ),
 ):
-
     created_document = (
         DocumentService.create_document(
             db=db,
@@ -86,7 +87,6 @@ def get_documents(
         get_current_user
     ),
 ):
-
     documents = (
         DocumentService.get_documents(
             db=db,
@@ -116,7 +116,6 @@ def get_document(
         get_current_user
     ),
 ):
-
     document = (
         DocumentService.get_document_by_id(
             db=db,
@@ -148,7 +147,6 @@ def update_document(
         get_current_user
     ),
 ):
-
     updated_document = (
         DocumentService.update_document(
             db=db,
@@ -178,7 +176,6 @@ def delete_document(
         get_current_user
     ),
 ):
-
     DocumentService.delete_document(
         db=db,
         document_id=document_id,
@@ -213,18 +210,70 @@ def upload_document(
         get_current_user
     ),
 ):
-
-    document = (
-        DocumentService.upload_pdf(
-            db=db,
-            file=file,
-            user_id=current_user.id,
-        )
+    filename = (
+        file.filename or ""
     )
 
-    BM25Service.build_index(
-        db,
-        current_user.id,
+    extension = (
+        filename.rsplit(
+            ".",
+            1,
+        )[-1]
+        .lower()
+        if "." in filename
+        else ""
+    )
+
+    content_type = (
+        file.content_type or ""
+    ).lower()
+
+    if extension != "pdf":
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "Only PDF files are "
+                "currently supported."
+            ),
+        )
+
+    if content_type not in {
+        "application/pdf",
+        "application/octet-stream",
+        "",
+    }:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=(
+                "The uploaded file must "
+                "be a PDF."
+            ),
+        )
+
+    try:
+        document = (
+            DocumentService.upload_pdf(
+                db=db,
+                file=file,
+                user_id=current_user.id,
+            )
+        )
+
+        BM25Service.build_index(
+            db,
+            current_user.id,
+        )
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=(
+                status.HTTP_400_BAD_REQUEST
+            ),
+            detail=str(error),
         )
 
     return APIResponse(

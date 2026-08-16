@@ -22,6 +22,10 @@ type SelectedDocumentMap =
   Record<string, number | null>;
 
 
+/* =========================================================
+   LOCAL STORAGE
+========================================================= */
+
 function loadSelectedDocumentMap():
   SelectedDocumentMap {
 
@@ -36,7 +40,7 @@ function loadSelectedDocumentMap():
 
     const raw =
       window.localStorage.getItem(
-        SELECTED_DOCUMENT_STORAGE_KEY
+        SELECTED_DOCUMENT_STORAGE_KEY,
       );
 
 
@@ -53,9 +57,7 @@ function loadSelectedDocumentMap():
       !parsed ||
       typeof parsed !== "object"
     ) {
-
       return {};
-
     }
 
 
@@ -89,12 +91,18 @@ function saveSelectedDocumentMap(
 
   } catch {
 
-    // LocalStorage should never
-    // break the application.
+    /*
+     * LocalStorage should never break
+     * the application.
+     */
 
   }
 }
 
+
+/* =========================================================
+   STATE
+========================================================= */
 
 interface WorkspaceState {
 
@@ -133,81 +141,89 @@ interface WorkspaceState {
 }
 
 
+/* =========================================================
+   ACTIONS
+========================================================= */
+
 interface WorkspaceActions {
 
   setActiveConversation: (
-    id: string | null
+    id: string | null,
   ) => void;
 
   setActiveDocument: (
-    id: string | null
+    id: string | null,
   ) => void;
 
   setSelectedDocumentId: (
-    id: number | null
+    id: number | null,
   ) => void;
 
   setSelectedPdf: (
-    path: string | null
+    path: string | null,
   ) => void;
 
   setSelectedEvidence: (
-    evidence: EvidenceChunk | null
+    evidence: EvidenceChunk | null,
   ) => void;
 
   addMessage: (
-    msg: ChatMessage
+    msg: ChatMessage,
   ) => void;
 
   setMessages: (
     updater:
       | ChatMessage[]
       | ((
-          prev: ChatMessage[]
-        ) => ChatMessage[])
+          prev: ChatMessage[],
+        ) => ChatMessage[]),
   ) => void;
 
   setDocuments: (
-    documents: Document[]
+    documents: Document[],
   ) => void;
 
   setConversations: (
-    conversations: Conversation[]
+    conversations: Conversation[],
   ) => void;
 
   addConversation: (
-    conversation: Conversation
+    conversation: Conversation,
   ) => void;
 
   removeConversation: (
-    id: string
+    id: string,
   ) => void;
 
   updateConversation: (
-    conversation: Conversation
+    conversation: Conversation,
   ) => void;
 
   setActiveEvidence: (
-    ev: EvidenceChunk[]
+    ev: EvidenceChunk[],
   ) => void;
 
   setIsQuerying: (
-    value: boolean
+    value: boolean,
   ) => void;
+
+  openSidebar: () => void;
+
+  closeSidebar: () => void;
 
   toggleSidebar: () => void;
 
   addDocument: (
-    doc: Document
+    doc: Document,
   ) => void;
 
   removeDocument: (
-    id: string
+    id: string,
   ) => void;
 
   updateDocument: (
     id: string,
-    updates: Partial<Document>
+    updates: Partial<Document>,
   ) => void;
 
   clearWorkspace: () => void;
@@ -221,9 +237,13 @@ type WorkspaceStore =
 
 const WorkspaceContext =
   createContext<WorkspaceStore | null>(
-    null
+    null,
   );
 
+
+/* =========================================================
+   PROVIDER
+========================================================= */
 
 export function WorkspaceProvider({
   children,
@@ -231,93 +251,135 @@ export function WorkspaceProvider({
   children: React.ReactNode;
 }) {
 
+  /* =======================================================
+     ACTIVE CONVERSATION
+  ======================================================== */
+
   const [
     activeConversationId,
     setActiveConversationId,
   ] = useState<string | null>(
-    null
+    null,
   );
 
 
   const activeConversationIdRef =
-    useRef<string | null>(null);
+    useRef<string | null>(
+      null,
+    );
 
+
+  /* =======================================================
+     ACTIVE DOCUMENT
+  ======================================================== */
 
   const [
     activeDocumentId,
     setActiveDocumentId,
   ] = useState<string | null>(
-    null
+    null,
   );
 
+
+  /* =======================================================
+     SELECTED DOCUMENT
+  ======================================================== */
 
   const [
     selectedDocumentId,
     setSelectedDocumentIdState,
   ] = useState<number | null>(
-    null
+    null,
   );
 
 
   const selectedDocumentMapRef =
     useRef<SelectedDocumentMap>(
-      loadSelectedDocumentMap()
+      loadSelectedDocumentMap(),
     );
 
+
+  /* =======================================================
+     PDF
+  ======================================================== */
 
   const [
     selectedPdf,
     setSelectedPdfState,
   ] = useState<string | null>(
-    null
+    null,
   );
 
+
+  /* =======================================================
+     SELECTED EVIDENCE
+  ======================================================== */
 
   const [
     selectedEvidence,
     setSelectedEvidenceState,
   ] = useState<EvidenceChunk | null>(
-    null
+    null,
   );
 
+
+  /* =======================================================
+     MESSAGES
+  ======================================================== */
 
   const [
     messages,
     setMessagesState,
   ] = useState<ChatMessage[]>(
-    []
+    [],
   );
 
+
+  /* =======================================================
+     DOCUMENTS
+  ======================================================== */
 
   const [
     documents,
     setDocumentsState,
   ] = useState<Document[]>(
-    []
+    [],
   );
 
+
+  /* =======================================================
+     CONVERSATIONS
+  ======================================================== */
 
   const [
     conversations,
     setConversationsState,
   ] = useState<Conversation[]>(
-    []
+    [],
   );
 
 
   const conversationsRef =
     useRef<Conversation[]>(
-      []
+      [],
     );
 
+
+  /* =======================================================
+     EVIDENCE
+  ======================================================== */
 
   const [
     activeEvidence,
     setActiveEvidence,
   ] = useState<EvidenceChunk[]>(
-    []
+    [],
   );
 
+
+  /* =======================================================
+     QUERYING
+  ======================================================== */
 
   const [
     isQuerying,
@@ -325,20 +387,31 @@ export function WorkspaceProvider({
   ] = useState(false);
 
 
+  /* =======================================================
+     SIDEBAR
+  ======================================================== */
+
+  /*
+   * The workspace starts as a clean canvas.
+   *
+   * The sidebar only appears once there is
+   * something meaningful to navigate.
+   */
+
   const [
     sidebarOpen,
     setSidebarOpen,
-  ] = useState(true);
+  ] = useState(false);
 
 
-  // -----------------------------------------
-  // Active Conversation
-  // -----------------------------------------
+  /* =========================================================
+     ACTIVE CONVERSATION
+  ========================================================= */
 
   const setActiveConversation =
     useCallback(
       (
-        id: string | null
+        id: string | null,
       ) => {
 
         activeConversationIdRef.current =
@@ -346,25 +419,31 @@ export function WorkspaceProvider({
 
 
         setActiveConversationId(
-          id
+          id,
         );
 
 
-        if (id === null) {
+        /*
+         * No active conversation means
+         * we are back at the empty workspace.
+         */
+
+        if (
+          id === null
+        ) {
 
           setSelectedDocumentIdState(
-            null
+            null,
           );
 
           return;
-
         }
 
 
         const conversation =
           conversationsRef.current.find(
             (item) =>
-              item.id === id
+              item.id === id,
           );
 
 
@@ -377,8 +456,7 @@ export function WorkspaceProvider({
         const storedDocumentId =
           selectedDocumentMapRef.current[
             id
-          ]
-          ?? null;
+          ] ?? null;
 
 
         const restoredDocumentId =
@@ -387,43 +465,45 @@ export function WorkspaceProvider({
 
 
         setSelectedDocumentIdState(
-          restoredDocumentId
+          restoredDocumentId,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Active Document
-  // -----------------------------------------
+  /* =========================================================
+     ACTIVE DOCUMENT
+  ========================================================= */
 
   const setActiveDocument =
     useCallback(
       (
-        id: string | null
+        id: string | null,
       ) => {
 
-        setActiveDocumentId(id);
+        setActiveDocumentId(
+          id,
+        );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Selected Research Paper
-  // -----------------------------------------
+  /* =========================================================
+     SELECTED DOCUMENT
+  ========================================================= */
 
   const setSelectedDocumentId =
     useCallback(
       (
-        id: number | null
+        id: number | null,
       ) => {
 
         setSelectedDocumentIdState(
-          id
+          id,
         );
 
 
@@ -431,102 +511,119 @@ export function WorkspaceProvider({
           activeConversationIdRef.current;
 
 
-        if (!conversationId) {
+        /*
+         * There is no conversation yet.
+         *
+         * This is normal during the initial
+         * document upload state.
+         */
+
+        if (
+          !conversationId
+        ) {
+
           return;
         }
 
 
-        selectedDocumentMapRef.current = {
-          ...selectedDocumentMapRef.current,
-          [conversationId]: id,
-        };
+        selectedDocumentMapRef.current =
+          {
+            ...selectedDocumentMapRef.current,
+
+            [conversationId]:
+              id,
+          };
 
 
         saveSelectedDocumentMap(
-          selectedDocumentMapRef.current
+          selectedDocumentMapRef.current,
         );
 
 
         conversationsRef.current =
           conversationsRef.current.map(
-            (conversation) =>
+            (
+              conversation,
+            ) =>
               conversation.id ===
               conversationId
                 ? {
                     ...conversation,
+
                     selectedDocumentId:
                       id,
                   }
-                : conversation
+                : conversation,
           );
 
 
         setConversationsState(
-          conversationsRef.current
+          conversationsRef.current,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // PDF
-  // -----------------------------------------
+  /* =========================================================
+     PDF
+  ========================================================= */
 
   const setSelectedPdf =
     useCallback(
       (
-        path: string | null
+        path: string | null,
       ) => {
 
         setSelectedPdfState(
-          path
+          path,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Evidence
-  // -----------------------------------------
+  /* =========================================================
+     SELECTED EVIDENCE
+  ========================================================= */
 
   const setSelectedEvidence =
     useCallback(
       (
-        evidence: EvidenceChunk | null
+        evidence:
+          EvidenceChunk | null,
       ) => {
 
         setSelectedEvidenceState(
-          evidence
+          evidence,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Messages
-  // -----------------------------------------
+  /* =========================================================
+     MESSAGES
+  ========================================================= */
 
   const addMessage =
     useCallback(
       (
-        msg: ChatMessage
+        msg: ChatMessage,
       ) => {
 
         setMessagesState(
           (prev) => [
             ...prev,
             msg,
-          ]
+          ],
         );
 
       },
-      []
+      [],
     );
 
 
@@ -536,8 +633,8 @@ export function WorkspaceProvider({
         updater:
           | ChatMessage[]
           | ((
-              prev: ChatMessage[]
-            ) => ChatMessage[])
+              prev: ChatMessage[],
+            ) => ChatMessage[]),
       ) => {
 
         if (
@@ -546,67 +643,66 @@ export function WorkspaceProvider({
         ) {
 
           setMessagesState(
-            updater
+            updater,
           );
 
         } else {
 
           setMessagesState(
-            updater
+            updater,
           );
 
         }
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Documents
-  // -----------------------------------------
+  /* =========================================================
+     DOCUMENTS
+  ========================================================= */
 
   const setDocuments =
     useCallback(
       (
-        nextDocuments: Document[]
+        nextDocuments:
+          Document[],
       ) => {
 
         setDocumentsState(
-          nextDocuments
+          nextDocuments,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Conversations
-  // -----------------------------------------
+  /* =========================================================
+     CONVERSATIONS
+  ========================================================= */
 
   const setConversations =
     useCallback(
       (
         nextConversations:
-          Conversation[]
+          Conversation[],
       ) => {
 
         conversationsRef.current =
           nextConversations;
 
 
-        // Synchronize the browser fallback
-        // with values returned by the backend.
-
-        const nextSelectedMap = {
-          ...selectedDocumentMapRef.current,
-        };
+        const nextSelectedMap =
+          {
+            ...selectedDocumentMapRef.current,
+          };
 
 
         for (
-          const conversation
-          of nextConversations
+          const conversation of
+          nextConversations
         ) {
 
           if (
@@ -632,36 +728,41 @@ export function WorkspaceProvider({
 
 
         saveSelectedDocumentMap(
-          nextSelectedMap
+          nextSelectedMap,
         );
 
 
         setConversationsState(
-          nextConversations
+          nextConversations,
         );
 
-
-        // If a conversation is already active,
-        // restore its persisted research paper.
 
         const activeId =
           activeConversationIdRef.current;
 
 
-        if (!activeId) {
+        if (
+          !activeId
+        ) {
+
           return;
         }
 
 
         const activeConversation =
           nextConversations.find(
-            (conversation) =>
+            (
+              conversation,
+            ) =>
               conversation.id ===
-              activeId
+              activeId,
           );
 
 
-        if (!activeConversation) {
+        if (
+          !activeConversation
+        ) {
+
           return;
         }
 
@@ -673,64 +774,70 @@ export function WorkspaceProvider({
 
 
         setSelectedDocumentIdState(
-          restoredDocumentId
+          restoredDocumentId,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Add Conversation
-  // -----------------------------------------
+  /* =========================================================
+     ADD CONVERSATION
+  ========================================================= */
 
   const addConversation =
     useCallback(
       (
-        conversation: Conversation
+        conversation:
+          Conversation,
       ) => {
 
-        conversationsRef.current = [
-          conversation,
-          ...conversationsRef.current,
-        ];
+        conversationsRef.current =
+          [
+            conversation,
+            ...conversationsRef.current,
+          ];
 
 
         setConversationsState(
-          conversationsRef.current
+          conversationsRef.current,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Remove Conversation
-  // -----------------------------------------
+  /* =========================================================
+     REMOVE CONVERSATION
+  ========================================================= */
 
   const removeConversation =
     useCallback(
       (
-        id: string
+        id: string,
       ) => {
 
         conversationsRef.current =
           conversationsRef.current.filter(
-            (conversation) =>
-              conversation.id !== id
+            (
+              conversation,
+            ) =>
+              conversation.id !==
+              id,
           );
 
 
         setConversationsState(
-          conversationsRef.current
+          conversationsRef.current,
         );
 
 
-        const nextMap = {
-          ...selectedDocumentMapRef.current,
-        };
+        const nextMap =
+          {
+            ...selectedDocumentMapRef.current,
+          };
 
 
         delete nextMap[id];
@@ -741,7 +848,7 @@ export function WorkspaceProvider({
 
 
         saveSelectedDocumentMap(
-          nextMap
+          nextMap,
         );
 
 
@@ -753,47 +860,51 @@ export function WorkspaceProvider({
           activeConversationIdRef.current =
             null;
 
+
           setActiveConversationId(
-            null
+            null,
           );
 
+
           setSelectedDocumentIdState(
-            null
+            null,
           );
 
         }
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Update Conversation
-  // -----------------------------------------
+  /* =========================================================
+     UPDATE CONVERSATION
+  ========================================================= */
 
   const updateConversation =
     useCallback(
       (
         updatedConversation:
-          Conversation
+          Conversation,
       ) => {
 
         conversationsRef.current =
           conversationsRef.current.map(
-            (conversation) =>
+            (
+              conversation,
+            ) =>
               conversation.id ===
               updatedConversation.id
                 ? {
                     ...conversation,
                     ...updatedConversation,
                   }
-                : conversation
+                : conversation,
           );
 
 
         setConversationsState(
-          conversationsRef.current
+          conversationsRef.current,
         );
 
 
@@ -809,31 +920,59 @@ export function WorkspaceProvider({
 
 
           setSelectedDocumentIdState(
-            restored
+            restored,
           );
 
 
-          selectedDocumentMapRef.current = {
-            ...selectedDocumentMapRef.current,
-            [updatedConversation.id]:
-              restored,
-          };
+          selectedDocumentMapRef.current =
+            {
+              ...selectedDocumentMapRef.current,
+
+              [updatedConversation.id]:
+                restored,
+            };
 
 
           saveSelectedDocumentMap(
-            selectedDocumentMapRef.current
+            selectedDocumentMapRef.current,
           );
 
         }
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Sidebar
-  // -----------------------------------------
+  /* =========================================================
+     SIDEBAR
+  ========================================================= */
+
+  const openSidebar =
+    useCallback(
+      () => {
+
+        setSidebarOpen(
+          true,
+        );
+
+      },
+      [],
+    );
+
+
+  const closeSidebar =
+    useCallback(
+      () => {
+
+        setSidebarOpen(
+          false,
+        );
+
+      },
+      [],
+    );
+
 
   const toggleSidebar =
     useCallback(
@@ -841,68 +980,69 @@ export function WorkspaceProvider({
 
         setSidebarOpen(
           (prev) =>
-            !prev
+            !prev,
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Add Document
-  // -----------------------------------------
+  /* =========================================================
+     ADD DOCUMENT
+  ========================================================= */
 
   const addDocument =
     useCallback(
       (
-        doc: Document
+        doc: Document,
       ) => {
 
         setDocumentsState(
           (prev) => [
             doc,
             ...prev,
-          ]
+          ],
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Remove Document
-  // -----------------------------------------
+  /* =========================================================
+     REMOVE DOCUMENT
+  ========================================================= */
 
   const removeDocument =
     useCallback(
       (
-        id: string
+        id: string,
       ) => {
 
         setDocumentsState(
           (prev) =>
             prev.filter(
               (doc) =>
-                doc.id !== id
-            )
+                doc.id !== id,
+            ),
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Update Document
-  // -----------------------------------------
+  /* =========================================================
+     UPDATE DOCUMENT
+  ========================================================= */
 
   const updateDocument =
     useCallback(
       (
         id: string,
-        updates: Partial<Document>
+        updates:
+          Partial<Document>,
       ) => {
 
         setDocumentsState(
@@ -914,41 +1054,124 @@ export function WorkspaceProvider({
                       ...doc,
                       ...updates,
                     }
-                  : doc
-            )
+                  : doc,
+            ),
         );
 
       },
-      []
+      [],
     );
 
 
-  // -----------------------------------------
-  // Clear Workspace
-  // -----------------------------------------
+  /* =========================================================
+     CLEAR / NEW WORKSPACE
+  ========================================================= */
 
   const clearWorkspace =
-    useCallback(() => {
+    useCallback(
+      () => {
 
-      activeConversationIdRef.current = null;
-      conversationsRef.current = [];
-      selectedDocumentMapRef.current = {};
+        /*
+         * IMPORTANT:
+         *
+         * "New Workspace" means:
+         *
+         *     start a NEW research session
+         *
+         * NOT:
+         *
+         *     delete the user's documents
+         *     delete their conversations
+         *
+         * The document library and conversation
+         * history remain available in the sidebar
+         * once the new workspace becomes active.
+         */
 
-      setActiveConversationId(null);
-      setActiveDocumentId(null);
-      setSelectedDocumentIdState(null);
-      setSelectedPdfState(null);
-      setSelectedEvidenceState(null);
-      setMessagesState([]);
-      setDocumentsState([]);
-      setConversationsState([]);
-      setActiveEvidence([]);
-      setIsQuerying(false);
 
-      saveSelectedDocumentMap({});
+        /* -----------------------------------------------
+           RESET ACTIVE SESSION
+        ------------------------------------------------ */
 
-    }, []);
+        activeConversationIdRef.current =
+          null;
 
+
+        setActiveConversationId(
+          null,
+        );
+
+
+        setActiveDocumentId(
+          null,
+        );
+
+
+        setSelectedDocumentIdState(
+          null,
+        );
+
+
+        setSelectedPdfState(
+          null,
+        );
+
+
+        setSelectedEvidenceState(
+          null,
+        );
+
+
+        setMessagesState(
+          [],
+        );
+
+
+        setActiveEvidence(
+          [],
+        );
+
+
+        setIsQuerying(
+          false,
+        );
+
+
+        /* -----------------------------------------------
+           CLOSE SIDEBAR
+        ------------------------------------------------ */
+
+        /*
+         * This is the key UX change.
+         *
+         * New Workspace returns the user to
+         * the clean centered canvas.
+         */
+
+        setSidebarOpen(
+          false,
+        );
+
+
+        /*
+         * DO NOT clear:
+         *
+         * documents
+         * conversations
+         *
+         * Those belong to the user's workspace
+         * and should remain available.
+         */
+
+
+      },
+      [],
+    );
+
+
+  /* =========================================================
+     PROVIDER
+  ========================================================= */
 
   return (
 
@@ -977,7 +1200,6 @@ export function WorkspaceProvider({
 
         sidebarOpen,
 
-
         setActiveConversation,
 
         setActiveDocument,
@@ -988,11 +1210,9 @@ export function WorkspaceProvider({
 
         setSelectedEvidence,
 
-
         addMessage,
 
         setMessages,
-
 
         setDocuments,
 
@@ -1004,14 +1224,15 @@ export function WorkspaceProvider({
 
         updateConversation,
 
-
         setActiveEvidence,
 
         setIsQuerying,
 
+        openSidebar,
+
+        closeSidebar,
 
         toggleSidebar,
-
 
         addDocument,
 
@@ -1029,23 +1250,28 @@ export function WorkspaceProvider({
     </WorkspaceContext.Provider>
 
   );
-
 }
 
+
+/* =========================================================
+   HOOK
+========================================================= */
 
 export function useWorkspaceStore():
   WorkspaceStore {
 
   const context =
     useContext(
-      WorkspaceContext
+      WorkspaceContext,
     );
 
 
-  if (!context) {
+  if (
+    !context
+  ) {
 
     throw new Error(
-      "useWorkspaceStore must be used within WorkspaceProvider"
+      "useWorkspaceStore must be used within WorkspaceProvider",
     );
 
   }

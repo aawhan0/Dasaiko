@@ -4,10 +4,16 @@ import uuid
 from pathlib import Path
 
 from fastapi import UploadFile
+
 from sqlalchemy.orm import Session
 
-from app.core.exceptions import DocumentNotFoundException
-from app.db.transaction import transactional
+from app.core.exceptions import (
+    DocumentNotFoundException,
+)
+
+from app.db.transaction import (
+    transactional,
+)
 
 from app.models.chunk import Chunk
 from app.models.document import Document
@@ -18,14 +24,18 @@ from app.schemas.document import (
     DocumentUpdate,
 )
 
-from app.services.embedding_service import generate_embedding
+from app.services.embedding_service import (
+    generate_embedding,
+)
 
 from app.utils.pdf import (
     extract_text_from_pdf,
     extract_pages_from_pdf,
 )
 
-from app.utils.chunker import split_page
+from app.utils.chunker import (
+    split_page,
+)
 
 
 class DocumentService:
@@ -109,12 +119,18 @@ class DocumentService:
         if not document:
             raise DocumentNotFoundException()
 
-        if updated_document.title is not None:
+        if (
+            updated_document.title
+            is not None
+        ):
             document.title = (
                 updated_document.title
             )
 
-        if updated_document.content is not None:
+        if (
+            updated_document.content
+            is not None
+        ):
             document.content = (
                 updated_document.content
             )
@@ -170,14 +186,12 @@ class DocumentService:
         user_id: int,
     ) -> Document:
 
-        # -----------------------------
-        # Save PDF
-        # -----------------------------
+        upload_dir = Path(
+            "uploads"
+        )
 
-        upload_dir = "uploads"
-
-        os.makedirs(
-            upload_dir,
+        upload_dir.mkdir(
+            parents=True,
             exist_ok=True,
         )
 
@@ -185,135 +199,192 @@ class DocumentService:
             f"{uuid.uuid4()}.pdf"
         )
 
-        disk_path = os.path.join(
-            upload_dir,
-            unique_name,
+        disk_path = (
+            upload_dir /
+            unique_name
         )
 
         public_path = (
             f"/uploads/{unique_name}"
         )
 
-        with open(
-            disk_path,
-            "wb",
-        ) as buffer:
+        try:
+            # ---------------------------------
+            # Save uploaded PDF
+            # ---------------------------------
 
-            shutil.copyfileobj(
-                file.file,
-                buffer,
-            )
-
-        file.file.close()
-
-        # -----------------------------
-        # Extract full text
-        # -----------------------------
-
-        extracted_text = (
-            extract_text_from_pdf(
-                disk_path
-            )
-        )
-
-        # -----------------------------
-        # Create document
-        # -----------------------------
-
-        filename = (
-            file.filename
-            or "Untitled"
-        )
-
-        title = filename
-
-        if title.lower().endswith(
-            ".pdf"
-        ):
-            title = title[:-4]
-
-        document = Document(
-            user_id=user_id,
-            title=title,
-            content=extracted_text,
-            source="pdf",
-            file_name=filename,
-            file_path=public_path,
-        )
-
-        db.add(document)
-        db.flush()
-
-        # -----------------------------
-        # Page-aware chunking
-        # -----------------------------
-
-        pages = (
-            extract_pages_from_pdf(
-                disk_path
-            )
-        )
-
-        global_chunk_index = 0
-
-        for page in pages:
-
-            page_chunks = split_page(
-                page
-            )
-
-            for chunk in page_chunks:
-
-                chunk_obj = Chunk(
-                    document_id=document.id,
-                    content=chunk[
-                        "content"
-                    ],
-                    chunk_index=(
-                        global_chunk_index
-                    ),
-                    page_number=chunk[
-                        "page_number"
-                    ],
-                    page_width=chunk[
-                        "page_width"
-                    ],
-                    page_height=chunk[
-                        "page_height"
-                    ],
-                    bboxes=chunk[
-                        "bboxes"
-                    ],
-                    token_count=len(
-                        chunk[
-                            "content"
-                        ].split()
-                    ),
+            with disk_path.open(
+                "wb"
+            ) as buffer:
+                shutil.copyfileobj(
+                    file.file,
+                    buffer,
                 )
 
-                db.add(chunk_obj)
-                db.flush()
+            file.file.close()
 
-                embedding_obj = Embedding(
-                    chunk_id=chunk_obj.id,
-                    model_name=(
-                        "all-MiniLM-L6-v2"
-                    ),
-                    embedding=(
-                        generate_embedding(
+            if (
+                not disk_path.is_file()
+                or disk_path.stat().st_size
+                == 0
+            ):
+                raise ValueError(
+                    "The uploaded PDF is empty."
+                )
+
+            # ---------------------------------
+            # Extract full text
+            # ---------------------------------
+
+            extracted_text = (
+                extract_text_from_pdf(
+                    str(disk_path)
+                )
+            )
+
+            if not extracted_text.strip():
+                raise ValueError(
+                    "Could not extract text "
+                    "from this PDF."
+                )
+
+            # ---------------------------------
+            # Create document
+            # ---------------------------------
+
+            filename = (
+                file.filename
+                or "Untitled.pdf"
+            )
+
+            title = filename
+
+            if title.lower().endswith(
+                ".pdf"
+            ):
+                title = title[:-4]
+
+            document = Document(
+                user_id=user_id,
+                title=title,
+                content=extracted_text,
+                source="pdf",
+                file_name=filename,
+                file_path=public_path,
+            )
+
+            db.add(document)
+            db.flush()
+
+            # ---------------------------------
+            # Page-aware chunking
+            # ---------------------------------
+
+            pages = (
+                extract_pages_from_pdf(
+                    str(disk_path)
+                )
+            )
+
+            if not pages:
+                raise ValueError(
+                    "Could not extract any "
+                    "pages from this PDF."
+                )
+
+            global_chunk_index = 0
+
+            for page in pages:
+
+                page_chunks = split_page(
+                    page
+                )
+
+                for chunk in page_chunks:
+
+                    content = (
+                        chunk["content"]
+                    )
+
+                    if not content.strip():
+                        continue
+
+                    chunk_obj = Chunk(
+                        document_id=(
+                            document.id
+                        ),
+                        content=content,
+                        chunk_index=(
+                            global_chunk_index
+                        ),
+                        page_number=(
                             chunk[
-                                "content"
+                                "page_number"
                             ]
-                        )
-                    ),
+                        ),
+                        page_width=(
+                            chunk[
+                                "page_width"
+                            ]
+                        ),
+                        page_height=(
+                            chunk[
+                                "page_height"
+                            ]
+                        ),
+                        bboxes=(
+                            chunk["bboxes"]
+                        ),
+                        token_count=len(
+                            content.split()
+                        ),
+                    )
+
+                    db.add(
+                        chunk_obj
+                    )
+
+                    db.flush()
+
+                    embedding_obj = Embedding(
+                        chunk_id=(
+                            chunk_obj.id
+                        ),
+                        model_name=(
+                            "all-MiniLM-L6-v2"
+                        ),
+                        embedding=(
+                            generate_embedding(
+                                content
+                            )
+                        ),
+                    )
+
+                    db.add(
+                        embedding_obj
+                    )
+
+                    global_chunk_index += 1
+
+            if (
+                global_chunk_index == 0
+            ):
+                raise ValueError(
+                    "No searchable text "
+                    "could be extracted "
+                    "from this PDF."
                 )
 
-                db.add(
-                    embedding_obj
-                )
+            db.refresh(document)
 
-                global_chunk_index += 1
+            return document
 
-        db.refresh(document)
+        except Exception:
 
-        return document
+            if disk_path.is_file():
+                try:
+                    disk_path.unlink()
+                except OSError:
+                    pass
+
+            raise
