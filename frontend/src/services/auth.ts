@@ -48,6 +48,19 @@ export const PASSWORD_RESET_EMAIL_KEY =
   "dasaiko.passwordResetEmail";
 
 /**
+ * Base URL for the FastAPI backend.
+ *
+ * Local:
+ *   VITE_API_BASE_URL=http://127.0.0.1:8000
+ *
+ * Production:
+ *   VITE_API_BASE_URL=https://dasaiko-api.onrender.com
+ */
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://127.0.0.1:8000";
+
+/**
  * Start Google OAuth authentication.
  *
  * The browser is redirected to the FastAPI backend,
@@ -55,7 +68,7 @@ export const PASSWORD_RESET_EMAIL_KEY =
  */
 export function loginWithGoogle(): void {
   window.location.href =
-    "http://127.0.0.1:8000/auth/google";
+    `${API_BASE_URL}/auth/google`;
 }
 
 export async function register(
