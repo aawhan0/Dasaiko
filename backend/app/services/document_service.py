@@ -1,10 +1,8 @@
-import os
 import shutil
 import uuid
 from pathlib import Path
 
 from fastapi import UploadFile
-
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import (
@@ -29,7 +27,6 @@ from app.services.embedding_service import (
 )
 
 from app.utils.pdf import (
-    extract_text_from_pdf,
     extract_pages_from_pdf,
 )
 
@@ -210,12 +207,13 @@ class DocumentService:
 
         try:
             # ---------------------------------
-            # Save uploaded PDF
+            # Save uploaded PDF to disk
             # ---------------------------------
 
             with disk_path.open(
                 "wb"
             ) as buffer:
+
                 shutil.copyfileobj(
                     file.file,
                     buffer,
@@ -225,27 +223,10 @@ class DocumentService:
 
             if (
                 not disk_path.is_file()
-                or disk_path.stat().st_size
-                == 0
+                or disk_path.stat().st_size == 0
             ):
                 raise ValueError(
                     "The uploaded PDF is empty."
-                )
-
-            # ---------------------------------
-            # Extract full text
-            # ---------------------------------
-
-            extracted_text = (
-                extract_text_from_pdf(
-                    str(disk_path)
-                )
-            )
-
-            if not extracted_text.strip():
-                raise ValueError(
-                    "Could not extract text "
-                    "from this PDF."
                 )
 
             # ---------------------------------
@@ -267,7 +248,7 @@ class DocumentService:
             document = Document(
                 user_id=user_id,
                 title=title,
-                content=extracted_text,
+                content="",
                 source="pdf",
                 file_name=filename,
                 file_path=public_path,
@@ -277,24 +258,36 @@ class DocumentService:
             db.flush()
 
             # ---------------------------------
-            # Page-aware chunking
+            # Process PDF lazily page-by-page
             # ---------------------------------
 
-            pages = (
-                extract_pages_from_pdf(
-                    str(disk_path)
-                )
-            )
-
-            if not pages:
-                raise ValueError(
-                    "Could not extract any "
-                    "pages from this PDF."
-                )
-
+            pages_processed = 0
             global_chunk_index = 0
 
-            for page in pages:
+            document_text_parts = []
+
+            for page in extract_pages_from_pdf(
+                str(disk_path)
+            ):
+
+                pages_processed += 1
+
+                # -----------------------------
+                # Keep document text
+                # -----------------------------
+
+                page_text = (
+                    page["text"] or ""
+                ).strip()
+
+                if page_text:
+                    document_text_parts.append(
+                        page_text
+                    )
+
+                # -----------------------------
+                # Chunk current page
+                # -----------------------------
 
                 page_chunks = split_page(
                     page
@@ -308,6 +301,10 @@ class DocumentService:
 
                     if not content.strip():
                         continue
+
+                    # -------------------------
+                    # Create chunk
+                    # -------------------------
 
                     chunk_obj = Chunk(
                         document_id=(
@@ -346,6 +343,10 @@ class DocumentService:
 
                     db.flush()
 
+                    # -------------------------
+                    # Generate embedding
+                    # -------------------------
+
                     embedding_obj = Embedding(
                         chunk_id=(
                             chunk_obj.id
@@ -366,15 +367,34 @@ class DocumentService:
 
                     global_chunk_index += 1
 
-            if (
-                global_chunk_index == 0
-            ):
+            # ---------------------------------
+            # Validate PDF
+            # ---------------------------------
+
+            if pages_processed == 0:
+                raise ValueError(
+                    "Could not extract any "
+                    "pages from this PDF."
+                )
+
+            if global_chunk_index == 0:
                 raise ValueError(
                     "No searchable text "
                     "could be extracted "
                     "from this PDF."
                 )
 
+            # ---------------------------------
+            # Store extracted document text
+            # ---------------------------------
+
+            document.content = (
+                "\n\n".join(
+                    document_text_parts
+                )
+            )
+
+            db.flush()
             db.refresh(document)
 
             return document

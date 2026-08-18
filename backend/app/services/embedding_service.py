@@ -1,31 +1,24 @@
-from functools import lru_cache
-
 from sentence_transformers import SentenceTransformer
 
 
-MODEL_NAME = "all-MiniLM-L6-v2"
+_model = None
 
 
-@lru_cache(maxsize=1)
-def get_embedding_model() -> SentenceTransformer:
-    """
-    Load the embedding model only when it is actually needed.
+def get_model() -> SentenceTransformer:
+    global _model
 
-    The model is cached after the first load so subsequent
-    embedding requests reuse the same instance.
-    """
+    if _model is None:
+        _model = SentenceTransformer(
+            "all-MiniLM-L6-v2",
+            local_files_only=True,
+            device="cpu",
+        )
 
-    return SentenceTransformer(
-        MODEL_NAME,
-        device="cpu",
-    )
+    return _model
 
 
-def generate_embedding(
-    text: str,
-) -> list[float]:
-
-    model = get_embedding_model()
+def generate_embedding(text: str) -> list[float]:
+    model = get_model()
 
     return model.encode(
         text,

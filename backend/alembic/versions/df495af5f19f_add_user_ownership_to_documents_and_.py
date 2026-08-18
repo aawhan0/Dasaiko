@@ -20,7 +20,7 @@ down_revision: Union[
     str,
     Sequence[str],
     None,
-] = "0f0ddf81d7a0"
+] = "6e1a7d9c2f10"
 
 branch_labels: Union[
     str,
