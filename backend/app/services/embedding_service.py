@@ -11,7 +11,6 @@ def get_model():
 
         _model = SentenceTransformer(
             "all-MiniLM-L6-v2",
-            local_files_only=True,
             device="cpu",
         )
 
