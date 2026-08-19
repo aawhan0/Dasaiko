@@ -5,7 +5,10 @@ import requests
 
 
 MODEL_NAME = "BAAI/bge-reranker-v2-m3"
-HF_RERANK_URL = "https://router.huggingface.co/hf-inference/models/BAAI/bge-reranker-v2-m3"
+HF_RERANK_URL = (
+    "https://router.huggingface.co/hf-inference/"
+    f"models/{MODEL_NAME}/pipeline/text-classification"
+)
 
 
 class RerankerService:
@@ -28,90 +31,73 @@ class RerankerService:
         if not token:
             raise RuntimeError("HF_TOKEN is required for remote reranking")
 
-        ranked = []
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
+        pairs = [
+            {"text": query, "text_pair": chunk.content}
+            for chunk, _ in results
+        ]
 
-        for chunk, _ in results:
-            # The HF text-classification API accepts one text input. For a
-            # reranker, represent the query/document pair as a single input.
-            # BGE reranker models are trained to score query/passage pairs.
-            payload = {
-                "inputs": {
-                    "text": query,
-                    "text_pair": chunk.content,
-                }
-            }
+        response = requests.post(
+            HF_RERANK_URL,
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "inputs": pairs,
+                "parameters": {"function_to_apply": "sigmoid"},
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
 
-            response = requests.post(
-                HF_RERANK_URL,
-                headers=headers,
-                json=payload,
-                timeout=30,
+        outputs = response.json()
+        if not isinstance(outputs, list) or len(outputs) != len(results):
+            raise RuntimeError(
+                f"Unexpected Hugging Face reranker response: {outputs}"
             )
-            response.raise_for_status()
-            data = response.json()
 
-            if isinstance(data, list) and data:
-                first = data[0]
-                score = float(first.get("score", 0.0))
-            elif isinstance(data, dict) and "score" in data:
-                score = float(data["score"])
+        scored = []
+        for (chunk, _), output in zip(results, outputs):
+            if isinstance(output, list):
+                if not output:
+                    raise RuntimeError("Empty Hugging Face reranker response")
+                score = output[0]["score"]
             else:
-                raise RuntimeError(
-                    f"Unexpected reranker response: {data}"
-                )
+                score = output["score"]
+            scored.append((chunk, float(score)))
 
-            ranked.append((chunk, score))
-
-        ranked.sort(key=lambda item: item[1], reverse=True)
-        return ranked[:limit]
+        scored.sort(key=lambda item: item[1], reverse=True)
+        return scored[:limit]
 
     @staticmethod
-    def rerank(
-        query: str,
-        results: list,
-        limit: int = 5,
-    ):
+    def rerank(query: str, results: list, limit: int = 5):
         if not results:
             return []
 
         provider = os.getenv("RERANKER_PROVIDER", "remote").lower()
 
         try:
+            if provider == "remote":
+                return RerankerService._rerank_remote(query, results, limit)
+
             if provider == "local":
-                pairs = [
-                    (query, chunk.content)
-                    for chunk, _ in results
-                ]
+                pairs = [(query, chunk.content) for chunk, _ in results]
                 model = RerankerService.get_model()
                 scores = model.predict(pairs)
-
                 reranked = sorted(
-                    zip(
-                        [chunk for chunk, _ in results],
-                        scores,
-                    ),
+                    zip([chunk for chunk, _ in results], scores),
                     key=lambda item: float(item[1]),
                     reverse=True,
                 )
-
                 return [
                     (chunk, float(score))
                     for chunk, score in reranked[:limit]
                 ]
 
-            return RerankerService._rerank_remote(
-                query=query,
-                results=results,
-                limit=limit,
-            )
+            raise ValueError(f"Unsupported RERANKER_PROVIDER: {provider}")
 
         except Exception:
             import traceback
-
             print("\n========== RERANKER ERROR ==========")
             traceback.print_exc()
             print("====================================\n")
