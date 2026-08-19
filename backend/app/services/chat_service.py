@@ -1070,7 +1070,7 @@ Chunk {index}
         try:
 
             request_kwargs = {
-                "model": "settings.groq_model",
+                "model": settings.groq_model,
                 "messages": [
                     {
                         "role": "system",
