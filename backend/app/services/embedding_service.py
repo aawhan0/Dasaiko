@@ -1,13 +1,14 @@
-from sentence_transformers import SentenceTransformer
-
-
 _model = None
 
 
-def get_model() -> SentenceTransformer:
+def get_model():
+    """Load the embedding model only when embeddings are actually needed."""
     global _model
 
     if _model is None:
+        # Keep sentence-transformers/PyTorch out of API startup memory.
+        from sentence_transformers import SentenceTransformer
+
         _model = SentenceTransformer(
             "all-MiniLM-L6-v2",
             local_files_only=True,
