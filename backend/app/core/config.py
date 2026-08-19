@@ -18,6 +18,11 @@ class Settings(BaseSettings):
 
     frontend_base_url: str = "http://localhost:5173"
 
+    # Embeddings
+    embedding_provider: str = "local"
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    hf_token: str | None = None
+
     # Google OAuth
     google_client_id: str
     google_client_secret: str
