@@ -1,10 +1,12 @@
 from functools import lru_cache
 import os
+import traceback
 
 import requests
 
 
 MODEL_NAME = "BAAI/bge-reranker-v2-m3"
+
 HF_RERANK_URL = (
     "https://router.huggingface.co/hf-inference/"
     f"models/{MODEL_NAME}/pipeline/text-classification"
@@ -16,7 +18,12 @@ class RerankerService:
     @staticmethod
     @lru_cache(maxsize=1)
     def get_model():
-        """Load the local reranker only when explicitly requested."""
+        """
+        Load the local reranker only when explicitly requested.
+
+        Local reranking is optional because Render's free instance
+        should not have to load the CrossEncoder model into memory.
+        """
         from sentence_transformers import CrossEncoder
 
         return CrossEncoder(
@@ -25,14 +32,27 @@ class RerankerService:
         )
 
     @staticmethod
-    def _rerank_remote(query: str, results: list, limit: int):
-        """Rerank candidates using Hugging Face Inference Providers."""
+    def _rerank_remote(
+        query: str,
+        results: list,
+        limit: int,
+    ):
+        """
+        Rerank candidates using Hugging Face Inference Providers.
+        """
+
         token = os.getenv("HF_TOKEN")
+
         if not token:
-            raise RuntimeError("HF_TOKEN is required for remote reranking")
+            raise RuntimeError(
+                "HF_TOKEN is required for remote reranking"
+            )
 
         pairs = [
-            {"text": query, "text_pair": chunk.content}
+            {
+                "text": query,
+                "text_pair": chunk.content,
+            }
             for chunk, _ in results
         ]
 
@@ -44,22 +64,37 @@ class RerankerService:
             },
             json={
                 "inputs": pairs,
-                "parameters": {"function_to_apply": "sigmoid"},
+                "parameters": {
+                    "function_to_apply": "sigmoid"
+                },
             },
             timeout=60,
         )
+
         response.raise_for_status()
 
         outputs = response.json()
 
-        # Hugging Face's text-classification pipeline can return the batched
-        # results in either of these shapes:
+        # ---------------------------------------------------------
+        # Hugging Face response normalization
         #
-        #   [ {"label": "LABEL_0", "score": ...}, ... ]
-        #   [ [ {"label": "LABEL_0", "score": ...}, ... ] ]
+        # Possible shapes:
         #
-        # With the current router/model combination, the second shape is
-        # returned: one outer item containing one score per input pair.
+        # [
+        #     {"label": "LABEL_0", "score": 0.91},
+        #     ...
+        # ]
+        #
+        # OR:
+        #
+        # [
+        #     [
+        #         {"label": "LABEL_0", "score": 0.91},
+        #         ...
+        #     ]
+        # ]
+        # ---------------------------------------------------------
+
         if (
             isinstance(outputs, list)
             and len(outputs) == 1
@@ -68,71 +103,228 @@ class RerankerService:
         ):
             outputs = outputs[0]
 
-        if not isinstance(outputs, list) or len(outputs) != len(results):
+        if (
+            not isinstance(outputs, list)
+            or len(outputs) != len(results)
+        ):
             raise RuntimeError(
-                f"Unexpected Hugging Face reranker response: {outputs}"
+                "Unexpected Hugging Face reranker response: "
+                f"{outputs}"
             )
 
         scored = []
-        for (chunk, _), output in zip(results, outputs):
-            # Some providers return a list of labels for one input. For the
-            # BGE reranker endpoint we want the single LABEL_0 score.
+
+        for (chunk, original_score), output in zip(
+            results,
+            outputs,
+        ):
+
+            # Some providers return multiple labels
+            # for one input.
             if isinstance(output, list):
+
                 if not output:
-                    raise RuntimeError("Empty Hugging Face reranker response")
+                    raise RuntimeError(
+                        "Empty Hugging Face reranker response"
+                    )
 
                 label_output = next(
                     (
                         item
                         for item in output
-                        if isinstance(item, dict)
-                        and item.get("label") == "LABEL_0"
+                        if (
+                            isinstance(item, dict)
+                            and item.get("label")
+                            == "LABEL_0"
+                        )
                     ),
                     output[0],
                 )
+
+                if (
+                    not isinstance(label_output, dict)
+                    or "score" not in label_output
+                ):
+                    raise RuntimeError(
+                        "Invalid Hugging Face reranker item: "
+                        f"{label_output}"
+                    )
+
                 score = label_output["score"]
-            elif isinstance(output, dict) and "score" in output:
+
+            elif (
+                isinstance(output, dict)
+                and "score" in output
+            ):
+
                 score = output["score"]
+
             else:
+
                 raise RuntimeError(
-                    f"Unexpected reranker item: {output}"
+                    "Unexpected reranker item: "
+                    f"{output}"
                 )
 
-            scored.append((chunk, float(score)))
+            scored.append(
+                (
+                    chunk,
+                    float(score),
+                )
+            )
 
-        scored.sort(key=lambda item: item[1], reverse=True)
+        scored.sort(
+            key=lambda item: item[1],
+            reverse=True,
+        )
+
         return scored[:limit]
 
     @staticmethod
-    def rerank(query: str, results: list, limit: int = 5):
+    def _rerank_local(
+        query: str,
+        results: list,
+        limit: int,
+    ):
+        """
+        Rerank candidates locally using CrossEncoder.
+        """
+
+        pairs = [
+            (
+                query,
+                chunk.content,
+            )
+            for chunk, _ in results
+        ]
+
+        model = RerankerService.get_model()
+
+        scores = model.predict(pairs)
+
+        reranked = sorted(
+            zip(
+                [
+                    chunk
+                    for chunk, _ in results
+                ],
+                scores,
+            ),
+            key=lambda item: float(item[1]),
+            reverse=True,
+        )
+
+        return [
+            (
+                chunk,
+                float(score),
+            )
+            for chunk, score in reranked[:limit]
+        ]
+
+    @staticmethod
+    def _fallback(
+        results: list,
+        limit: int,
+    ):
+        """
+        Fallback to the existing hybrid-search ranking.
+
+        SearchService already provides an ordered list of
+        candidates. If the optional reranker is unavailable,
+        we preserve that ranking rather than failing the
+        entire chat request.
+        """
+
+        print(
+            "⚠ Reranker unavailable."
+        )
+
+        print(
+            "⚠ Falling back to hybrid-search ranking."
+        )
+
+        return [
+            (
+                chunk,
+                float(score),
+            )
+            for chunk, score in results[:limit]
+        ]
+
+    @staticmethod
+    def rerank(
+        query: str,
+        results: list,
+        limit: int = 5,
+    ):
+        """
+        Rerank search results.
+
+        Reranking is an optimization layer, not a hard
+        dependency for the chat system.
+
+        If remote/local reranking fails, return the original
+        hybrid-search ordering instead of crashing the
+        entire RAG pipeline.
+        """
+
         if not results:
             return []
 
-        provider = os.getenv("RERANKER_PROVIDER", "remote").lower()
+        provider = (
+            os.getenv(
+                "RERANKER_PROVIDER",
+                "remote",
+            )
+            .strip()
+            .lower()
+        )
 
         try:
+
             if provider == "remote":
-                return RerankerService._rerank_remote(query, results, limit)
+
+                return RerankerService._rerank_remote(
+                    query=query,
+                    results=results,
+                    limit=limit,
+                )
 
             if provider == "local":
-                pairs = [(query, chunk.content) for chunk, _ in results]
-                model = RerankerService.get_model()
-                scores = model.predict(pairs)
-                reranked = sorted(
-                    zip([chunk for chunk, _ in results], scores),
-                    key=lambda item: float(item[1]),
-                    reverse=True,
+
+                return RerankerService._rerank_local(
+                    query=query,
+                    results=results,
+                    limit=limit,
                 )
-                return [
-                    (chunk, float(score))
-                    for chunk, score in reranked[:limit]
-                ]
 
-            raise ValueError(f"Unsupported RERANKER_PROVIDER: {provider}")
+            raise ValueError(
+                f"Unsupported RERANKER_PROVIDER: "
+                f"{provider}"
+            )
 
-        except Exception:
-            import traceback
-            print("\n========== RERANKER ERROR ==========")
+        except Exception as exc:
+
+            print(
+                "\n========== RERANKER ERROR =========="
+            )
+
+            print(
+                f"Provider: {provider}"
+            )
+
+            print(
+                f"Error: {exc}"
+            )
+
             traceback.print_exc()
-            print("====================================\n")
-            raise
+
+            print(
+                "====================================\n"
+            )
+
+            return RerankerService._fallback(
+                results=results,
+                limit=limit,
+            )
