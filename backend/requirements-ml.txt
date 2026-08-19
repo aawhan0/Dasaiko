@@ -1,0 +1,9 @@
+# Local-only ML dependencies.
+# Production/Render uses remote Hugging Face inference and must install
+# backend/requirements.txt instead.
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+sentence-transformers==5.6.1
+transformers==5.15.0
+torch==2.13.0+cpu
