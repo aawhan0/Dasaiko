@@ -1070,7 +1070,7 @@ Chunk {index}
         try:
 
             request_kwargs = {
-                "model": "llama-3.3-70b-versatile",
+                "model": "settings.groq_model",
                 "messages": [
                     {
                         "role": "system",
