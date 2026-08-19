@@ -30,7 +30,7 @@ Jinja2==3.1.6
 jiter==0.16.0
 joblib==1.5.3
 jsonpatch==1.33
-jsonpointer==1.0
+jsonpointer==1.9
 langchain-core==1.5.3
 langchain-protocol==0.0.18
 langchain-text-splitters==1.1.2
