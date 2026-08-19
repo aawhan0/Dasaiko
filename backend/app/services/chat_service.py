@@ -1,21 +1,21 @@
 import time
+from typing import Callable
 
 from groq import Groq
 from sqlalchemy.orm import Session
 
-from typing import Callable
-
 from app.core.config import settings
-
 from app.models.document import Document
-
 from app.services.search_service import SearchService
 from app.services.query_rewriter_service import QueryRewriterService
-
 from app.services.conversation_service import ConversationService
 from app.services.message_service import MessageService
 from app.services.prompt_service import PromptService
 
+
+# ============================================================
+# GROQ CLIENT
+# ============================================================
 
 client = Groq(
     api_key=settings.groq_api_key,
@@ -24,31 +24,20 @@ client = Groq(
 
 class ChatService:
 
-    # -----------------------------------------
-    # Minimum reranker score required for
-    # general/unrestricted evidence.
-    #
-    # Cross-encoder scores are ranking scores,
-    # NOT probabilities.
-    # -----------------------------------------
+    # ========================================================
+    # EVIDENCE FILTERING
+    # ========================================================
 
+    # CrossEncoder scores are ranking scores, NOT probabilities.
     MIN_EVIDENCE_SCORE = -2.0
 
-    # -----------------------------------------
-    # When a user explicitly selects a paper,
-    # evidence is already restricted to that
-    # document.
-    #
-    # Instead of requiring an absolute score,
-    # we allow results within this score margin
-    # of the best result.
-    # -----------------------------------------
-
+    # When a paper is explicitly selected, use a relative
+    # score margin instead of requiring an absolute score.
     SELECTED_PAPER_SCORE_MARGIN = 3.0
 
-    # -----------------------------------------
-    # Casual / conversational messages
-    # -----------------------------------------
+    # ========================================================
+    # CASUAL MESSAGE DETECTION
+    # ========================================================
 
     @staticmethod
     def _is_casual_message(
@@ -83,23 +72,11 @@ class ChatService:
             "thanks a lot",
         }
 
-        return (
-            normalized
-            in casual_messages
-        )
+        return normalized in casual_messages
 
-    # -----------------------------------------
-    # Paper-context query detection
-    # -----------------------------------------
-    #
-    # These are questions that cannot be answered
-    # reliably without knowing which uploaded paper
-    # the user means.
-    #
-    # IMPORTANT:
-    # This does NOT contain any paper titles or IDs.
-    # It is intentionally generic.
-    # -----------------------------------------
+    # ========================================================
+    # PAPER-CONTEXT QUERY DETECTION
+    # ========================================================
 
     @staticmethod
     def _is_paper_context_query(
@@ -165,6 +142,7 @@ class ChatService:
         tokens = normalized.split()
 
         if len(tokens) <= 6:
+
             contextual_tokens = (
                 "it",
                 "its",
@@ -188,34 +166,23 @@ class ChatService:
 
         return False
 
+    # ========================================================
+    # PAPER SELECTION REQUIREMENT
+    # ========================================================
+
     @staticmethod
     def _needs_paper_selection(
         query: str,
         conversation_history: str,
     ) -> bool:
-        """
-        Return True when the user is asking a
-        paper-dependent question but no paper has
-        been selected by the frontend.
-
-        IMPORTANT:
-        Conversation history must NOT suppress paper
-        selection. A conversation can contain casual
-        messages such as "hi" before the user asks a
-        paper-dependent question.
-
-        The frontend selection UI owns the actual
-        paper list. This method only decides whether
-        selection is required.
-        """
 
         return ChatService._is_paper_context_query(
             query
         )
 
-    # -----------------------------------------
-    # Get paper-selection options
-    # -----------------------------------------
+    # ========================================================
+    # GET PAPER SELECTION OPTIONS
+    # ========================================================
 
     @staticmethod
     def _get_paper_selection_options(
@@ -251,10 +218,7 @@ class ChatService:
                 .lower()
             )
 
-            if (
-                normalized_title
-                in seen_titles
-            ):
+            if normalized_title in seen_titles:
                 continue
 
             seen_titles.add(
@@ -270,17 +234,9 @@ class ChatService:
 
         return unique_documents
 
-    # -----------------------------------------
-    # Build paper-selection response
-    # -----------------------------------------
-    #
-    # IMPORTANT:
-    # The actual paper names are returned separately
-    # through paper_selection and rendered by the
-    # frontend selection component.
-    #
-    # Do NOT list the papers in this text response.
-    # -----------------------------------------
+    # ========================================================
+    # BUILD PAPER SELECTION RESPONSE
+    # ========================================================
 
     @staticmethod
     def _build_paper_selection_response(
@@ -311,9 +267,9 @@ class ChatService:
             "context."
         )
 
-    # -----------------------------------------
-    # Main Chat
-    # -----------------------------------------
+    # ========================================================
+    # MAIN CHAT
+    # ========================================================
 
     @staticmethod
     def chat(
@@ -334,9 +290,9 @@ class ChatService:
             "\n========== CHAT START =========="
         )
 
-        # -----------------------------------------
-        # Conversation
-        # -----------------------------------------
+        # ====================================================
+        # CONVERSATION
+        # ====================================================
 
         conversation = (
             ConversationService.get_conversation(
@@ -356,31 +312,18 @@ class ChatService:
             "✓ Conversation found"
         )
 
-        # -----------------------------------------
-        # Determine whether this request is the
-        # one-time paper-selection continuation.
-        #
-        # Normal follow-up questions may also carry
-        # selected_document_id, but they must NOT
-        # create another "Research Context Set"
-        # event. Only the explicit picker action
-        # creates that historical event.
-        # -----------------------------------------
+        # ====================================================
+        # RESEARCH CONTEXT SELECTION
+        # ====================================================
 
         is_new_research_context_selection = (
             selection_continuation
             and selected_document_id is not None
         )
 
-        # -----------------------------------------
-        # Restore conversation research context
-        #
-        # The frontend also keeps a browser-local
-        # per-conversation cache so switching and
-        # reloading feel instant. The database is
-        # the durable source of truth once the
-        # migration has been applied.
-        # -----------------------------------------
+        # ====================================================
+        # RESTORE PERSISTED RESEARCH CONTEXT
+        # ====================================================
 
         if selected_document_id is None:
 
@@ -390,10 +333,7 @@ class ChatService:
                 None,
             )
 
-            if (
-                persisted_document_id
-                is not None
-            ):
+            if persisted_document_id is not None:
 
                 selected_document_id = (
                     persisted_document_id
@@ -409,9 +349,9 @@ class ChatService:
                     f"{selected_document_id}"
                 )
 
-        # -----------------------------------------
-        # Load recent messages
-        # -----------------------------------------
+        # ====================================================
+        # LOAD RECENT MESSAGES
+        # ====================================================
 
         messages = (
             MessageService.get_messages(
@@ -434,16 +374,9 @@ class ChatService:
             f"{len(messages)} previous messages"
         )
 
-        # -----------------------------------------
-        # Save user message
-        #
-        # When a user selects a paper from the
-        # paper picker, the original question has
-        # already been saved. The frontend sends
-        # selection_continuation=True so we can
-        # answer that original question without
-        # creating a duplicate user message.
-        # -----------------------------------------
+        # ====================================================
+        # SAVE USER MESSAGE
+        # ====================================================
 
         if not selection_continuation:
 
@@ -466,9 +399,9 @@ class ChatService:
                 "after paper selection"
             )
 
-        # -----------------------------------------
-        # Casual Message Detection
-        # -----------------------------------------
+        # ====================================================
+        # CASUAL MESSAGE
+        # ====================================================
 
         if ChatService._is_casual_message(
             query
@@ -483,39 +416,7 @@ class ChatService:
                 "with your research?"
             )
 
-            # -----------------------------------------
-            # Stream casual responses too
-            # -----------------------------------------
-            #
-            # Casual messages intentionally bypass the
-            # LLM/RAG pipeline because there is no
-            # research question to answer. When the
-            # streaming endpoint supplies on_token,
-            # emit this fixed response progressively so
-            # "hi" behaves like a normal streamed reply.
-            #
-            # We do not call the LLM just to generate a
-            # greeting. The short pacing delay only
-            # controls delivery of this already-known
-            # response to the SSE client.
-            # -----------------------------------------
-
             if on_token is not None:
-
-                # Send the complete known greeting as ONE
-                # streaming event.
-                #
-                # The frontend already owns the visual
-                # typewriter/presentation queue. Sending
-                # several tiny backend events here was
-                # unnecessary and could make the casual
-                # path race with the final "done" event.
-                #
-                # Research responses still stream from
-                # Groq token-by-token. Casual responses
-                # bypass the LLM/RAG pipeline but enter
-                # the exact same frontend presentation
-                # pipeline.
                 on_token(answer)
 
             MessageService.create_message(
@@ -544,9 +445,9 @@ class ChatService:
                 None,
             )
 
-        # -----------------------------------------
-        # Ambiguous Paper Reference Detection
-        # -----------------------------------------
+        # ====================================================
+        # AMBIGUOUS PAPER REFERENCE
+        # ====================================================
 
         if (
             selected_document_id is None
@@ -603,9 +504,9 @@ class ChatService:
                 paper_options,
             )
 
-        # -----------------------------------------
-        # Explicit Paper Selection
-        # -----------------------------------------
+        # ====================================================
+        # EXPLICIT PAPER SELECTION
+        # ====================================================
 
         if selected_document_id is not None:
 
@@ -643,11 +544,9 @@ class ChatService:
                     f"{selected_document.title}"
                 )
 
-                # ---------------------------------
-                # Persist the selected paper to the
-                # conversation when the database
-                # migration/model are active.
-                # ---------------------------------
+                # --------------------------------------------
+                # Persist selected document
+                # --------------------------------------------
 
                 if hasattr(
                     conversation,
@@ -665,16 +564,9 @@ class ChatService:
                         "context saved"
                     )
 
-                # ---------------------------------
-                # Persist the context-selection event
-                # exactly once, at the moment the user
-                # selects the paper.
-                #
-                # This is a real message in the
-                # conversation history, so it survives
-                # reloads and is not re-created for
-                # subsequent questions.
-                # ---------------------------------
+                # --------------------------------------------
+                # Persist research context event once
+                # --------------------------------------------
 
                 if (
                     is_new_research_context_selection
@@ -695,25 +587,9 @@ class ChatService:
                         "✓ Research context event saved"
                     )
 
-        # -----------------------------------------
-        # Query Rewriting
-        # -----------------------------------------
-        #
-        # When a research paper has explicitly been
-        # selected, preserve the user's query.
-        #
-        # The selected document already provides the
-        # missing research context, and rewriting can
-        # accidentally change a short question such as:
-        #
-        #     "who is the author?"
-        #
-        # into something unrelated to the selected
-        # paper.
-        #
-        # For global search, conversation-aware query
-        # rewriting remains enabled.
-        # -----------------------------------------
+        # ====================================================
+        # QUERY REWRITING
+        # ====================================================
 
         rewritten_query = query
 
@@ -742,7 +618,7 @@ class ChatService:
                 )
 
                 print(
-                    "Original :",
+                    "Original:",
                     query,
                 )
 
@@ -761,13 +637,15 @@ class ChatService:
                     "⚠ Query rewriting failed."
                 )
 
-                print(e)
+                print(
+                    f"Error: {e}"
+                )
 
                 rewritten_query = query
 
-        # -----------------------------------------
-        # Search
-        # -----------------------------------------
+        # ====================================================
+        # SEARCH
+        # ====================================================
 
         print(
             "Searching..."
@@ -790,38 +668,9 @@ class ChatService:
             f"{len(results)} results"
         )
 
-        # -----------------------------------------
-        # Filter Weak Evidence
-        # -----------------------------------------
-        #
-        # IMPORTANT:
-        #
-        # CrossEncoder scores are ranking scores.
-        #
-        # They are NOT:
-        #
-        #     0 → 100 confidence
-        #
-        # A selected paper can legitimately have
-        # scores such as:
-        #
-        #     -5.03
-        #     -8.69
-        #     -8.95
-        #
-        # If the user selected a paper, we already
-        # know the correct document scope.
-        #
-        # Therefore we use a relative threshold:
-        #
-        # best score
-        #      ↓
-        # best score - margin
-        #
-        # This prevents us from throwing away all
-        # evidence simply because the absolute
-        # reranker scores are negative.
-        # -----------------------------------------
+        # ====================================================
+        # FILTER WEAK EVIDENCE
+        # ====================================================
 
         if (
             selected_document_id is not None
@@ -846,19 +695,9 @@ class ChatService:
                 ) >= score_floor
             ]
 
-            # -----------------------------------------
+            # --------------------------------------------
             # Summary-query safety
-            # -----------------------------------------
-            #
-            # For paper-summary questions, keep at least
-            # one content-bearing result even when its
-            # reranker score falls outside the normal
-            # selected-paper score margin.
-            #
-            # This prevents heading-only chunks such as
-            # "Abstract" or "1 Introduction" from consuming
-            # the entire evidence budget.
-            # -----------------------------------------
+            # --------------------------------------------
 
             if (
                 SearchService._is_summary_query(query)
@@ -869,7 +708,10 @@ class ChatService:
                     result
                     for result in results
                     if len(
-                        (result.get("preview") or "").strip()
+                        (
+                            result.get("preview")
+                            or ""
+                        ).strip()
                     ) >= 100
                 ]
 
@@ -879,18 +721,18 @@ class ChatService:
                         content_results[0]
                     )
 
-                    if best_content_result not in usable_results:
+                    if (
+                        best_content_result
+                        not in usable_results
+                    ):
 
                         usable_results.append(
                             best_content_result
                         )
 
-            # -------------------------------------
-            # Safety:
-            # Always keep the strongest result
-            # when a selected paper produced
-            # retrieval results.
-            # -------------------------------------
+            # --------------------------------------------
+            # Always keep strongest result
+            # --------------------------------------------
 
             if not usable_results:
 
@@ -933,9 +775,9 @@ class ChatService:
             f"{len(usable_results)}"
         )
 
-        # -----------------------------------------
-        # No Usable Evidence
-        # -----------------------------------------
+        # ====================================================
+        # BUILD CONTEXT
+        # ====================================================
 
         if not usable_results:
 
@@ -949,10 +791,6 @@ class ChatService:
             evidence = []
 
         else:
-
-            # -------------------------------------
-            # Build Context
-            # -------------------------------------
 
             context_parts = []
 
@@ -981,9 +819,9 @@ Chunk {index}
                 "✓ Context built"
             )
 
-        # -----------------------------------------
-        # Debug Context
-        # -----------------------------------------
+        # ====================================================
+        # DEBUG CONTEXT
+        # ====================================================
 
         print(
             "\n"
@@ -1047,9 +885,9 @@ Chunk {index}
             + "\n"
         )
 
-        # -----------------------------------------
-        # Build Prompt
-        # -----------------------------------------
+        # ====================================================
+        # BUILD PROMPT
+        # ====================================================
 
         prompt = PromptService.build_prompt(
             conversation_history=(
@@ -1059,12 +897,17 @@ Chunk {index}
             query=query,
         )
 
-        # -----------------------------------------
-        # Call Groq
-        # -----------------------------------------
+        # ====================================================
+        # CALL GROQ
+        # ====================================================
 
         print(
             "Calling Groq..."
+        )
+
+        print(
+            f"Groq model: "
+            f"{settings.groq_model}"
         )
 
         try:
@@ -1088,40 +931,40 @@ Chunk {index}
                 "temperature": 0.2,
             }
 
+            # =================================================
+            # STREAMING RESPONSE
+            # =================================================
+
             if on_token is not None:
 
                 request_kwargs["stream"] = True
 
                 stream = (
-                    client.chat.completions.create(
+                    client
+                    .chat
+                    .completions
+                    .create(
                         **request_kwargs
                     )
                 )
 
                 answer_parts = []
 
-                # -------------------------------------------------
+                # ---------------------------------------------
                 # Stream batching
-                # -------------------------------------------------
-                #
-                # Some model/SDK/network combinations can yield a
-                # very large number of tiny chunks in a tight burst.
-                # We keep consuming the real Groq stream immediately,
-                # but forward small batches to the SSE layer so the
-                # frontend receives coherent pieces of text.
-                #
-                # There is NO artificial frontend typewriter here.
-                # -------------------------------------------------
-
-                import time
+                # ---------------------------------------------
 
                 stream_buffer: list[str] = []
-                last_flush = time.perf_counter()
+
+                last_flush = (
+                    time.perf_counter()
+                )
 
                 FLUSH_INTERVAL = 0.045
                 MAX_BUFFER_CHARS = 24
 
                 def flush_stream_buffer() -> None:
+
                     nonlocal last_flush
 
                     if not stream_buffer:
@@ -1181,20 +1024,26 @@ Chunk {index}
                             >= FLUSH_INTERVAL
                         )
                     ):
+
                         flush_stream_buffer()
 
-                # Forward any text left in the
-                # buffer after the model stream ends.
                 flush_stream_buffer()
 
                 answer = "".join(
                     answer_parts
                 )
 
+            # =================================================
+            # NON-STREAMING RESPONSE
+            # =================================================
+
             else:
 
                 response = (
-                    client.chat.completions.create(
+                    client
+                    .chat
+                    .completions
+                    .create(
                         **request_kwargs
                     )
                 )
@@ -1206,26 +1055,69 @@ Chunk {index}
                     .content
                 )
 
+        # ====================================================
+        # GROQ ERROR HANDLING
+        # ====================================================
+
         except Exception as e:
 
             print(
-                "Groq Error:",
-                e,
+                "\n========== GROQ ERROR =========="
             )
 
-            answer = (
-                "The language model took too "
-                "long to respond. Please try "
-                "asking again."
+            print(
+                f"Error type: "
+                f"{type(e).__name__}"
             )
+
+            print(
+                f"Error: {e}"
+            )
+
+            print(
+                "================================\n"
+            )
+
+            # ---------------------------------------------
+            # IMPORTANT:
+            #
+            # Do NOT pretend every error is a timeout.
+            # This could be:
+            #
+            # - model_not_found
+            # - authentication failure
+            # - rate limit
+            # - server error
+            # - network error
+            #
+            # The user gets a clean message while the
+            # actual technical error remains in Render logs.
+            # ---------------------------------------------
+
+            answer = (
+                "I couldn't generate the answer "
+                "right now. Your document was "
+                "retrieved successfully, but the "
+                "language model is temporarily "
+                "unavailable. Please try again."
+            )
+
+            # ---------------------------------------------
+            # If streaming has already started, send the
+            # fallback through the same stream.
+            # ---------------------------------------------
+
+            if on_token is not None:
+
+                on_token(answer)
 
         print(
             "✓ Groq returned"
         )
 
-        # -----------------------------------------
-        # Save Assistant Message
-        # -----------------------------------------
+        # ====================================================
+        # SAVE ASSISTANT MESSAGE
+        # ====================================================
 
         MessageService.create_message(
             db=db,
@@ -1239,9 +1131,9 @@ Chunk {index}
             "✓ Assistant message saved"
         )
 
-        # -----------------------------------------
-        # Debug Answer
-        # -----------------------------------------
+        # ====================================================
+        # DEBUG ANSWER
+        # ====================================================
 
         print(
             "\n"
@@ -1261,9 +1153,9 @@ Chunk {index}
             + "\n"
         )
 
-        # -----------------------------------------
-        # Debug Evidence
-        # -----------------------------------------
+        # ====================================================
+        # DEBUG EVIDENCE
+        # ====================================================
 
         print(
             "\n===== RESULTS ====="
@@ -1291,23 +1183,9 @@ Chunk {index}
             "===================\n"
         )
 
-        # -----------------------------------------
-        # Build Evidence Response
-        # -----------------------------------------
-        #
-        # Evidence is built ONLY from
-        # usable_results.
-        #
-        # Therefore:
-        #
-        # weak retrieval
-        #       ↓
-        # usable_results = []
-        #       ↓
-        # evidence = []
-        #       ↓
-        # Evidence Vault stays empty.
-        # -----------------------------------------
+        # ====================================================
+        # BUILD EVIDENCE RESPONSE
+        # ====================================================
 
         evidence = []
 
@@ -1317,42 +1195,23 @@ Chunk {index}
 
             evidence.append(
                 {
-                    "id":
-                        chunk.id,
-
-                    "document_id":
-                        chunk.document_id,
-
-                    "document_name":
-                        chunk.document.title,
-
-                    "chunk_index":
-                        chunk.chunk_index,
-
-                    "page_number":
-                        result["page_number"],
-
-                    "page_width":
-                        result.get(
-                            "page_width"
-                        ),
-
-                    "page_height":
-                        result.get(
-                            "page_height"
-                        ),
-
-                    "bboxes":
-                        result.get(
-                            "bboxes",
-                            [],
-                        ),
-
-                    "score":
-                        result["score"],
-
-                    "preview":
-                        chunk.content,
+                    "id": chunk.id,
+                    "document_id": chunk.document_id,
+                    "document_name": chunk.document.title,
+                    "chunk_index": chunk.chunk_index,
+                    "page_number": result["page_number"],
+                    "page_width": result.get(
+                        "page_width"
+                    ),
+                    "page_height": result.get(
+                        "page_height"
+                    ),
+                    "bboxes": result.get(
+                        "bboxes",
+                        [],
+                    ),
+                    "score": result["score"],
+                    "preview": chunk.content,
                 }
             )
 
