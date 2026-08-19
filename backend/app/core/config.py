@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     database_url: str
     groq_api_key: str
+    groq_model: str = "llama-3.1-8b-instant"
 
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
