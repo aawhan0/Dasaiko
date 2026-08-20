@@ -18,7 +18,14 @@ import {
 import type { EvidenceChunk } from "@/types";
 
 
-export function EvidenceVault() {
+interface EvidenceVaultProps {
+  onCollapse?: () => void;
+}
+
+
+export function EvidenceVault({
+  onCollapse,
+}: EvidenceVaultProps) {
 
   const {
     activeEvidence,
@@ -110,6 +117,10 @@ export function EvidenceVault() {
           "
         >
 
+          {/* -------------------------------------------
+              TITLE
+          -------------------------------------------- */}
+
           <div
             className="
               flex
@@ -174,44 +185,126 @@ export function EvidenceVault() {
           </div>
 
 
-          {hasEvidence && (
-            <div
+          {/* -------------------------------------------
+              HEADER ACTIONS
+          -------------------------------------------- */}
+
+          <div
+            className="
+              flex
+              shrink-0
+              items-center
+              gap-2
+            "
+          >
+
+            {/* Evidence count */}
+
+            {hasEvidence && (
+              <div
+                className="
+                  flex
+                  shrink-0
+                  items-center
+                  gap-1.5
+                  rounded-lg
+                  border
+                  border-primary/15
+                  bg-primary/[0.045]
+                  px-2
+                  py-1.5
+                "
+              >
+
+                <Sparkles
+                  className="
+                    h-3
+                    w-3
+                    text-primary/80
+                  "
+                />
+
+                <span
+                  className="
+                    text-[9px]
+                    font-semibold
+                    uppercase
+                    tracking-[0.12em]
+                    text-primary/80
+                  "
+                >
+                  {evidence.length}
+                </span>
+
+              </div>
+            )}
+
+
+            {/* -----------------------------------------
+                DASAIKO COLLAPSE BUTTON
+            ------------------------------------------ */}
+
+            <button
+              type="button"
+
+              onClick={onCollapse}
+
+              aria-label="Collapse research evidence"
+              title="Collapse research evidence"
+
               className="
+                group
+
                 flex
+                h-8
+                w-8
                 shrink-0
                 items-center
-                gap-1.5
-                rounded-lg
-                border
-                border-primary/15
-                bg-primary/[0.045]
-                px-2
-                py-1.5
-              "
-            >
+                justify-center
 
-              <Sparkles
+                rounded-full
+
+                border
+               border-white/[0.12]
+
+               bg-white
+
+                shadow-[0_2px_10px_rgba(0,0,0,0.20)]
+
+                transition-all
+                duration-200
+
+               hover:bg-white/[0.92]
+                hover:shadow-[0_3px_14px_rgba(0,0,0,0.28)]
+
+                active:scale-95
+
+                focus:outline-none
+                focus:ring-2
+               focus:ring-white/30
+                focus:ring-offset-2
+                focus:ring-offset-[#070707]
+                          "
+              >
+
+              <img
+                src="/assets/brand/dasaiko-mark-black.png"
+                alt=""
                 className="
-                  h-3
-                  w-3
-                  text-primary/80
+                  h-4
+                  w-4
+                  object-contain
+
+                  transition-transform
+                  duration-200
+
+                  group-hover:scale-110
                 "
               />
 
-              <span
-                className="
-                  text-[9px]
-                  font-semibold
-                  uppercase
-                  tracking-[0.12em]
-                  text-primary/80
-                "
-              >
-                {evidence.length}
-              </span>
+            </button>
 
-            </div>
-          )}
+          </div>
 
         </div>
 

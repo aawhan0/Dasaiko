@@ -249,21 +249,14 @@ export function MessageInput({
 
 
   /*
-   * First query:
-   *
-   * document required.
-   *
-   * Subsequent queries:
-   *
-   * document requirement disappears.
+   * Queries may be submitted without a selected
+   * document. The backend decides whether paper
+   * selection is required and can return the
+   * paper picker response.
    */
 
   const canSend =
-    !isQuerying &&
-    (
-      !isFirstMessage ||
-      documentReady
-    );
+    !isQuerying;
 
 
   /*
@@ -678,90 +671,20 @@ export function MessageInput({
 
 
       /*
-       * FIRST MESSAGE RULE
+       * A query may be submitted without a
+       * selected document.
        *
-       * The user may type without a document.
-       *
-       * But they cannot submit the first
-       * message until a document is ready.
+       * The backend decides whether paper
+       * selection is required and returns the
+       * paper picker when necessary.
        */
-
-      if (
-        isFirstMessage &&
-        !documentReady
-      ) {
-
-        return;
-      }
-
 
       /* =================================================
          DETERMINE DOCUMENT
       ================================================== */
 
-      let queryDocumentId =
+      const queryDocumentId =
         selectedDocumentId;
-
-
-      /*
-       * If this is the first message and
-       * there is a ready document but the
-       * selected ID is missing, automatically
-       * use the first ready document.
-       */
-
-      if (
-        isFirstMessage &&
-        queryDocumentId === null
-      ) {
-
-        const firstReadyDocument =
-          readyDocuments[0];
-
-
-        if (
-          firstReadyDocument
-        ) {
-
-          const numericId =
-            Number(
-              firstReadyDocument.id,
-            );
-
-
-          if (
-            !Number.isNaN(
-              numericId,
-            )
-          ) {
-
-            queryDocumentId =
-              numericId;
-
-
-            setSelectedDocumentId(
-              numericId,
-            );
-
-          }
-
-        }
-
-      }
-
-
-      /*
-       * We still need a document for the
-       * first query.
-       */
-
-      if (
-        isFirstMessage &&
-        queryDocumentId === null
-      ) {
-
-        return;
-      }
 
 
       /* =================================================
@@ -1400,12 +1323,7 @@ export function MessageInput({
             !canSend
           }
           aria-label="Send research query"
-          title={
-            isFirstMessage &&
-            !documentReady
-              ? "Upload a document first"
-              : "Send"
-          }
+          title="Send research query"
           className={cn(
             `
               flex

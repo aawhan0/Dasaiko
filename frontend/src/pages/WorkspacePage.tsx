@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-
 import {
   AnimatePresence,
   motion,
@@ -17,6 +15,11 @@ import { listMessages } from "@/services/messages";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
+import {
+  useEffect,
+  useState,
+} from "react";
+
 
 export function WorkspacePage() {
 
@@ -26,9 +29,18 @@ export function WorkspacePage() {
     setActiveConversation,
     setMessages,
 
-    conversations,
     messages,
   } = useWorkspaceStore();
+
+
+  /* =====================================================
+     EVIDENCE PANEL STATE
+  ====================================================== */
+
+  const [
+    evidenceOpen,
+    setEvidenceOpen,
+  ] = useState(true);
 
 
   /* =====================================================
@@ -57,7 +69,9 @@ export function WorkspacePage() {
         }
 
 
-        setDocuments(docs);
+        setDocuments(
+          docs,
+        );
 
 
         /* -----------------------------------------------
@@ -116,7 +130,9 @@ export function WorkspacePage() {
             null,
           );
 
-          setMessages([]);
+          setMessages(
+            [],
+          );
 
         }
 
@@ -171,6 +187,7 @@ export function WorkspacePage() {
 
       <div
         className="
+          relative
           flex
           min-h-0
           min-w-0
@@ -214,7 +231,8 @@ export function WorkspacePage() {
           initial={false}
         >
 
-          {hasAssistantResponse && (
+          {hasAssistantResponse &&
+            evidenceOpen && (
 
             <motion.div
               key="research-evidence"
@@ -238,8 +256,13 @@ export function WorkspacePage() {
               }}
 
               transition={{
-                duration: 0.4,
-                ease: [0.22, 1, 0.36, 1],
+                duration: 0.30,
+                ease: [
+                  0.22,
+                  1,
+                  0.36,
+                  1,
+                ],
               }}
 
               className="
@@ -257,11 +280,128 @@ export function WorkspacePage() {
                 "
               >
 
-                <EvidenceVault />
+                <EvidenceVault
+                  onCollapse={() =>
+                    setEvidenceOpen(false)
+                  }
+                />
 
               </div>
 
             </motion.div>
+
+          )}
+
+        </AnimatePresence>
+
+
+        {/* =================================================
+            COLLAPSED EVIDENCE CONTROL
+        ================================================= */}
+
+        <AnimatePresence>
+
+          {hasAssistantResponse &&
+            !evidenceOpen && (
+
+            <motion.button
+              key="reopen-evidence"
+
+              type="button"
+
+              initial={{
+                opacity: 0,
+                x: 12,
+              }}
+
+              animate={{
+                opacity: 1,
+                x: 0,
+              }}
+
+              exit={{
+                opacity: 0,
+                x: 12,
+              }}
+
+              transition={{
+                duration: 0.22,
+                ease: [
+                  0.22,
+                  1,
+                  0.36,
+                  1,
+                ],
+              }}
+
+              onClick={() =>
+                setEvidenceOpen(true)
+              }
+
+              whileHover={{
+                scale: 1.06,
+              }}
+
+              whileTap={{
+                scale: 0.94,
+              }}
+
+              aria-label="Open research evidence"
+              title="Open research evidence"
+
+              className="
+                group
+
+                absolute
+                right-4
+                top-5
+                z-50
+
+                flex
+                h-10
+                w-10
+                items-center
+                justify-center
+
+                rounded-xl
+
+                border
+                border-white/[0.12]
+
+                bg-white
+
+                shadow-[0_4px_18px_rgba(0,0,0,0.30)]
+
+                transition-all
+                duration-200
+
+                hover:bg-white/[0.92]
+                hover:shadow-[0_5px_20px_rgba(0,0,0,0.35)]
+
+                focus:outline-none
+                focus:ring-2
+                focus:ring-white/30
+                focus:ring-offset-2
+                focus:ring-offset-[#070707]
+              "
+            >
+
+              <img
+                src="/assets/brand/dasaiko-mark-black.png"
+                alt=""
+                className="
+                  h-5
+                  w-5
+                  object-contain
+
+                  transition-transform
+                  duration-200
+
+                  group-hover:scale-110
+                "
+              />
+
+            </motion.button>
 
           )}
 
