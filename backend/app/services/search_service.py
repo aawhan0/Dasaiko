@@ -1,3 +1,4 @@
+import os
 import re
 from difflib import SequenceMatcher
 
@@ -15,9 +16,6 @@ class SearchService:
     # ============================================
     # Generic signals that a user explicitly wants
     # to leave the currently selected paper.
-    #
-    # No paper names or technology names are
-    # hardcoded here.
     # ============================================
 
     EXTERNAL_CONTEXT_PHRASES = (
@@ -48,13 +46,6 @@ class SearchService:
 
     # ============================================
     # Bibliographic / paper metadata questions
-    #
-    # These are handled differently because
-    # semantic retrieval of words like "author"
-    # often retrieves arbitrary chunks.
-    #
-    # These phrases are generic and do NOT refer
-    # to any specific paper.
     # ============================================
 
     METADATA_QUERY_PHRASES = (
@@ -88,7 +79,6 @@ class SearchService:
         "what journal was it published",
         "what venue was it published",
 
-        # Title
         "what is the title",
         "what is the title of this",
         "what is the title of this paper",
@@ -104,18 +94,6 @@ class SearchService:
 
     # ============================================
     # Summary / high-level understanding questions
-    # ============================================
-    #
-    # These questions benefit from a structured
-    # overview of the paper rather than arbitrary
-    # semantic matches. We therefore prioritize:
-    #
-    #   - abstract
-    #   - introduction
-    #   - conclusion
-    #   - nearby opening/closing chunks
-    #
-    # No paper names are hardcoded here.
     # ============================================
 
     SUMMARY_QUERY_PHRASES = (
@@ -212,11 +190,6 @@ class SearchService:
             )
         )
 
-        # Use normalized phrase matching first.
-        # This handles normal questions such as:
-        #   "title of this paper?"
-        #   "what's the title?"
-        #   "who wrote this paper?"
         for phrase in (
             SearchService.METADATA_QUERY_PHRASES
         ):
@@ -235,7 +208,6 @@ class SearchService:
 
                 return True
 
-        # Short generic metadata questions.
         short_queries = {
             "author",
             "authors",
@@ -263,8 +235,6 @@ class SearchService:
 
             return True
 
-        # Defensive handling for punctuation/spacing variants
-        # that may not be covered by the phrase list.
         metadata_patterns = (
             r"\btitle\b.*\bpaper\b",
             r"\bpaper\b.*\btitle\b",
@@ -305,11 +275,6 @@ class SearchService:
 
     # ============================================
     # Detect author-specific metadata questions
-    #
-    # Author lists can span several adjacent chunks
-    # on the first page. These queries therefore use
-    # an ordered front-matter evidence block instead
-    # of letting the reranker select isolated chunks.
     # ============================================
 
     @staticmethod
@@ -338,8 +303,9 @@ class SearchService:
             for phrase in author_phrases
         )
 
-
-
+    # ============================================
+    # Detect title metadata questions
+    # ============================================
 
     @staticmethod
     def _is_title_metadata_query(
@@ -368,6 +334,7 @@ class SearchService:
                 "title of this",
             )
         )
+
     # ============================================
     # Detect summary / overview questions
     # ============================================
@@ -399,10 +366,48 @@ class SearchService:
         return False
 
     # ============================================
-    # Get opening chunks from selected document
+    # Detect comparison questions
     #
-    # Paper metadata is usually near the beginning
-    # of the paper.
+    # IMPORTANT:
+    # Comparison questions often need multiple
+    # complementary chunks. Aggressive duplicate
+    # filtering can incorrectly remove useful
+    # evidence because two chunks discuss the
+    # same terminology.
+    # ============================================
+
+    @staticmethod
+    def _is_comparison_query(
+        query: str,
+    ) -> bool:
+
+        normalized_query = (
+            SearchService._normalize_text(
+                query
+            )
+        )
+
+        comparison_patterns = (
+            "compare",
+            "comparison",
+            "difference between",
+            "differences between",
+            "different between",
+            "versus",
+            " vs ",
+            "better than",
+            "similarities and differences",
+            "how does x differ",
+            "how do they differ",
+        )
+
+        return any(
+            pattern in normalized_query
+            for pattern in comparison_patterns
+        )
+
+    # ============================================
+    # Get opening chunks from selected document
     # ============================================
 
     @staticmethod
@@ -468,13 +473,7 @@ class SearchService:
         return front_chunks
 
     # ============================================
-    # Get summary-oriented chunks from a document
-    #
-    # We deliberately combine the beginning and end
-    # of the paper with chunks around section headings.
-    # This gives the LLM the paper's framing, core
-    # motivation, and conclusion instead of relying
-    # on arbitrary vector/BM25 matches.
+    # Get summary-oriented chunks
     # ============================================
 
     @staticmethod
@@ -502,13 +501,6 @@ class SearchService:
 
         opening = []
         section_neighbors = []
-        closing = []
-
-        # ----------------------------------------
-        # Opening: abstract + introduction.
-        # Keep this bounded so the conclusion still
-        # has guaranteed room in the final set.
-        # ----------------------------------------
 
         for chunk in chunks:
 
@@ -519,10 +511,6 @@ class SearchService:
 
             if len(opening) >= 8:
                 break
-
-        # ----------------------------------------
-        # Section neighborhoods.
-        # ----------------------------------------
 
         section_terms = (
             "abstract",
@@ -560,17 +548,7 @@ class SearchService:
                 section_neighbors.append(neighbor)
                 seen_section_ids.add(neighbor.id)
 
-        # ----------------------------------------
-        # Closing: conclusion / final findings.
-        # Always reserve a few slots for the end.
-        # ----------------------------------------
-
         closing = chunks[-4:]
-
-        # ----------------------------------------
-        # Merge by priority while preserving document
-        # order within each group.
-        # ----------------------------------------
 
         selected = []
         selected_ids = set()
@@ -582,35 +560,38 @@ class SearchService:
 
             selected.append(chunk)
             selected_ids.add(chunk.id)
+
             return True
 
-        # Reserve space for opening and closing first.
         for chunk in opening[:6]:
             add(chunk)
 
         for chunk in section_neighbors:
+
             if len(selected) >= limit - 4:
                 break
+
             add(chunk)
 
         for chunk in closing:
             add(chunk)
 
-        # Fill any remaining slots from the opening and
-        # section neighborhoods before falling back to
-        # arbitrary later chunks.
         if len(selected) < limit:
 
             for chunk in opening[6:]:
+
                 if len(selected) >= limit:
                     break
+
                 add(chunk)
 
         if len(selected) < limit:
 
             for chunk in section_neighbors:
+
                 if len(selected) >= limit:
                     break
+
                 add(chunk)
 
         selected.sort(
@@ -751,10 +732,7 @@ class SearchService:
             # Exact duplicate
             # ------------------------------------
 
-            if (
-                current_text
-                == previous_text
-            ):
+            if current_text == previous_text:
 
                 print(
                     "Skipping exact duplicate evidence | "
@@ -776,10 +754,7 @@ class SearchService:
                 ).ratio()
             )
 
-            if (
-                sequence_similarity
-                >= 0.90
-            ):
+            if sequence_similarity >= 0.90:
 
                 print(
                     "Skipping near-duplicate evidence | "
@@ -803,20 +778,14 @@ class SearchService:
                 len(previous_tokens),
             )
 
-            if (
-                smaller_token_count
-                > 0
-            ):
+            if smaller_token_count > 0:
 
                 token_containment = (
                     len(intersection)
                     / smaller_token_count
                 )
 
-                if (
-                    token_containment
-                    >= 0.90
-                ):
+                if token_containment >= 0.90:
 
                     print(
                         "Skipping overlapping evidence | "
@@ -837,10 +806,7 @@ class SearchService:
                 )
             )
 
-            if (
-                token_similarity
-                >= 0.85
-            ):
+            if token_similarity >= 0.85:
 
                 print(
                     "Skipping near-duplicate evidence | "
@@ -868,24 +834,17 @@ class SearchService:
                 == previous_page
             )
 
-            if (
-                same_document
-                and same_page
-            ):
+            if same_document and same_page:
 
                 if (
-                    sequence_similarity
-                    >= 0.80
-                    or token_similarity
-                    >= 0.70
+                    sequence_similarity >= 0.80
+                    or token_similarity >= 0.70
                     or (
-                        smaller_token_count
-                        > 0
+                        smaller_token_count > 0
                         and (
                             len(intersection)
                             / smaller_token_count
-                        )
-                        >= 0.80
+                        ) >= 0.80
                     )
                 ):
 
@@ -901,18 +860,7 @@ class SearchService:
         return False
 
     # ============================================
-    # Find an explicitly referenced OTHER document
-    #
-    # This lets queries such as:
-    #
-    #     "who wrote the attention paper?"
-    #     "what is the BERT paper?"
-    #
-    # leave the currently selected research context
-    # without hardcoding any paper names.
-    #
-    # We compare meaningful title tokens against the
-    # user's query and also support title acronyms.
+    # Find explicitly referenced OTHER document
     # ============================================
 
     @staticmethod
@@ -922,6 +870,7 @@ class SearchService:
         current_document_id: int,
         user_id: int,
     ):
+
         from app.models.document import Document
 
         normalized_query = (
@@ -959,12 +908,39 @@ class SearchService:
             "study",
             "work",
             "article",
+            "document",
+            "publication",
         }
 
-        query_tokens -= generic_title_tokens
+        meaningful_query_tokens = (
+            query_tokens
+            - generic_title_tokens
+        )
 
-        if not query_tokens:
+        if not meaningful_query_tokens:
             return None
+
+        document_reference_phrases = (
+            "paper",
+            "research paper",
+            "study",
+            "research study",
+            "article",
+            "document",
+            "work",
+            "publication",
+            "paper about",
+            "paper on",
+            "study about",
+            "study on",
+            "research about",
+            "research on",
+        )
+
+        has_explicit_document_reference = any(
+            phrase in normalized_query
+            for phrase in document_reference_phrases
+        )
 
         documents = (
             db.query(Document)
@@ -983,8 +959,7 @@ class SearchService:
                 continue
 
             title = (
-                document.title
-                or ""
+                document.title or ""
             ).strip()
 
             if not title:
@@ -1008,22 +983,18 @@ class SearchService:
             if not title_tokens:
                 continue
 
-            # ------------------------------------
-            # Exact multi-word title reference
-            # ------------------------------------
-
             if (
-                normalized_title
+                len(title_tokens) >= 2
+                and normalized_title
                 in normalized_query
             ):
-                return document
 
-            # ------------------------------------
-            # Acronym support
-            #
-            # "BERT paper" can resolve a title
-            # such as "BERT: Pre-training..."
-            # ------------------------------------
+                print(
+                    f"Explicit full-title match: "
+                    f"{document.id}"
+                )
+
+                return document
 
             title_words = [
                 token
@@ -1040,20 +1011,20 @@ class SearchService:
             if (
                 acronym
                 and len(acronym) >= 3
-                and acronym in query_tokens
+                and acronym
+                in meaningful_query_tokens
+                and has_explicit_document_reference
             ):
+
+                print(
+                    f"Explicit acronym document match: "
+                    f"{document.id}"
+                )
+
                 return document
 
-            # ------------------------------------
-            # Distinctive title-token matching
-            #
-            # A single short/common word should not
-            # switch documents. A distinctive token
-            # (6+ characters) can.
-            # ------------------------------------
-
             overlap = (
-                query_tokens
+                meaningful_query_tokens
                 & title_tokens
             )
 
@@ -1066,20 +1037,20 @@ class SearchService:
             if not distinctive_overlap:
                 continue
 
-            # Prefer documents with stronger title
-            # coverage, while allowing a distinctive
-            # token such as "attention" to identify
-            # "Attention Is All You Need".
+            if (
+                len(distinctive_overlap) < 2
+                and not has_explicit_document_reference
+            ):
+                continue
+
             coverage = (
                 len(overlap)
-                / max(
-                    len(title_tokens),
-                    1,
-                )
+                / max(len(title_tokens), 1)
             )
 
             score = (
-                0.70 * min(
+                0.70
+                * min(
                     len(distinctive_overlap),
                     3,
                 )
@@ -1087,10 +1058,12 @@ class SearchService:
             )
 
             if score > best_score:
+
                 best_score = score
                 best_document = document
 
         if best_document is not None:
+
             print(
                 "Search intent: "
                 "EXPLICIT OTHER DOCUMENT"
@@ -1104,8 +1077,7 @@ class SearchService:
         return best_document
 
     # ============================================
-    # Determine whether query should use the
-    # selected research context.
+    # Determine retrieval document
     # ============================================
 
     @staticmethod
@@ -1122,14 +1094,6 @@ class SearchService:
             )
         )
 
-        # ----------------------------------------
-        # Explicit request for external/global
-        # research.
-        #
-        # This is the ONLY case where retrieval
-        # should intentionally become global.
-        # ----------------------------------------
-
         for phrase in (
             SearchService.EXTERNAL_CONTEXT_PHRASES
         ):
@@ -1142,20 +1106,6 @@ class SearchService:
                 )
 
                 return None
-
-        # ----------------------------------------
-        # Explicitly referenced another uploaded
-        # document.
-        #
-        # IMPORTANT:
-        # This changes retrieval scope only for the
-        # current query. It does NOT change the
-        # conversation's persistent research context.
-        #
-        # Once a document is resolved here, vector
-        # search, BM25, metadata retrieval, and
-        # summary retrieval MUST all use this ID.
-        # ----------------------------------------
 
         referenced_document = (
             SearchService
@@ -1181,18 +1131,204 @@ class SearchService:
 
             return referenced_document.id
 
-        # ----------------------------------------
-        # No explicit override:
-        # continue using the selected research
-        # context.
-        # ----------------------------------------
-
         print(
             "Search intent: "
             "SELECTED RESEARCH CONTEXT"
         )
 
         return document_id
+
+    # ============================================
+    # Infer document from query
+    # ============================================
+
+    @staticmethod
+    def _infer_document_from_query(
+        db: Session,
+        query: str,
+        user_id: int,
+    ):
+
+        from app.models.document import Document
+
+        normalized_query = (
+            SearchService._normalize_text(
+                query
+            )
+        )
+
+        routing_signals = {
+            "skipgram": {
+                "skipgram",
+                "skip-gram",
+                "word2vec",
+            },
+            "glove": {
+                "glove",
+            },
+            "attention": {
+                "scaled dot product attention",
+                "multi head attention",
+                "multihead attention",
+                "transformer",
+                "attention is all you need",
+            },
+            "seq2seq": {
+                "seq2seq",
+                "sequence to sequence",
+                "sequence-to-sequence",
+                "beam search",
+                "lstm encoder decoder",
+            },
+            "dpr": {
+                "dense passage retrieval",
+                "dense passage retriever",
+                "dpr",
+            },
+        }
+
+        matched_family = None
+        matched_signal = None
+
+        for family, signals in routing_signals.items():
+
+            for signal in sorted(
+                signals,
+                key=len,
+                reverse=True,
+            ):
+
+                normalized_signal = (
+                    SearchService._normalize_text(
+                        signal
+                    )
+                )
+
+                if (
+                    normalized_signal
+                    in normalized_query
+                ):
+
+                    matched_family = family
+                    matched_signal = signal
+                    break
+
+            if matched_family is not None:
+                break
+
+        if matched_family is None:
+            return None
+
+        documents = (
+            db.query(Document)
+            .filter(
+                Document.user_id == user_id
+            )
+            .all()
+        )
+
+        family_aliases = {
+            "skipgram": {
+                "word2vec",
+                "word2 vec",
+                "skip gram",
+                "skipgram",
+            },
+            "glove": {
+                "glove",
+            },
+            "attention": {
+                "attention",
+                "transformer",
+                "attention is all you need",
+            },
+            "seq2seq": {
+                "seq2seq",
+                "sequence to sequence",
+                "sequence to sequence learning",
+            },
+            "dpr": {
+                "dpr",
+                "dense passage retrieval",
+            },
+        }
+
+        aliases = family_aliases[
+            matched_family
+        ]
+
+        best_document = None
+        best_score = 0
+
+        for document in documents:
+
+            title = SearchService._normalize_title(
+                document.title or ""
+            )
+
+            if not title:
+                continue
+
+            score = 0
+
+            for alias in aliases:
+
+                normalized_alias = (
+                    SearchService._normalize_text(
+                        alias
+                    )
+                )
+
+                if normalized_alias in title:
+                    score += 2
+
+            title_tokens = set(
+                re.findall(
+                    r"[a-z0-9]+",
+                    title,
+                )
+            )
+
+            query_tokens = set(
+                re.findall(
+                    r"[a-z0-9]+",
+                    normalized_query,
+                )
+            )
+
+            meaningful_overlap = {
+                token
+                for token in (
+                    title_tokens
+                    & query_tokens
+                )
+                if len(token) >= 5
+            }
+
+            score += min(
+                len(meaningful_overlap),
+                2,
+            )
+
+            if score > best_score:
+
+                best_score = score
+                best_document = document
+
+        if (
+            best_document is None
+            or best_score < 2
+        ):
+            return None
+
+        print(
+            "Query routing: "
+            f"'{matched_signal}' -> "
+            f"Document {best_document.id} "
+            f"({best_document.title})"
+        )
+
+        return best_document.id
 
     # ============================================
     # Search
@@ -1245,6 +1381,13 @@ class SearchService:
             else False
         )
 
+        # NEW
+        is_comparison_query = (
+            SearchService._is_comparison_query(
+                query
+            )
+        )
+
         print(
             "Metadata flags: "
             f"metadata={is_metadata_query}, "
@@ -1253,25 +1396,13 @@ class SearchService:
             f"summary={is_summary_query}"
         )
 
+        print(
+            f"Comparison query: "
+            f"{is_comparison_query}"
+        )
+
         # ========================================
         # Resolve retrieval scope
-        # ========================================
-        #
-        # There are three possible scopes:
-        #
-        #   1. Explicit external research
-        #      -> global search
-        #
-        #   2. Explicitly referenced uploaded paper
-        #      -> that document ONLY
-        #
-        #   3. No override
-        #      -> persistent selected paper
-        #
-        # The resolved document ID is passed directly
-        # into BOTH vector and BM25 retrieval. This
-        # prevents an explicitly referenced paper from
-        # accidentally falling back to global search.
         # ========================================
 
         retrieval_document_id = None
@@ -1288,9 +1419,26 @@ class SearchService:
                 )
             )
 
+        else:
+
+            retrieval_document_id = (
+                SearchService._infer_document_from_query(
+                    db=db,
+                    query=query,
+                    user_id=user_id,
+                )
+            )
+
         if retrieval_document_id is not None:
 
-            if (
+            if document_id is None:
+
+                print(
+                    f"Query-routed document retrieval: "
+                    f"Document {retrieval_document_id}"
+                )
+
+            elif (
                 retrieval_document_id
                 == document_id
             ):
@@ -1338,8 +1486,7 @@ class SearchService:
                 query=query,
                 user_id=user_id,
                 limit=candidate_limit,
-                document_id=
-                    retrieval_document_id,
+                document_id=retrieval_document_id,
             )
         )
 
@@ -1358,8 +1505,7 @@ class SearchService:
                 query=query,
                 user_id=user_id,
                 limit=candidate_limit,
-                document_id=
-                    retrieval_document_id,
+                document_id=retrieval_document_id,
             )
         )
 
@@ -1369,38 +1515,153 @@ class SearchService:
         )
 
         # ========================================
-        # Hybrid Candidate Merge
+        # Reciprocal Rank Fusion
         # ========================================
 
-        combined = {}
+        RRF_K = 60
 
-        for chunk, _ in vector_results:
+        RRF_CANDIDATE_LIMIT = int(
+            os.getenv(
+                "DASAIKO_RRF_CANDIDATE_LIMIT",
+                str(
+                    max(
+                        limit * 5,
+                        50,
+                    )
+                ),
+            )
+        )
+
+        rrf_scores = {}
+        chunks_by_id = {}
+
+        for rank, item in enumerate(
+            vector_results,
+            start=1,
+        ):
+
+            chunk = item[0]
 
             if chunk is None:
                 continue
 
-            combined[
-                chunk.id
-            ] = chunk
+            chunks_by_id[chunk.id] = chunk
 
-        for chunk, _ in bm25_results:
+            rrf_scores.setdefault(
+                chunk.id,
+                0.0,
+            )
+
+            rrf_scores[chunk.id] += (
+                1.0
+                / (RRF_K + rank)
+            )
+
+        for rank, item in enumerate(
+            bm25_results,
+            start=1,
+        ):
+
+            chunk = item[0]
 
             if chunk is None:
                 continue
 
-            if chunk.id not in combined:
+            chunks_by_id[chunk.id] = chunk
 
-                combined[
-                    chunk.id
-                ] = chunk
+            rrf_scores.setdefault(
+                chunk.id,
+                0.0,
+            )
+
+            rrf_scores[chunk.id] += (
+                1.0
+                / (RRF_K + rank)
+            )
+
+        hybrid_candidates = sorted(
+            rrf_scores.items(),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+
+        hybrid_candidates = (
+            hybrid_candidates[
+                :RRF_CANDIDATE_LIMIT
+            ]
+        )
+
+        rrf_candidate_scores = {
+            chunk_id: score
+            for chunk_id, score
+            in hybrid_candidates
+        }
+
+        rrf_candidate_ranks = {
+            chunk_id: rank
+            for rank, (chunk_id, _)
+            in enumerate(
+                hybrid_candidates,
+                start=1,
+            )
+        }
+
+        candidate_chunks = [
+            chunks_by_id[chunk_id]
+            for chunk_id, _
+            in hybrid_candidates
+            if chunk_id in chunks_by_id
+        ]
+
+        candidate_chunks_by_id = {
+            chunk.id: chunk
+            for chunk in candidate_chunks
+        }
+
+        candidate_chunks = list(
+            candidate_chunks_by_id.values()
+        )
+
+        print(
+            f"Unique hybrid candidates: "
+            f"{len(rrf_scores)}"
+        )
+
+        print(
+            f"RRF candidate pool: "
+            f"{len(candidate_chunks)}"
+        )
+
+        print(
+            "\n========== RRF HYBRID RESULTS =========="
+        )
+
+        for index, (
+            chunk_id,
+            rrf_score,
+        ) in enumerate(
+            hybrid_candidates[:10],
+            start=1,
+        ):
+
+            chunk = chunks_by_id[
+                chunk_id
+            ]
+
+            print(
+                f"{index}. "
+                f"Chunk {chunk.id} | "
+                f"Page {chunk.page_number} | "
+                f"RRF={rrf_score:.6f} | "
+                f"{chunk.document.title}"
+            )
+
+        print(
+            "========================================\n"
+        )
 
         # ========================================
-        # Metadata-specific front matter
-        #
-        # This is the key fix.
-        #
-        # We explicitly add the beginning of the
-        # selected paper to the candidate pool.
+        # Metadata / Summary retrieval
         # ========================================
 
         front_matter_chunks = []
@@ -1408,8 +1669,7 @@ class SearchService:
 
         if (
             is_metadata_query
-            and retrieval_document_id
-            is not None
+            and retrieval_document_id is not None
         ):
 
             print(
@@ -1419,8 +1679,7 @@ class SearchService:
             front_matter_chunks = (
                 SearchService._get_front_matter_chunks(
                     db=db,
-                    document_id=
-                        retrieval_document_id,
+                    document_id=retrieval_document_id,
                     max_pages=(
                         1
                         if is_author_metadata_query
@@ -1434,11 +1693,9 @@ class SearchService:
                 )
             )
 
-            for chunk in (
-                front_matter_chunks
-            ):
+            for chunk in front_matter_chunks:
 
-                combined[
+                candidate_chunks_by_id[
                     chunk.id
                 ] = chunk
 
@@ -1448,8 +1705,7 @@ class SearchService:
 
         elif (
             is_summary_query
-            and retrieval_document_id
-            is not None
+            and retrieval_document_id is not None
         ):
 
             print(
@@ -1459,15 +1715,14 @@ class SearchService:
             summary_chunks = (
                 SearchService._get_summary_chunks(
                     db=db,
-                    document_id=
-                        retrieval_document_id,
+                    document_id=retrieval_document_id,
                     limit=16,
                 )
             )
 
             for chunk in summary_chunks:
 
-                combined[
+                candidate_chunks_by_id[
                     chunk.id
                 ] = chunk
 
@@ -1476,7 +1731,7 @@ class SearchService:
             )
 
         candidate_chunks = list(
-            combined.values()
+            candidate_chunks_by_id.values()
         )
 
         print(
@@ -1504,15 +1759,23 @@ class SearchService:
             for chunk in candidate_chunks
         ]
 
+        print(
+            "\n========== RERANKER DIAGNOSTICS =========="
+        )
+
+        print(
+            f"Candidates sent to BGE: "
+            f"{len(reranker_input)}"
+        )
+
+        print(
+            "==========================================\n"
+        )
+
         # ========================================
         # Reranking
         # ========================================
 
-        # For metadata queries we slightly enrich
-        # the reranker query so that "author" is
-        # interpreted as paper-author information
-        # rather than an arbitrary occurrence of
-        # the word "author".
         reranker_query = query
 
         if is_metadata_query:
@@ -1554,6 +1817,26 @@ class SearchService:
                 reranker_query
             )
 
+        elif is_comparison_query:
+
+            reranker_query = (
+                f"{query}. "
+                "Retrieve complementary evidence for each "
+                "side of the comparison. Preserve passages "
+                "that explain the distinct mechanisms, "
+                "objectives, training procedures, strengths, "
+                "limitations, or outcomes of the concepts "
+                "being compared."
+            )
+
+            print(
+                "Comparison reranker query:"
+            )
+
+            print(
+                reranker_query
+            )
+
         reranked_results = (
             RerankerService.rerank(
                 query=reranker_query,
@@ -1565,61 +1848,285 @@ class SearchService:
         )
 
         # ========================================
+        # RRF -> BGE diagnostics
+        # ========================================
+
+        print(
+            "\n========== RELEVANT RANKING DIAGNOSTICS =========="
+        )
+
+        for bge_rank, item in enumerate(
+            reranked_results,
+            start=1,
+        ):
+
+            chunk, relevance_score = item
+
+            rrf_rank = rrf_candidate_ranks.get(
+                chunk.id
+            )
+
+            if rrf_rank is not None:
+
+                print(
+                    f"BGE rank={bge_rank:02d} | "
+                    f"RRF rank={rrf_rank:02d} | "
+                    f"Chunk={chunk.id} | "
+                    f"BGE={float(relevance_score):.6f}"
+                )
+
+        print(
+            "===================================================\n"
+        )
+
+        print(
+            "\n========== BGE RANKING DIAGNOSTICS =========="
+        )
+
+        for bge_rank, item in enumerate(
+            reranked_results,
+            start=1,
+        ):
+
+            chunk, relevance_score = item
+
+            rrf_rank = rrf_candidate_ranks.get(
+                chunk.id
+            )
+
+            print(
+                f"BGE rank={bge_rank:02d} | "
+                f"RRF rank="
+                f"{rrf_rank if rrf_rank is not None else '-':>2} | "
+                f"Chunk={chunk.id} | "
+                f"score={float(relevance_score):.6f} | "
+                f"page={chunk.page_number} | "
+                f"document={chunk.document.title}"
+            )
+
+        print(
+            "=============================================\n"
+        )
+
+        # ========================================
+        # Combine RRF + BGE
+        # ========================================
+
+        if reranked_results:
+
+            bge_scores = [
+                float(item[1])
+                for item in reranked_results
+            ]
+
+            bge_min = min(bge_scores)
+            bge_max = max(bge_scores)
+            bge_range = (
+                bge_max - bge_min
+            )
+
+            if bge_range > 0:
+
+                bge_normalized = {
+                    item[0].id: (
+                        (
+                            float(item[1])
+                            - bge_min
+                        )
+                        / bge_range
+                    )
+                    for item in reranked_results
+                }
+
+            else:
+
+                bge_normalized = {
+                    item[0].id: 1.0
+                    for item in reranked_results
+                }
+
+            candidate_rrf_scores = [
+                rrf_candidate_scores.get(
+                    item[0].id,
+                    0.0,
+                )
+                for item in reranked_results
+            ]
+
+            rrf_min = min(
+                candidate_rrf_scores
+            )
+
+            rrf_max = max(
+                candidate_rrf_scores
+            )
+
+            rrf_range = (
+                rrf_max - rrf_min
+            )
+
+            if rrf_range > 0:
+
+                rrf_normalized = {
+                    item[0].id: (
+                        (
+                            rrf_candidate_scores.get(
+                                item[0].id,
+                                0.0,
+                            )
+                            - rrf_min
+                        )
+                        / rrf_range
+                    )
+                    for item in reranked_results
+                }
+
+            else:
+
+                rrf_normalized = {
+                    item[0].id: 1.0
+                    for item in reranked_results
+                }
+
+            BGE_WEIGHT = float(
+                os.getenv(
+                    "DASAIKO_BGE_WEIGHT",
+                    "0.50",
+                )
+            )
+
+            RRF_WEIGHT = float(
+                os.getenv(
+                    "DASAIKO_RRF_WEIGHT",
+                    "0.50",
+                )
+            )
+
+            combined_results = []
+
+            for (
+                chunk,
+                bge_raw_score,
+            ) in reranked_results:
+
+                bge_score = (
+                    bge_normalized.get(
+                        chunk.id,
+                        0.0,
+                    )
+                )
+
+                rrf_score = (
+                    rrf_normalized.get(
+                        chunk.id,
+                        0.0,
+                    )
+                )
+
+                combined_score = (
+                    BGE_WEIGHT * bge_score
+                    + RRF_WEIGHT * rrf_score
+                )
+
+                combined_results.append(
+                    (
+                        chunk,
+                        combined_score,
+                        float(bge_raw_score),
+                        rrf_candidate_scores.get(
+                            chunk.id,
+                            0.0,
+                        ),
+                    )
+                )
+
+            combined_results.sort(
+                key=lambda item: item[1],
+                reverse=True,
+            )
+
+        else:
+
+            combined_results = []
+
+        print(
+            "\n========== RRF + BGE RESULTS =========="
+        )
+
+        print(
+            f"Weights: RRF={RRF_WEIGHT:.2f} | "
+            f"BGE={BGE_WEIGHT:.2f}"
+        )
+
+        for rank, (
+            chunk,
+            combined_score,
+            bge_raw_score,
+            rrf_raw_score,
+        ) in enumerate(
+            combined_results[:10],
+            start=1,
+        ):
+
+            print(
+                f"{rank}. "
+                f"Chunk {chunk.id} | "
+                f"Combined={combined_score:.6f} | "
+                f"BGE={bge_raw_score:.6f} | "
+                f"RRF={rrf_raw_score:.6f} | "
+                f"RRF-rank="
+                f"{rrf_candidate_ranks.get(chunk.id, '-')}"
+                f" | Page={chunk.page_number} | "
+                f"{chunk.document.title}"
+            )
+
+        print(
+            "=======================================\n"
+        )
+
+        # ========================================
         # Build Ranked Results
         # ========================================
 
         ranked_results = []
 
-        for chunk, relevance_score in (
-            reranked_results
-        ):
+        for (
+            chunk,
+            combined_score,
+            bge_raw_score,
+            rrf_raw_score,
+        ) in combined_results:
 
             ranked_results.append(
                 {
-                    "id":
-                        chunk.id,
-
-                    "document_id":
-                        chunk.document_id,
-
-                    "document_name":
-                        chunk.document.title,
-
-                    "chunk_index":
-                        chunk.chunk_index,
-
-                    "page_number":
-                        chunk.page_number,
-
-                    "page_width":
-                        chunk.page_width,
-
-                    "page_height":
-                        chunk.page_height,
-
-                    "bboxes":
-                        getattr(
-                            chunk,
-                            "bboxes",
-                            [],
-                        ),
-
-                    "score":
-                        float(
-                            relevance_score
-                        ),
-
-                    "preview":
-                        chunk.content,
-
-                    "chunk":
+                    "id": chunk.id,
+                    "document_id": chunk.document_id,
+                    "document_name": chunk.document.title,
+                    "chunk_index": chunk.chunk_index,
+                    "page_number": chunk.page_number,
+                    "page_width": chunk.page_width,
+                    "page_height": chunk.page_height,
+                    "bboxes": getattr(
                         chunk,
+                        "bboxes",
+                        [],
+                    ),
+                    "score": float(
+                        combined_score
+                    ),
+                    "bge_score": float(
+                        bge_raw_score
+                    ),
+                    "rrf_score": float(
+                        rrf_raw_score
+                    ),
+                    "rrf_rank": rrf_candidate_ranks.get(
+                        chunk.id
+                    ),
+                    "preview": chunk.content,
+                    "chunk": chunk,
                 }
             )
-
-        # ========================================
-        # Explicit Descending Ranking
-        # ========================================
 
         ranked_results.sort(
             key=lambda result:
@@ -1629,13 +2136,6 @@ class SearchService:
 
         # ========================================
         # Metadata priority
-        #
-        # The first page is a strong signal for
-        # bibliographic questions.
-        #
-        # We do NOT simply replace the reranker.
-        # Instead, front matter gets a controlled
-        # priority boost.
         # ========================================
 
         if (
@@ -1645,8 +2145,7 @@ class SearchService:
 
             front_ids = {
                 chunk.id
-                for chunk in
-                front_matter_chunks
+                for chunk in front_matter_chunks
             }
 
             front_results = []
@@ -1654,10 +2153,7 @@ class SearchService:
 
             for result in ranked_results:
 
-                if (
-                    result["id"]
-                    in front_ids
-                ):
+                if result["id"] in front_ids:
 
                     front_results.append(
                         result
@@ -1674,18 +2170,11 @@ class SearchService:
                 or is_title_metadata_query
             ):
 
-                # Metadata answers such as titles and authors
-                # depend on the document's front matter.
-                #
-                # Preserve PDF/document order so the title,
-                # author block, affiliations, and publication
-                # information remain together instead of allowing
-                # the reranker to push the critical front-matter
-                # chunks below the evidence limit.
                 front_results.sort(
                     key=lambda result: (
                         result["page_number"]
-                        if result["page_number"] is not None
+                        if result["page_number"]
+                        is not None
                         else -1,
                         result["chunk_index"],
                     )
@@ -1702,10 +2191,6 @@ class SearchService:
                 )
 
             else:
-
-                # Keep reranker order inside each group,
-                # while making front matter appear before
-                # unrelated later pages.
 
                 ranked_results = (
                     front_results
@@ -1736,8 +2221,7 @@ class SearchService:
 
             summary_ids = {
                 chunk.id
-                for chunk in
-                summary_chunks
+                for chunk in summary_chunks
             }
 
             summary_results = []
@@ -1745,10 +2229,7 @@ class SearchService:
 
             for result in ranked_results:
 
-                if (
-                    result["id"]
-                    in summary_ids
-                ):
+                if result["id"] in summary_ids:
 
                     summary_results.append(
                         result
@@ -1760,36 +2241,25 @@ class SearchService:
                         result
                     )
 
-            # Summary questions should favor the
-            # structured overview set.
-            #
-            # IMPORTANT:
-            # A summary chunk can be a section heading such as
-            # "Abstract" or "1 Introduction", or it can contain
-            # the actual explanatory text underneath that heading.
-            #
-            # Heading-only chunks are poor LLM context even when
-            # the reranker gives them a high score. Prefer chunks
-            # that contain meaningful text while preserving the
-            # rerank score as the primary signal.
+            def summary_content_priority(
+                result,
+            ):
 
-            def summary_content_priority(result):
                 preview = (
                     result.get("preview")
                     or ""
                 ).strip()
 
-                # Very short chunks are usually section headings,
-                # page labels, or isolated metadata.
-                is_content_bearing = len(
-                    preview
-                ) >= 100
-
-                return (
-                    1 if is_content_bearing else 0,
-                    result["score"],
+                is_content_bearing = (
+                    len(preview) >= 100
                 )
 
+                return (
+                    1
+                    if is_content_bearing
+                    else 0,
+                    result["score"],
+                )
 
             summary_results.sort(
                 key=summary_content_priority,
@@ -1851,13 +2321,10 @@ class SearchService:
 
         evidence_limit = limit
 
-        # Author metadata needs the contiguous author block.
-        #
-        # IMPORTANT:
-        # Title metadata must NOT use this logic. The title is
-        # normally in the very first chunk(s) of the document, so
-        # skipping ahead to an author/contact chunk would remove
-        # the exact evidence needed to answer the title question.
+        # ========================================
+        # Author metadata
+        # ========================================
+
         if is_author_metadata_query:
 
             author_start_index = None
@@ -1889,44 +2356,90 @@ class SearchService:
                     ]
                 )
 
+        # ========================================
+        # Title metadata
+        # ========================================
+
         elif is_title_metadata_query:
 
-            # Title questions should always preserve the earliest
-            # front-matter chunks. Metadata priority has already
-            # placed front matter first and document-order sorting
-            # has already made chunk_index 0 the first candidate.
-            #
-            # Do not search for "author" or "@" here: doing so would
-            # discard the title chunk itself.
             ranked_results = sorted(
                 ranked_results,
                 key=lambda result: (
                     result["page_number"]
-                    if result["page_number"] is not None
+                    if result["page_number"]
+                    is not None
                     else 10**9,
                     result["chunk_index"],
                 ),
             )
 
+        # ========================================
+        # Final evidence selection
+        #
+        # IMPORTANT CHANGE:
+        #
+        # Comparison queries bypass the aggressive
+        # semantic duplicate detector.
+        #
+        # We still prevent the same chunk ID from
+        # appearing twice.
+        # ========================================
+
+        existing_ids = set()
+
         for result in ranked_results:
 
-            if SearchService._is_duplicate_evidence(
-                current=result,
-                previous_results=final_results,
-            ):
+            # ------------------------------------
+            # Comparison query
+            # ------------------------------------
 
-                print(
-                    "Skipping duplicate evidence | "
-                    f"Chunk {result['id']} | "
-                    f"Page {result['page_number']} | "
-                    f"{result['document_name']}"
+            if is_comparison_query:
+
+                if result["id"] in existing_ids:
+
+                    print(
+                        "Skipping exact duplicate "
+                        f"chunk ID | "
+                        f"Chunk {result['id']}"
+                    )
+
+                    continue
+
+                final_results.append(
+                    result
                 )
 
-                continue
+                existing_ids.add(
+                    result["id"]
+                )
 
-            final_results.append(
-                result
-            )
+            # ------------------------------------
+            # Normal query
+            # ------------------------------------
+
+            else:
+
+                if SearchService._is_duplicate_evidence(
+                    current=result,
+                    previous_results=final_results,
+                ):
+
+                    print(
+                        "Skipping duplicate evidence | "
+                        f"Chunk {result['id']} | "
+                        f"Page {result['page_number']} | "
+                        f"{result['document_name']}"
+                    )
+
+                    continue
+
+                final_results.append(
+                    result
+                )
+
+                existing_ids.add(
+                    result["id"]
+                )
 
             if (
                 len(final_results)
@@ -1938,13 +2451,10 @@ class SearchService:
         # Final Ordering
         # ========================================
 
-        # Do NOT re-sort metadata results by score
-        # after applying front-matter priority.
-        #
-        # For normal questions, score remains the
-        # final ordering criterion.
-
-        if not is_metadata_query and not is_summary_query:
+        if (
+            not is_metadata_query
+            and not is_summary_query
+        ):
 
             final_results.sort(
                 key=lambda result:
