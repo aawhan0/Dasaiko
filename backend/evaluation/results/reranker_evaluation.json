@@ -1,0 +1,1089 @@
+{
+  "user_id": 1,
+  "top_k": 10,
+  "retrieval_limit": 100,
+  "rrf_candidate_limit": 50,
+  "case_count": 20,
+  "results": [
+    {
+      "id": "attn_01",
+      "query": "How does scaled dot-product attention work?",
+      "category": "direct",
+      "expected_document_id": 3,
+      "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+      "relevant_ids": [
+        230,
+        235,
+        184,
+        257
+      ],
+      "vector": {
+        "recall@5": 0.5,
+        "recall@10": 0.75,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.4852658227346317
+      },
+      "bm25": {
+        "recall@5": 0.25,
+        "recall@10": 0.5,
+        "mrr": 0.25,
+        "ndcg@10": 0.298254219601818
+      },
+      "rrf": {
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr": 0.25,
+        "ndcg@10": 0.3191471544989227,
+        "candidate_count": 50,
+        "relevant_in_candidates": 4
+      },
+      "bge_reranker": {
+        "recall@5": 0.75,
+        "recall@10": 1.0,
+        "mrr": 0.5,
+        "ndcg@10": 0.7053571733135213,
+        "candidate_count": 50,
+        "rank_changes": {
+          "230": {
+            "rrf_rank": 5,
+            "bge_rank": 2
+          },
+          "235": {
+            "rrf_rank": 13,
+            "bge_rank": 3
+          },
+          "184": {
+            "rrf_rank": 4,
+            "bge_rank": 5
+          },
+          "257": {
+            "rrf_rank": 40,
+            "bge_rank": 10
+          }
+        }
+      }
+    },
+    {
+      "id": "attn_02",
+      "query": "Why does the Transformer use multi-head attention?",
+      "category": "direct",
+      "expected_document_id": 3,
+      "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+      "relevant_ids": [
+        104,
+        253
+      ],
+      "vector": {
+        "recall@5": 0.5,
+        "recall@10": 1.0,
+        "mrr": 0.25,
+        "ndcg@10": 0.448643819352159
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.5,
+        "recall@10": 1.0,
+        "mrr": 0.25,
+        "ndcg@10": 0.448643819352159,
+        "candidate_count": 50,
+        "relevant_in_candidates": 2
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8772153153380493,
+        "candidate_count": 50,
+        "rank_changes": {
+          "104": {
+            "rrf_rank": 9,
+            "bge_rank": 1
+          },
+          "253": {
+            "rrf_rank": 4,
+            "bge_rank": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "attn_03",
+      "query": "Why does the Transformer remove recurrence?",
+      "category": "multi_chunk",
+      "expected_document_id": 3,
+      "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+      "relevant_ids": [
+        97,
+        60,
+        736,
+        120,
+        449
+      ],
+      "vector": {
+        "recall@5": 0.4,
+        "recall@10": 0.4,
+        "mrr": 1.0,
+        "ndcg@10": 0.5531464700081437
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.0,
+        "recall@10": 0.6,
+        "mrr": 0.16666666666666666,
+        "ndcg@10": 0.32584372089811503,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 0.6,
+        "recall@10": 0.6,
+        "mrr": 1.0,
+        "ndcg@10": 0.639945385422766,
+        "candidate_count": 50,
+        "rank_changes": {
+          "97": {
+            "rrf_rank": 8,
+            "bge_rank": 1
+          },
+          "60": {
+            "rrf_rank": null,
+            "bge_rank": null
+          },
+          "736": {
+            "rrf_rank": 10,
+            "bge_rank": 3
+          },
+          "120": {
+            "rrf_rank": 6,
+            "bge_rank": 5
+          },
+          "449": {
+            "rrf_rank": null,
+            "bge_rank": null
+          }
+        }
+      }
+    },
+    {
+      "id": "attn_04",
+      "query": "What advantage does the Transformer gain from removing recurrence?",
+      "category": "multi_chunk",
+      "expected_document_id": 3,
+      "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+      "relevant_ids": [
+        97,
+        60,
+        736,
+        104
+      ],
+      "vector": {
+        "recall@5": 0.25,
+        "recall@10": 0.5,
+        "mrr": 0.25,
+        "ndcg@10": 0.298254219601818
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.0,
+        "recall@10": 0.5,
+        "mrr": 0.1111111111111111,
+        "ndcg@10": 0.2303612461053624,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 0.75,
+        "recall@10": 0.75,
+        "mrr": 1.0,
+        "ndcg@10": 0.7095272044910244,
+        "candidate_count": 50,
+        "rank_changes": {
+          "97": {
+            "rrf_rank": 9,
+            "bge_rank": 1
+          },
+          "60": {
+            "rrf_rank": null,
+            "bge_rank": null
+          },
+          "736": {
+            "rrf_rank": 11,
+            "bge_rank": 4
+          },
+          "104": {
+            "rrf_rank": 10,
+            "bge_rank": 5
+          }
+        }
+      }
+    },
+    {
+      "id": "attn_05",
+      "query": "What translation performance does the Transformer achieve?",
+      "category": "direct",
+      "expected_document_id": 3,
+      "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+      "relevant_ids": [
+        625,
+        736,
+        632,
+        550
+      ],
+      "vector": {
+        "recall@5": 0.75,
+        "recall@10": 1.0,
+        "mrr": 0.5,
+        "ndcg@10": 0.7315682114753617
+      },
+      "bm25": {
+        "recall@5": 0.25,
+        "recall@10": 0.5,
+        "mrr": 0.25,
+        "ndcg@10": 0.2856436410275446
+      },
+      "rrf": {
+        "recall@5": 0.5,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.7991748853900112,
+        "candidate_count": 50,
+        "relevant_in_candidates": 4
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 1.0,
+        "candidate_count": 50,
+        "rank_changes": {
+          "625": {
+            "rrf_rank": 8,
+            "bge_rank": 3
+          },
+          "736": {
+            "rrf_rank": 1,
+            "bge_rank": 1
+          },
+          "632": {
+            "rrf_rank": 4,
+            "bge_rank": 2
+          },
+          "550": {
+            "rrf_rank": 9,
+            "bge_rank": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "nmt_01",
+      "query": "What problem does attention solve in neural machine translation?",
+      "category": "direct",
+      "expected_document_id": 4,
+      "expected_document_title": "dpr-2004.04906v3",
+      "relevant_ids": [
+        968,
+        94
+      ],
+      "vector": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8772153153380493
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.5,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.48381288316677695,
+        "candidate_count": 50,
+        "relevant_in_candidates": 2
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 1.0,
+        "candidate_count": 50,
+        "rank_changes": {
+          "968": {
+            "rrf_rank": 10,
+            "bge_rank": 2
+          },
+          "94": {
+            "rrf_rank": 3,
+            "bge_rank": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "nmt_02",
+      "query": "How does the attention model compute the context vector?",
+      "category": "multi_chunk",
+      "expected_document_id": 4,
+      "expected_document_title": "dpr-2004.04906v3",
+      "relevant_ids": [
+        175,
+        184,
+        216,
+        211
+      ],
+      "vector": {
+        "recall@5": 0.5,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8276904491046954
+      },
+      "bm25": {
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr": 1.0,
+        "ndcg@10": 0.6366824387328317
+      },
+      "rrf": {
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr": 1.0,
+        "ndcg@10": 0.6366824387328317,
+        "candidate_count": 50,
+        "relevant_in_candidates": 4
+      },
+      "bge_reranker": {
+        "recall@5": 0.5,
+        "recall@10": 0.5,
+        "mrr": 1.0,
+        "ndcg@10": 0.5855700749881525,
+        "candidate_count": 50,
+        "rank_changes": {
+          "175": {
+            "rrf_rank": 18,
+            "bge_rank": 1
+          },
+          "184": {
+            "rrf_rank": 1,
+            "bge_rank": 17
+          },
+          "216": {
+            "rrf_rank": 39,
+            "bge_rank": 11
+          },
+          "211": {
+            "rrf_rank": 2,
+            "bge_rank": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "nmt_03",
+      "query": "Why does attention help the encoder-decoder translate long sentences?",
+      "category": "multi_chunk",
+      "expected_document_id": 4,
+      "expected_document_title": "dpr-2004.04906v3",
+      "relevant_ids": [
+        968,
+        329,
+        165
+      ],
+      "vector": {
+        "recall@5": 0.0,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.16666666666666666,
+        "ndcg@10": 0.3152014104491349
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.08333333333333333,
+        "ndcg@10": 0.0,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.9674679834891693,
+        "candidate_count": 50,
+        "rank_changes": {
+          "968": {
+            "rrf_rank": 17,
+            "bge_rank": 2
+          },
+          "329": {
+            "rrf_rank": 12,
+            "bge_rank": 1
+          },
+          "165": {
+            "rrf_rank": 22,
+            "bge_rank": 4
+          }
+        }
+      }
+    },
+    {
+      "id": "nmt_04",
+      "query": "Why is soft alignment useful for translating phrases?",
+      "category": "direct",
+      "expected_document_id": 4,
+      "expected_document_title": "dpr-2004.04906v3",
+      "relevant_ids": [
+        94
+      ],
+      "vector": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 1.0,
+        "mrr": 0.1111111111111111,
+        "ndcg@10": 0.3010299956639812
+      },
+      "rrf": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.25,
+        "ndcg@10": 0.43067655807339306,
+        "candidate_count": 50,
+        "relevant_in_candidates": 1
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.5,
+        "candidate_count": 50,
+        "rank_changes": {
+          "94": {
+            "rrf_rank": 4,
+            "bge_rank": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "w2v_01",
+      "query": "How does the Skip-gram model learn word representations?",
+      "category": "direct",
+      "expected_document_id": 2,
+      "expected_document_title": "word2vec",
+      "relevant_ids": [
+        588,
+        350,
+        266
+      ],
+      "vector": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 1.0,
+        "mrr": 0.5,
+        "ndcg@10": 0.6653497124326151
+      },
+      "bm25": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.5,
+        "ndcg@10": 0.5307212739772434
+      },
+      "rrf": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 1.0,
+        "mrr": 0.5,
+        "ndcg@10": 0.6871475159848289,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.25,
+        "ndcg@10": 0.36926780146674987,
+        "candidate_count": 50,
+        "rank_changes": {
+          "588": {
+            "rrf_rank": 7,
+            "bge_rank": 6
+          },
+          "350": {
+            "rrf_rank": 2,
+            "bge_rank": 4
+          },
+          "266": {
+            "rrf_rank": 3,
+            "bge_rank": 32
+          }
+        }
+      }
+    },
+    {
+      "id": "w2v_02",
+      "query": "How does hierarchical softmax reduce the computational cost of softmax?",
+      "category": "direct",
+      "expected_document_id": 2,
+      "expected_document_title": "word2vec",
+      "relevant_ids": [
+        190,
+        214,
+        183
+      ],
+      "vector": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8451850618939637
+      },
+      "bm25": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 0.5,
+        "ndcg@10": 0.2960819109658652
+      },
+      "rrf": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8278123145308894,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 1.0,
+        "candidate_count": 50,
+        "rank_changes": {
+          "190": {
+            "rrf_rank": 1,
+            "bge_rank": 1
+          },
+          "214": {
+            "rrf_rank": 7,
+            "bge_rank": 2
+          },
+          "183": {
+            "rrf_rank": 4,
+            "bge_rank": 3
+          }
+        }
+      }
+    },
+    {
+      "id": "w2v_03",
+      "query": "Why does the Skip-gram paper use a Huffman tree?",
+      "category": "direct",
+      "expected_document_id": 2,
+      "expected_document_title": "word2vec",
+      "relevant_ids": [
+        190
+      ],
+      "vector": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.2,
+        "ndcg@10": 0.38685280723454163
+      },
+      "bm25": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.5
+      },
+      "rrf": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 0.5,
+        "ndcg@10": 0.6309297535714575,
+        "candidate_count": 50,
+        "relevant_in_candidates": 1
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 1.0,
+        "candidate_count": 50,
+        "rank_changes": {
+          "190": {
+            "rrf_rank": 2,
+            "bge_rank": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "w2v_04",
+      "query": "What do the phrase analogy experiments demonstrate about Skip-gram representations?",
+      "category": "multi_chunk",
+      "expected_document_id": 2,
+      "expected_document_title": "word2vec",
+      "relevant_ids": [
+        107,
+        643,
+        479
+      ],
+      "vector": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 1.0,
+        "ndcg@10": 0.46927872602275644
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.23463936301137822,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8179809735263114,
+        "candidate_count": 50,
+        "rank_changes": {
+          "107": {
+            "rrf_rank": 3,
+            "bge_rank": 1
+          },
+          "643": {
+            "rrf_rank": 36,
+            "bge_rank": 5
+          },
+          "479": {
+            "rrf_rank": 18,
+            "bge_rank": 6
+          }
+        }
+      }
+    },
+    {
+      "id": "glove_01",
+      "query": "What is the main idea behind GloVe?",
+      "category": "direct",
+      "expected_document_id": 5,
+      "expected_document_title": "glove",
+      "relevant_ids": [
+        1651,
+        121
+      ],
+      "vector": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.023255813953488372,
+        "ndcg@10": 0.0,
+        "candidate_count": 50,
+        "relevant_in_candidates": 1
+      },
+      "bge_reranker": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.023255813953488372,
+        "ndcg@10": 0.0,
+        "candidate_count": 50,
+        "rank_changes": {
+          "1651": {
+            "rrf_rank": null,
+            "bge_rank": null
+          },
+          "121": {
+            "rrf_rank": 43,
+            "bge_rank": 43
+          }
+        }
+      }
+    },
+    {
+      "id": "glove_02",
+      "query": "How does GloVe use word co-occurrence statistics?",
+      "category": "multi_chunk",
+      "expected_document_id": 5,
+      "expected_document_title": "glove",
+      "relevant_ids": [
+        1651,
+        121,
+        58,
+        50,
+        16
+      ],
+      "vector": {
+        "recall@5": 0.2,
+        "recall@10": 0.2,
+        "mrr": 0.5,
+        "ndcg@10": 0.21398626473452756
+      },
+      "bm25": {
+        "recall@5": 0.2,
+        "recall@10": 0.2,
+        "mrr": 0.25,
+        "ndcg@10": 0.14606834984270645
+      },
+      "rrf": {
+        "recall@5": 0.2,
+        "recall@10": 0.2,
+        "mrr": 1.0,
+        "ndcg@10": 0.3391602052736161,
+        "candidate_count": 50,
+        "relevant_in_candidates": 4
+      },
+      "bge_reranker": {
+        "recall@5": 0.6,
+        "recall@10": 0.8,
+        "mrr": 1.0,
+        "ndcg@10": 0.8357799744028239,
+        "candidate_count": 50,
+        "rank_changes": {
+          "1651": {
+            "rrf_rank": 26,
+            "bge_rank": 1
+          },
+          "121": {
+            "rrf_rank": 1,
+            "bge_rank": 2
+          },
+          "58": {
+            "rrf_rank": 16,
+            "bge_rank": 3
+          },
+          "50": {
+            "rrf_rank": 35,
+            "bge_rank": 7
+          },
+          "16": {
+            "rrf_rank": null,
+            "bge_rank": null
+          }
+        }
+      }
+    },
+    {
+      "id": "glove_03",
+      "query": "How does GloVe relate to prediction-based word-vector models such as skip-gram?",
+      "category": "multi_chunk",
+      "expected_document_id": 5,
+      "expected_document_title": "glove",
+      "relevant_ids": [
+        1651,
+        509,
+        107,
+        50
+      ],
+      "vector": {
+        "recall@5": 0.0,
+        "recall@10": 0.25,
+        "mrr": 0.14285714285714285,
+        "ndcg@10": 0.13012668333070054
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.25,
+        "mrr": 0.16666666666666666,
+        "ndcg@10": 0.13905617951077562
+      },
+      "rrf": {
+        "recall@5": 0.25,
+        "recall@10": 0.5,
+        "mrr": 0.25,
+        "ndcg@10": 0.298254219601818,
+        "candidate_count": 50,
+        "relevant_in_candidates": 4
+      },
+      "bge_reranker": {
+        "recall@5": 0.75,
+        "recall@10": 1.0,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.6533933590057491,
+        "candidate_count": 50,
+        "rank_changes": {
+          "1651": {
+            "rrf_rank": 4,
+            "bge_rank": 3
+          },
+          "509": {
+            "rrf_rank": 12,
+            "bge_rank": 4
+          },
+          "107": {
+            "rrf_rank": 7,
+            "bge_rank": 5
+          },
+          "50": {
+            "rrf_rank": 16,
+            "bge_rank": 6
+          }
+        }
+      }
+    },
+    {
+      "id": "glove_04",
+      "query": "What happens to GloVe performance when the training corpus becomes much larger?",
+      "category": "multi_chunk",
+      "expected_document_id": 5,
+      "expected_document_title": "glove",
+      "relevant_ids": [
+        1318,
+        1227,
+        1179
+      ],
+      "vector": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "bm25": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 0.2,
+        "ndcg@10": 0.18154179253735267
+      },
+      "rrf": {
+        "recall@5": 0.0,
+        "recall@10": 0.3333333333333333,
+        "mrr": 0.1111111111111111,
+        "ndcg@10": 0.14126697285982898,
+        "candidate_count": 50,
+        "relevant_in_candidates": 2
+      },
+      "bge_reranker": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 0.6666666666666666,
+        "mrr": 1.0,
+        "ndcg@10": 0.7653606369886217,
+        "candidate_count": 50,
+        "rank_changes": {
+          "1318": {
+            "rrf_rank": 34,
+            "bge_rank": 1
+          },
+          "1227": {
+            "rrf_rank": 9,
+            "bge_rank": 2
+          },
+          "1179": {
+            "rrf_rank": null,
+            "bge_rank": null
+          }
+        }
+      }
+    },
+    {
+      "id": "seq_01",
+      "query": "Why are sequences challenging for standard feedforward neural networks?",
+      "category": "direct",
+      "expected_document_id": 1,
+      "expected_document_title": "seq2seq",
+      "relevant_ids": [
+        90,
+        55,
+        76
+      ],
+      "vector": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.6666666666666666,
+        "mrr": 0.3333333333333333,
+        "ndcg@10": 0.40179981797758046
+      },
+      "bm25": {
+        "recall@5": 0.0,
+        "recall@10": 0.0,
+        "mrr": 0.0,
+        "ndcg@10": 0.0
+      },
+      "rrf": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 0.25,
+        "ndcg@10": 0.20210734650054757,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.8385465274895063,
+        "candidate_count": 50,
+        "rank_changes": {
+          "90": {
+            "rrf_rank": 11,
+            "bge_rank": 1
+          },
+          "55": {
+            "rrf_rank": 13,
+            "bge_rank": 4
+          },
+          "76": {
+            "rrf_rank": 4,
+            "bge_rank": 6
+          }
+        }
+      }
+    },
+    {
+      "id": "seq_02",
+      "query": "How does the LSTM encoder-decoder model represent an input sequence?",
+      "category": "direct",
+      "expected_document_id": 1,
+      "expected_document_title": "seq2seq",
+      "relevant_ids": [
+        90,
+        174,
+        55,
+        100,
+        199
+      ],
+      "vector": {
+        "recall@5": 0.6,
+        "recall@10": 0.6,
+        "mrr": 1.0,
+        "ndcg@10": 0.639945385422766
+      },
+      "bm25": {
+        "recall@5": 0.2,
+        "recall@10": 0.2,
+        "mrr": 1.0,
+        "ndcg@10": 0.3391602052736161
+      },
+      "rrf": {
+        "recall@5": 0.4,
+        "recall@10": 0.6,
+        "mrr": 1.0,
+        "ndcg@10": 0.5773584151532217,
+        "candidate_count": 50,
+        "relevant_in_candidates": 5
+      },
+      "bge_reranker": {
+        "recall@5": 0.6,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 0.9182162519778518,
+        "candidate_count": 50,
+        "rank_changes": {
+          "90": {
+            "rrf_rank": 5,
+            "bge_rank": 1
+          },
+          "174": {
+            "rrf_rank": 8,
+            "bge_rank": 2
+          },
+          "55": {
+            "rrf_rank": 12,
+            "bge_rank": 5
+          },
+          "100": {
+            "rrf_rank": 1,
+            "bge_rank": 6
+          },
+          "199": {
+            "rrf_rank": 19,
+            "bge_rank": 7
+          }
+        }
+      }
+    },
+    {
+      "id": "seq_03",
+      "query": "How does beam search generate translations in the sequence-to-sequence model?",
+      "category": "direct",
+      "expected_document_id": 1,
+      "expected_document_title": "seq2seq",
+      "relevant_ids": [
+        272,
+        105,
+        259
+      ],
+      "vector": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 1.0,
+        "ndcg@10": 0.46927872602275644
+      },
+      "bm25": {
+        "recall@5": 0.3333333333333333,
+        "recall@10": 0.3333333333333333,
+        "mrr": 0.5,
+        "ndcg@10": 0.2960819109658652
+      },
+      "rrf": {
+        "recall@5": 0.6666666666666666,
+        "recall@10": 0.6666666666666666,
+        "mrr": 1.0,
+        "ndcg@10": 0.6508205185601091,
+        "candidate_count": 50,
+        "relevant_in_candidates": 3
+      },
+      "bge_reranker": {
+        "recall@5": 1.0,
+        "recall@10": 1.0,
+        "mrr": 1.0,
+        "ndcg@10": 1.0,
+        "candidate_count": 50,
+        "rank_changes": {
+          "272": {
+            "rrf_rank": 1,
+            "bge_rank": 1
+          },
+          "105": {
+            "rrf_rank": 11,
+            "bge_rank": 2
+          },
+          "259": {
+            "rrf_rank": 5,
+            "bge_rank": 3
+          }
+        }
+      }
+    }
+  ]
+}

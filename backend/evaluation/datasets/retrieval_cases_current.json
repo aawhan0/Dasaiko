@@ -1,0 +1,564 @@
+[
+    {
+        "id": "attn_01",
+        "query": "How does scaled dot-product attention work?",
+        "expected_document_id": 3,
+        "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+        "relevant_chunk_ids": [
+            230,
+            235,
+            184,
+            257
+        ],
+        "retrieved_chunk_ids": [
+            194,
+            230,
+            235,
+            184,
+            722,
+            257,
+            227,
+            191,
+            1514,
+            245
+        ],
+        "retrieved_document_ids": [
+            3,
+            4
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "attn_02",
+        "query": "Why does the Transformer use multi-head attention?",
+        "expected_document_id": 3,
+        "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+        "relevant_chunk_ids": [
+            104,
+            253
+        ],
+        "retrieved_chunk_ids": [
+            104,
+            732,
+            324,
+            253,
+            74,
+            120,
+            97,
+            165,
+            135,
+            60
+        ],
+        "retrieved_document_ids": [
+            3
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "attn_03",
+        "query": "Why does the Transformer remove recurrence?",
+        "expected_document_id": 3,
+        "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+        "relevant_chunk_ids": [
+            97,
+            60,
+            736,
+            120,
+            449
+        ],
+        "retrieved_chunk_ids": [
+            97,
+            60,
+            732,
+            736,
+            104,
+            120,
+            374,
+            135,
+            741,
+            449
+        ],
+        "retrieved_document_ids": [
+            3
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "attn_04",
+        "query": "What advantage does the Transformer gain from removing recurrence?",
+        "expected_document_id": 3,
+        "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+        "relevant_chunk_ids": [
+            97,
+            60,
+            736,
+            104
+        ],
+        "retrieved_chunk_ids": [
+            97,
+            60,
+            120,
+            732,
+            736,
+            104,
+            550,
+            741,
+            78,
+            135
+        ],
+        "retrieved_document_ids": [
+            3,
+            5
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "attn_05",
+        "query": "What translation performance does the Transformer achieve?",
+        "expected_document_id": 3,
+        "expected_document_title": "NIPS-2017-attention-is-all-you-need-Paper",
+        "relevant_chunk_ids": [
+            625,
+            736,
+            632,
+            550
+        ],
+        "retrieved_chunk_ids": [
+            652,
+            625,
+            736,
+            97,
+            632,
+            550,
+            672,
+            155,
+            120,
+            135
+        ],
+        "retrieved_document_ids": [
+            3
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "nmt_01",
+        "query": "What problem does attention solve in neural machine translation?",
+        "expected_document_id": 4,
+        "expected_document_title": "dpr-2004.04906v3",
+        "relevant_chunk_ids": [
+            968,
+            94
+        ],
+        "retrieved_chunk_ids": [
+            968,
+            449,
+            93,
+            94,
+            240,
+            60,
+            947,
+            115,
+            472,
+            1037
+        ],
+        "retrieved_document_ids": [
+            1,
+            3
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "nmt_02",
+        "query": "How does the attention model compute the context vector?",
+        "expected_document_id": 4,
+        "expected_document_title": "dpr-2004.04906v3",
+        "relevant_chunk_ids": [
+            175,
+            184,
+            216,
+            211
+        ],
+        "retrieved_chunk_ids": [
+            175,
+            319,
+            314,
+            184,
+            194,
+            216,
+            211,
+            198,
+            93,
+            741
+        ],
+        "retrieved_document_ids": [
+            3
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "nmt_03",
+        "query": "Why does attention help the encoder-decoder translate long sentences?",
+        "expected_document_id": 4,
+        "expected_document_title": "dpr-2004.04906v3",
+        "relevant_chunk_ids": [
+            968,
+            329,
+            165
+        ],
+        "retrieved_chunk_ids": [
+            329,
+            968,
+            60,
+            165,
+            732,
+            994,
+            116,
+            449,
+            345,
+            562
+        ],
+        "retrieved_document_ids": [
+            3,
+            1
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "nmt_04",
+        "query": "Why is soft alignment useful for translating phrases?",
+        "expected_document_id": 4,
+        "expected_document_title": "dpr-2004.04906v3",
+        "relevant_chunk_ids": [
+            94
+        ],
+        "retrieved_chunk_ids": [
+            122,
+            968,
+            94,
+            962,
+            204,
+            780,
+            105,
+            1019,
+            1535,
+            999
+        ],
+        "retrieved_document_ids": [
+            1,
+            3,
+            4
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "w2v_01",
+        "query": "How does the Skip-gram model learn word representations?",
+        "expected_document_id": 2,
+        "expected_document_title": "word2vec",
+        "relevant_chunk_ids": [
+            588,
+            350,
+            266
+        ],
+        "retrieved_chunk_ids": [
+            107,
+            588,
+            516,
+            350,
+            103,
+            266,
+            643,
+            50,
+            790,
+            509
+        ],
+        "retrieved_document_ids": [
+            5,
+            2
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "w2v_02",
+        "query": "How does hierarchical softmax reduce the computational cost of softmax?",
+        "expected_document_id": 2,
+        "expected_document_title": "word2vec",
+        "relevant_chunk_ids": [
+            190,
+            214,
+            183
+        ],
+        "retrieved_chunk_ids": [
+            190,
+            214,
+            183,
+            1218,
+            568,
+            235,
+            314,
+            1514,
+            364,
+            325
+        ],
+        "retrieved_document_ids": [
+            2,
+            5,
+            3,
+            4,
+            1
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "w2v_03",
+        "query": "Why does the Skip-gram paper use a Huffman tree?",
+        "expected_document_id": 2,
+        "expected_document_title": "word2vec",
+        "relevant_chunk_ids": [
+            190
+        ],
+        "retrieved_chunk_ids": [
+            190,
+            643,
+            50,
+            516,
+            669,
+            479,
+            593,
+            509,
+            107,
+            667
+        ],
+        "retrieved_document_ids": [
+            2,
+            5
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "w2v_04",
+        "query": "What do the phrase analogy experiments demonstrate about Skip-gram representations?",
+        "expected_document_id": 2,
+        "expected_document_title": "word2vec",
+        "relevant_chunk_ids": [
+            107,
+            643,
+            479
+        ],
+        "retrieved_chunk_ids": [
+            107,
+            981,
+            50,
+            1605,
+            643,
+            479,
+            103,
+            667,
+            977,
+            588
+        ],
+        "retrieved_document_ids": [
+            5,
+            2
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "glove_01",
+        "query": "What is the main idea behind GloVe?",
+        "expected_document_id": 5,
+        "expected_document_title": "glove",
+        "relevant_chunk_ids": [
+            1651,
+            121
+        ],
+        "retrieved_chunk_ids": [
+            1651,
+            121,
+            1442,
+            1218,
+            1630,
+            1265,
+            1433,
+            5,
+            118,
+            1605
+        ],
+        "retrieved_document_ids": [
+            5
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "glove_02",
+        "query": "How does GloVe use word co-occurrence statistics?",
+        "expected_document_id": 5,
+        "expected_document_title": "glove",
+        "relevant_chunk_ids": [
+            1651,
+            121,
+            58,
+            50,
+            16
+        ],
+        "retrieved_chunk_ids": [
+            1651,
+            121,
+            58,
+            1258,
+            1218,
+            1265,
+            50,
+            1605,
+            1433,
+            16
+        ],
+        "retrieved_document_ids": [
+            5
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "glove_03",
+        "query": "How does GloVe relate to prediction-based word-vector models such as skip-gram?",
+        "expected_document_id": 5,
+        "expected_document_title": "glove",
+        "relevant_chunk_ids": [
+            1651,
+            509,
+            107,
+            50
+        ],
+        "retrieved_chunk_ids": [
+            1573,
+            1651,
+            509,
+            107,
+            50,
+            1265,
+            121,
+            350,
+            1218,
+            1433
+        ],
+        "retrieved_document_ids": [
+            5,
+            2
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "glove_04",
+        "query": "What happens to GloVe performance when the training corpus becomes much larger?",
+        "expected_document_id": 5,
+        "expected_document_title": "glove",
+        "relevant_chunk_ids": [
+            1318,
+            1227,
+            1179
+        ],
+        "retrieved_chunk_ids": [
+            1318,
+            1227,
+            1218,
+            1630,
+            1258,
+            1624,
+            1179,
+            1605,
+            1433,
+            834
+        ],
+        "retrieved_document_ids": [
+            5
+        ],
+        "category": "multi_chunk"
+    },
+    {
+        "id": "seq_01",
+        "query": "Why are sequences challenging for standard feedforward neural networks?",
+        "expected_document_id": 1,
+        "expected_document_title": "seq2seq",
+        "relevant_chunk_ids": [
+            90,
+            55,
+            76
+        ],
+        "retrieved_chunk_ids": [
+            90,
+            140,
+            999,
+            169,
+            443,
+            55,
+            200,
+            76,
+            204,
+            104
+        ],
+        "retrieved_document_ids": [
+            1,
+            3,
+            2
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "seq_02",
+        "query": "How does the LSTM encoder-decoder model represent an input sequence?",
+        "expected_document_id": 1,
+        "expected_document_title": "seq2seq",
+        "relevant_chunk_ids": [
+            90,
+            174,
+            55,
+            100,
+            199
+        ],
+        "retrieved_chunk_ids": [
+            90,
+            174,
+            130,
+            204,
+            55,
+            933,
+            100,
+            199,
+            325,
+            169
+        ],
+        "retrieved_document_ids": [
+            1,
+            3
+        ],
+        "category": "direct"
+    },
+    {
+        "id": "seq_03",
+        "query": "How does beam search generate translations in the sequence-to-sequence model?",
+        "expected_document_id": 1,
+        "expected_document_title": "seq2seq",
+        "relevant_chunk_ids": [
+            272,
+            105,
+            259
+        ],
+        "retrieved_chunk_ids": [
+            272,
+            105,
+            259,
+            980,
+            637,
+            652,
+            130,
+            204,
+            55,
+            88
+        ],
+        "retrieved_document_ids": [
+            1,
+            3
+        ],
+        "category": "direct"
+    }
+]
