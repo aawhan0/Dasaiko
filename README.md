@@ -1,166 +1,324 @@
 # Dasaiko
 
-> **An AI-powered research workspace for understanding, exploring, and learning from research papers.**
+> An AI-powered research workspace for understanding, exploring, and learning from research papers.
 
-Dasaiko is a full-stack research assistant designed around a simple idea: **AI answers should remain grounded in the source material**.
+Dasaiko is a full-stack research assistant built around one principle: **AI answers should remain grounded in the source material.**
 
-Instead of treating a research paper like a plain text document, Dasaiko combines document-aware retrieval, hybrid search, reranking, persistent research context, streaming responses, and page-level evidence so users can ask questions while staying connected to the original paper.
-
----
-
-## ✨ What Dasaiko Does
-
-- 📄 Upload and work with research papers as PDFs
-- 🔎 Search paper content using **semantic + lexical retrieval**
-- 🧠 Rerank retrieved evidence with a **CrossEncoder**
-- 💬 Ask questions and receive **streaming AI responses**
-- 📚 Maintain persistent **research-paper context**
-- 🧾 Handle paper metadata and summary questions differently from normal retrieval
-- 🔗 Explicitly switch retrieval to another uploaded paper when requested
-- 📌 Return page-aware evidence with source previews and bounding-box information
-- 🗂️ Persist conversations, messages, documents, and research context
-- 🖥️ Inspect retrieved evidence directly alongside the PDF
+Instead of treating a research paper as plain text, Dasaiko combines document-aware retrieval, hybrid search, reciprocal rank fusion, cross-encoder reranking, persistent research context, streaming responses, and page-level evidence to create a more reliable paper-reading workflow.
 
 ---
 
-## 🏗️ Architecture
+## Overview
+
+Dasaiko is designed to sit between a researcher and the papers they are trying to understand.
+
+The system allows users to:
+
+- Upload and manage research papers as PDFs
+- Ask questions against a selected research paper
+- Search using both semantic and lexical retrieval
+- Combine Vector Search and BM25 using Reciprocal Rank Fusion (RRF)
+- Rerank candidates with a BGE Cross-Encoder
+- Handle metadata and summary questions with specialized retrieval strategies
+- Explicitly switch retrieval to another uploaded paper
+- Receive grounded answers with source citations
+- Inspect evidence alongside the original PDF
+- Preserve conversations and research context across sessions
+
+The goal is not to replace reading. It is to make research papers easier to **question, navigate, compare, and learn from**.
+
+---
+
+## Architecture
 
 ```text
-                         ┌─────────────────────┐
-                         │      React UI       │
-                         │ Research Workspace  │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │      FastAPI        │
-                         │     REST / SSE      │
-                         └──────────┬──────────┘
-                                    │
-                    ┌───────────────┼────────────────┐
-                    │               │                │
-                    ▼               ▼                ▼
-              PDF Ingestion    Conversation     Chat / RAG
-                    │          Persistence          │
-                    ▼                                ▼
-              Text + Layout                  Query Processing
-                    │                                │
-                    ▼                                ▼
-                 Chunking                  ┌──────────────────┐
-                    │                      │ Hybrid Retrieval │
-                    ▼                      └────────┬─────────┘
-          Sentence Transformer                       │
-             Embeddings                    ┌─────────┴─────────┐
-                    │                      │                   │
-                    ▼                      ▼                   ▼
-          PostgreSQL + pgvector       Vector Search         BM25
-                                           │                   │
-                                           └─────────┬─────────┘
-                                                     ▼
-                                            Candidate Merging
-                                                     │
-                                                     ▼
-                                           CrossEncoder Reranker
-                                                     │
-                                                     ▼
-                                                Evidence
-                                                     │
-                                                     ▼
-                                                  LLM
-                                                     │
-                                                     ▼
-                                           Streaming Response
+                         React Research Workspace
+                                  │
+                                  ▼
+                              FastAPI
+                           REST + SSE APIs
+                                  │
+              ┌───────────────────┼───────────────────┐
+              │                   │                   │
+              ▼                   ▼                   ▼
+        PDF Ingestion       Conversations        Chat / RAG
+              │                   │                   │
+              ▼                   │                   ▼
+       Text + Layout             │             Query Analysis
+              │                   │                   │
+              ▼                   │                   ▼
+          Chunking                │          Retrieval Scope
+              │                   │                   │
+              ▼                   │                   ▼
+     Sentence Transformers        │        ┌──────────┴──────────┐
+         Embeddings               │        │                     │
+              │                   │        ▼                     ▼
+              └───────────────────┼──► Vector Search          BM25
+                                  │        │                     │
+                                  │        └──────────┬──────────┘
+                                  │                   ▼
+                                  │              RRF Fusion
+                                  │                   │
+                                  │                   ▼
+                                  │          BGE Cross-Encoder
+                                  │             Reranking
+                                  │                   │
+                                  │                   ▼
+                                  │         RRF + BGE Score Fusion
+                                  │                   │
+                                  │                   ▼
+                                  │          Evidence Selection
+                                  │                   │
+                                  │                   ▼
+                                  │             LLM / Groq
+                                  │                   │
+                                  └───────────────────┘
+                                                      │
+                                                      ▼
+                                             Grounded SSE Response
 ```
 
 ---
 
-## 🔍 Retrieval Pipeline
+## Retrieval Pipeline
 
-Dasaiko does not rely on vector similarity alone.
+Dasaiko uses a multi-stage retrieval pipeline rather than relying on vector similarity alone.
 
 ```text
 User Query
     │
-    ├──► Vector Search
-    │
-    └──► BM25 Search
-             │
-             ▼
-       Hybrid Candidate Pool
-             │
-             ▼
-       CrossEncoder Reranking
-             │
-             ▼
-       Evidence Selection
-             │
-             ▼
-       Grounded LLM Response
+    ├──────────────► Vector Search ──────────────┐
+    │                                             │
+    └──────────────► BM25 Search ─────────────────┤
+                                                  ▼
+                                      Reciprocal Rank Fusion
+                                               (RRF)
+                                                  │
+                                                  ▼
+                                        Hybrid Candidate Pool
+                                                  │
+                                                  ▼
+                                        BGE Cross-Encoder
+                                             Reranking
+                                                  │
+                                                  ▼
+                                      RRF + BGE Score Fusion
+                                                  │
+                                                  ▼
+                                      Duplicate Evidence Filter
+                                                  │
+                                                  ▼
+                                          Top-K Evidence
+                                                  │
+                                                  ▼
+                                           Grounded LLM
 ```
 
-Vector search provides semantic similarity, while BM25 provides strong lexical matching for exact terminology, names, technical phrases, and keyword-sensitive queries. The combined candidate pool is then reranked by a CrossEncoder.
+### Why hybrid retrieval?
+
+Vector retrieval is effective for semantic similarity, while BM25 provides strong lexical matching for exact terminology, technical phrases, names, and keyword-sensitive queries.
+
+RRF combines their rankings without requiring the raw vector and BM25 scores to exist on the same numerical scale.
+
+### Reciprocal Rank Fusion
+
+Dasaiko uses:
+
+```text
+RRF(d) = 1 / (k + vector_rank)
+       + 1 / (k + bm25_rank)
+```
+
+with:
+
+```text
+k = 60
+```
+
+A candidate ranked highly by both retrieval systems therefore receives a stronger hybrid score.
+
+### BGE Cross-Encoder reranking
+
+The RRF candidate pool is passed to a BGE Cross-Encoder for semantic reranking.
+
+This creates a deliberate separation of responsibilities:
+
+```text
+Vector + BM25
+     ↓
+Broad candidate retrieval
+     ↓
+RRF
+     ↓
+Evidence consolidation
+     ↓
+BGE Cross-Encoder
+     ↓
+Semantic relevance refinement
+```
+
+The reranker can promote semantically useful evidence that was not highly ranked by the initial retrieval systems and demote candidates that were retrieved primarily because of lexical or embedding similarity.
 
 ---
 
-## 🧠 Context-Aware Retrieval
+## Retrieval Configuration
 
-A major part of Dasaiko is controlling **where retrieval is allowed to search**.
+| Component | Configuration |
+|---|---|
+| Vector retrieval | Top 50 candidates |
+| BM25 retrieval | Top 50 candidates |
+| Hybrid fusion | Reciprocal Rank Fusion |
+| RRF constant | `k = 60` |
+| Reranker | BGE Cross-Encoder |
+| RRF fusion weight | `0.50` |
+| BGE fusion weight | `0.50` |
+| Final evidence | Top 5 chunks by default |
+| Duplicate filtering | Sequence, token containment, token-set similarity, document/page similarity |
 
-### Selected paper
+Final fusion uses normalized component scores:
 
-Normal paper-related questions search the currently selected research paper.
+```text
+Final Score = 0.50 × BGE_normalized
+            + 0.50 × RRF_normalized
+```
+
+---
+
+## Context-Aware Retrieval
+
+A core design problem in research assistants is deciding **where a query should search**.
+
+Dasaiko explicitly controls retrieval scope.
+
+### Selected research paper
+
+Normal questions use the currently selected research paper as the retrieval boundary.
 
 ### Explicitly referenced paper
 
-If the user explicitly refers to another uploaded paper, Dasaiko resolves that document and restricts retrieval to it for that query.
+If a user explicitly refers to another uploaded paper, Dasaiko resolves that document and restricts retrieval to it for the current query.
 
-### External/global research
+### External or global research
 
 Only explicit requests for other research or external context intentionally expand retrieval beyond the selected paper.
 
-This prevents unrelated documents from accidentally becoming evidence for a question about the currently selected paper.
+This prevents unrelated uploaded documents from silently becoming evidence for a question about the active research context.
 
 ---
 
-## 📑 Query-Aware Retrieval
+## Query-Aware Retrieval
 
-Dasaiko changes retrieval behavior based on the type of question.
+Not every question should be answered using the same retrieval strategy.
 
 ### Paper metadata
 
-Questions such as *Who are the authors?*, *When was this published?*, or *What is the title?* prioritize the front matter of the selected paper instead of relying only on semantic retrieval.
+Questions such as:
+
+- Who are the authors?
+- When was this published?
+- What is the title?
+- Where was it published?
+
+prioritize front-matter chunks rather than relying solely on semantic retrieval.
 
 ### Paper summaries
 
-Summary questions prioritize the abstract, introduction, motivation/problem, section neighborhoods, and conclusion to provide a more coherent representation of the paper.
+Summary questions prioritize:
+
+- Abstract
+- Introduction
+- Problem or motivation
+- Relevant section neighborhoods
+- Conclusion
+- Final findings
+
+This produces more coherent evidence for high-level paper understanding.
+
+### Comparative questions
+
+Comparison queries are enriched to favor complementary evidence for each side of the comparison, including mechanisms, objectives, training procedures, strengths, limitations, and outcomes.
 
 ---
 
-## 📌 Evidence-Aware Answers
+## Evidence and Citations
 
-Retrieved evidence contains information such as:
+Every retrieved evidence object preserves document-level and page-level information, including:
 
-- document ID
-- document title
-- chunk index
-- page number
-- page dimensions
-- bounding boxes
-- relevance score
-- source preview
+- Document ID
+- Document title
+- Chunk ID
+- Chunk index
+- Page number
+- Page dimensions
+- Bounding boxes
+- Retrieval and ranking scores
+- Source preview
 
-This lets the frontend connect an AI answer back to the original PDF instead of presenting an unsupported response.
+The final context sent to the LLM is therefore traceable back to the original document.
+
+Dasaiko also validates source references before returning the generated response, helping prevent unsupported or invalid citations from reaching the user.
 
 ---
 
-## 🛠️ Tech Stack
+## Retrieval Evaluation
+
+The current retrieval pipeline has been manually evaluated using representative research queries covering conceptual understanding, paper-specific retrieval, and comparative reasoning.
+
+### Evaluation results
+
+| Query | Hybrid Candidates | BGE Candidates | Final Evidence | Result |
+|---|---:|---:|---:|---|
+| Main idea behind GloVe | 88 | 88 | 5 | Pass |
+| GloVe evaluation / broader query | 88 | 88 | 5 | Pass |
+| CBOW vs Skip-gram | 72 | 72 | 5 | Pass |
+
+### Observed results
+
+- **3/3 end-to-end queries passed** — 100% observed pass rate on the current manual test set
+- **3/3 queries retrieved the intended research document**
+- **5 final evidence chunks returned per query**
+- **Citation validation passed on tested outputs**
+- Vector Search and BM25 produced complementary candidate sets
+- RRF combined lexical and semantic ranking signals before reranking
+- BGE materially changed candidate ordering based on semantic relevance
+- Duplicate evidence filtering reduced redundant context before LLM generation
+
+### RRF and reranking observations
+
+The evaluation demonstrates that the ranking stages perform different roles rather than simply duplicating one another.
+
+For the CBOW vs Skip-gram query, for example:
+
+```text
+Chunk 593
+RRF rank: 14
+BGE rank:  1
+```
+
+BGE promoted the candidate from rank 14 to rank 1 based on semantic relevance.
+
+For the GloVe evaluation, another candidate moved from:
+
+```text
+Chunk 5
+RRF rank: 38
+BGE rank:  4
+```
+
+This demonstrates that the Cross-Encoder is actively refining the initial hybrid ranking.
+
+The current evaluation is a small manually curated engineering benchmark, not a statistically significant retrieval benchmark. Formal Recall@K, MRR, nDCG, citation precision, and faithfulness measurements require a larger labeled evaluation set and are planned as the evaluation suite expands.
+
+---
+
+## Tech Stack
 
 ### Frontend
 
 - React
 - Vite
 - Tailwind CSS
-- PDF rendering / evidence viewer
+- PDF rendering and evidence viewer
 - Server-Sent Events for streamed responses
 
 ### Backend
@@ -172,10 +330,10 @@ This lets the frontend connect an AI answer back to the original PDF instead of 
 - PostgreSQL
 - pgvector
 
-### AI / Retrieval
+### AI and Retrieval
 
 - Sentence Transformers
-- CrossEncoder
+- BGE Cross-Encoder
 - BM25
 - Vector similarity search
 - Groq LLM API
@@ -188,7 +346,7 @@ This lets the frontend connect an AI answer back to the original PDF instead of 
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 Dasaiko/
@@ -223,14 +381,14 @@ Dasaiko/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Python 3.11+
 - Node.js 18+
 - Docker / Docker Compose
-- A Groq API key
+- Groq API key
 
 ### 1. Clone the repository
 
@@ -239,13 +397,13 @@ git clone https://github.com/aawhan0/Dasaiko.git
 cd Dasaiko
 ```
 
-### 2. Start PostgreSQL + pgvector
+### 2. Start PostgreSQL and pgvector
 
 ```bash
 docker compose up -d
 ```
 
-The repository uses the `pgvector/pgvector:pg17` image for PostgreSQL.
+The repository uses PostgreSQL with pgvector for vector storage and similarity search.
 
 ### 3. Configure the backend
 
@@ -254,7 +412,7 @@ cd backend
 cp .env.example .env
 ```
 
-Configure the required environment variables, including your LLM API key and database configuration.
+Configure the required environment variables, including the LLM API key and database connection.
 
 ### 4. Install backend dependencies
 
@@ -262,7 +420,7 @@ Configure the required environment variables, including your LLM API key and dat
 pip install -r requirements.txt
 ```
 
-### 5. Start the FastAPI backend
+### 5. Start FastAPI
 
 ```bash
 uvicorn app.main:app --reload
@@ -280,55 +438,65 @@ npm run dev
 
 Open the Vite development server in your browser.
 
-> **Note:** Local setup and production configuration may evolve as deployment is finalized.
+> Local setup and production configuration may evolve as deployment is finalized.
 
 ---
 
-## 🧪 Retrieval Evaluation
+## Evaluation Tooling
 
-Dasaiko includes a retrieval/reranker evaluation script:
+The repository contains dedicated retrieval evaluation tooling under:
 
 ```text
-backend/evaluation/evaluate_reranker.py
+backend/evaluation/
 ```
 
-The evaluation queries include strongly relevant, related/partially relevant, and irrelevant questions. The evaluation reproduces the retrieval flow:
+The evaluation flow is designed to reproduce the production retrieval path:
 
 ```text
+Query
+  ↓
 Vector Search + BM25
-        ↓
-Hybrid Candidates
-        ↓
-CrossEncoder
-        ↓
-Ranked Results
+  ↓
+RRF
+  ↓
+BGE Cross-Encoder
+  ↓
+Score Fusion
+  ↓
+Evidence Selection
+  ↓
+LLM Context
 ```
 
-This provides a foundation for measuring and improving retrieval quality rather than treating RAG behavior as a black box.
+This keeps retrieval behavior observable and makes future improvements measurable instead of treating RAG quality as a black box.
 
 ---
 
-## 🎯 Design Goals
+## Design Principles
 
-### 1. Ground answers in sources
+### Ground answers in sources
 
-Make it easy to inspect the evidence behind an answer.
+The system should make it easy to inspect the evidence behind an answer.
 
-### 2. Preserve research context
+### Preserve research context
 
 A research conversation should understand which paper the user is currently studying.
 
-### 3. Improve retrieval before improving prompts
+### Improve retrieval before prompting
 
-Better evidence selection is treated as a core engineering problem, not something that can be solved purely with a longer LLM prompt.
+Retrieval quality is treated as a core engineering problem rather than something that can be solved entirely with increasingly complex LLM prompts.
 
-### 4. Encourage actual paper reading
+### Separate retrieval responsibilities
 
-The goal is not to replace research papers with AI summaries. The goal is to make papers easier to **read, question, navigate, compare, and learn from**.
+Vector Search, BM25, RRF, and Cross-Encoder reranking each serve a distinct purpose in the pipeline.
+
+### Keep the researcher connected to the paper
+
+The objective is not to replace the paper with an AI-generated summary. The objective is to make the original research easier to read, question, navigate, compare, and understand.
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 ### Research Workspace
 
@@ -345,10 +513,12 @@ The goal is not to replace research papers with AI summaries. The goal is to mak
 - [x] Embedding generation
 - [x] pgvector semantic retrieval
 - [x] BM25 lexical retrieval
-- [x] Hybrid candidate merging
-- [x] CrossEncoder reranking
+- [x] Reciprocal Rank Fusion
+- [x] BGE Cross-Encoder reranking
+- [x] RRF + BGE score fusion
 - [x] Query-aware retrieval
 - [x] Document-scoped retrieval
+- [x] Duplicate evidence filtering
 
 ### Research Learning
 
@@ -356,80 +526,62 @@ The goal is not to replace research papers with AI summaries. The goal is to mak
 - [ ] Paper prerequisite mapping
 - [ ] Related-paper discovery
 - [ ] Visual research maps
-- [ ] Learning progression from foundational → advanced papers
+- [ ] Learning progression from foundational to advanced papers
 
 ### Production
 
-- [ ] Automated test suite expansion
+- [ ] Expanded automated evaluation suite
+- [ ] Formal retrieval metrics such as Recall@K, MRR, and nDCG
 - [ ] Production deployment
 - [ ] Automated CI pipeline
-- [ ] Retrieval evaluation metrics
 - [ ] Production observability
 
 ---
 
-## 🔬 Engineering Highlights
+## Engineering Highlights
 
-- **Hybrid retrieval** instead of vector-only RAG
-- **CrossEncoder reranking** after candidate retrieval
-- **Document-scoped retrieval** to avoid cross-paper contamination
-- **Specialized metadata retrieval** for bibliographic questions
-- **Summary-specific retrieval** for coherent paper overviews
-- **Persistent research context** across conversations
-- **Page-aware evidence objects** for source navigation
-- **Streaming chat responses** using server-sent events
-- **Dedicated retrieval evaluation tooling**
-
----
-
-## 📸 Screenshots
-
-Add 3–4 screenshots here before publishing the repository as a portfolio project.
-
-Recommended:
-
-1. Research workspace
-2. AI response with evidence cards
-3. PDF evidence viewer
-4. Research-paper/library interface
-
-Suggested paths:
-
-```text
-docs/images/research-workspace.png
-docs/images/evidence-viewer.png
-docs/images/streaming-chat.png
-```
+- Hybrid semantic + lexical retrieval
+- Reciprocal Rank Fusion for rank-based candidate consolidation
+- BGE Cross-Encoder semantic reranking
+- RRF + BGE score fusion
+- Document-scoped retrieval to prevent cross-paper contamination
+- Query-aware retrieval strategies for metadata, summaries, and comparisons
+- Persistent research context across conversations
+- Page-aware evidence objects for source navigation
+- Citation-aware LLM context construction
+- Streaming responses through Server-Sent Events
+- Dedicated retrieval evaluation tooling
 
 ---
 
-## 📌 Project Status
+## Project Status
 
 **Active development — portfolio-ready MVP**
 
-The core research workspace and retrieval pipeline are implemented. The project is continuing toward research-path generation, prerequisite mapping, visual research maps, stronger automated evaluation, and production deployment.
+The core research workspace, document management, context-aware retrieval, hybrid RAG pipeline, evidence system, and conversational workflow are implemented.
+
+Current development is focused on completing authentication hardening, expanding automated evaluation, production deployment, and the longer-term research-learning layer.
 
 ---
 
-## 👨‍💻 Author
+## Author
 
-**Aawhan Vyas**
-
+**Aawhan Vyas**  
 Computer Science Engineering
 
-GitHub: [aawhan0](https://github.com/aawhan0)
+[GitHub](https://github.com/aawhan0)
 
 ---
 
-## ⭐ Why Dasaiko?
+## Why Dasaiko?
 
-Most "chat with PDF" applications stop at:
+Most basic chat-with-PDF systems follow:
 
 ```text
 PDF → chunks → embeddings → LLM
 ```
 
-Dasaiko is being developed as a more complete **research learning system**:
+Dasaiko is being developed as a broader research-learning system:
 
 ```text
 Research Paper
@@ -438,13 +590,15 @@ Understand the document
       ↓
 Retrieve relevant evidence
       ↓
-Rank evidence intelligently
+Combine semantic + lexical signals
+      ↓
+Rerank evidence intelligently
       ↓
 Ask grounded questions
       ↓
 Inspect the source
       ↓
-Connect the paper to other research
+Compare research
       ↓
 Build a research path
 ```
