@@ -26,7 +26,9 @@ interface PDFViewerProps {
   bboxes?: number[][];
 }
 
-const API = "http://localhost:8000";
+const API =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8000";
 const EVIDENCE_ZOOM = 1.25;
 
 interface RenderedPageDimensions {
