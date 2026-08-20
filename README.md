@@ -260,54 +260,113 @@ Dasaiko also validates source references before returning the generated response
 
 ---
 
-## Retrieval Evaluation
+## Retrieval & Reranking Evaluation
 
-The current retrieval pipeline has been manually evaluated using representative research queries covering conceptual understanding, paper-specific retrieval, and comparative reasoning.
+Dasaiko's retrieval architecture was chosen empirically rather than by assuming that a single retrieval strategy would be sufficient.
 
-### Evaluation results
+The evaluation compares the same relevance benchmark across dense retrieval, lexical retrieval, hybrid fusion, and two reranking configurations. This makes each additional stage measurable and provides evidence for the final architecture.
 
-| Query | Hybrid Candidates | BGE Candidates | Final Evidence | Result |
-|---|---:|---:|---:|---|
-| Main idea behind GloVe | 88 | 88 | 5 | Pass |
-| GloVe evaluation / broader query | 88 | 88 | 5 | Pass |
-| CBOW vs Skip-gram | 72 | 72 | 5 | Pass |
+### Evaluation methodology
 
-### Observed results
+The benchmark evaluates the retrieval stack using representative, relevance-annotated research queries. Each approach is measured using the same cases and relevance judgments.
 
-- **3/3 end-to-end queries passed** — 100% observed pass rate on the current manual test set
-- **3/3 queries retrieved the intended research document**
-- **5 final evidence chunks returned per query**
-- **Citation validation passed on tested outputs**
-- Vector Search and BM25 produced complementary candidate sets
-- RRF combined lexical and semantic ranking signals before reranking
-- BGE materially changed candidate ordering based on semantic relevance
-- Duplicate evidence filtering reduced redundant context before LLM generation
+| Metric | What it measures |
+|---|---|
+| **Recall@5** | Whether a relevant chunk appears within the top 5 results |
+| **Recall@10** | Whether a relevant chunk appears within the top 10 results |
+| **MRR** | How highly the first relevant result is ranked |
+| **nDCG@10** | Overall ranking quality within the top 10 results |
 
-### RRF and reranking observations
+### Why the architecture is multi-stage
 
-The evaluation demonstrates that the ranking stages perform different roles rather than simply duplicating one another.
+**Vector Search** provides semantic retrieval and handles conceptually similar passages even when wording differs.
 
-For the CBOW vs Skip-gram query, for example:
+**BM25** provides lexical retrieval for exact terminology, technical phrases, names, and keyword-sensitive queries.
 
-```text
-Chunk 593
-RRF rank: 14
-BGE rank:  1
-```
+**RRF** combines the two rankings without requiring their raw scores to be directly comparable, producing a broader and more robust candidate set.
 
-BGE promoted the candidate from rank 14 to rank 1 based on semantic relevance.
+**Cross-Encoder reranking** then evaluates query-passage relevance directly and refines the ordering of the candidate pool before evidence is passed to the LLM.
 
-For the GloVe evaluation, another candidate moved from:
+This separates the responsibilities of retrieval and ranking:
 
 ```text
-Chunk 5
-RRF rank: 38
-BGE rank:  4
+Vector + BM25
+      ↓
+Candidate recall
+      ↓
+RRF
+      ↓
+Hybrid ranking
+      ↓
+Cross-Encoder
+      ↓
+Fine-grained relevance ranking
+      ↓
+Top-K evidence
 ```
 
-This demonstrates that the Cross-Encoder is actively refining the initial hybrid ranking.
+### Benchmark results
 
-The current evaluation is a small manually curated engineering benchmark, not a statistically significant retrieval benchmark. Formal Recall@K, MRR, nDCG, citation precision, and faithfulness measurements require a larger labeled evaluation set and are planned as the evaluation suite expands.
+| Method | Recall@5 | Recall@10 | MRR | nDCG@10 |
+|---|---:|---:|---:|---:|
+| Vector Search | 0.4017 | 0.5850 | 0.5088 | 0.4379 |
+| BM25 | 0.2033 | 0.2908 | 0.2531 | 0.1975 |
+| RRF | 0.4008 | 0.6033 | 0.4706 | 0.4132 |
+| Local Cross-Encoder | 0.6325 | 0.8017 | 0.7780 | 0.6850 |
+| **RRF + BGE Reranker** | **0.7442** | **0.8492** | **0.8220** | **0.7592** |
+
+### RRF → BGE improvement
+
+The strongest evidence for the final architecture is the improvement obtained by applying BGE reranking to the RRF candidate set.
+
+| Metric | RRF | RRF + BGE | Absolute Δ | Relative Improvement |
+|---|---:|---:|---:|---:|
+| Recall@5 | 0.4008 | **0.7442** | +0.3433 | **+85.65%** |
+| Recall@10 | 0.6033 | **0.8492** | +0.2458 | **+40.75%** |
+| MRR | 0.4706 | **0.8220** | +0.3514 | **+74.67%** |
+| nDCG@10 | 0.4132 | **0.7592** | +0.3460 | **+83.74%** |
+
+The reranker produced the largest gains in ranking quality, with MRR improving by **74.67%** and nDCG@10 improving by **83.74%** relative to RRF.
+
+Recall@5 also increased from **40.08% to 74.42%**, showing that the reranker substantially improved the likelihood of placing relevant evidence in the highest-value portion of the result set.
+
+### Local vs remote reranking
+
+Dasaiko also evaluated a local Cross-Encoder fallback against the remote BGE configuration.
+
+| Reranking configuration | Recall@5 | Recall@10 | MRR | nDCG@10 |
+|---|---:|---:|---:|---:|
+| RRF baseline | 0.4008 | 0.6033 | 0.4706 | 0.4132 |
+| Local Cross-Encoder | 0.6325 | 0.8017 | 0.7780 | 0.6850 |
+| **Remote BGE Reranker** | **0.7442** | **0.8492** | **0.8220** | **0.7592** |
+
+The local Cross-Encoder provides a strong fallback without requiring external inference. The remote BGE configuration achieved the strongest measured ranking performance on the current evaluation benchmark and is therefore the preferred configuration when remote inference is available.
+
+The benchmark does not establish that BGE is universally superior to every reranker. It establishes that BGE achieved the strongest measured performance on Dasaiko's current evaluation set.
+
+### Final retrieval decision
+
+The measured results support the final retrieval architecture:
+
+```text
+Dense Vector Search
+        +
+       BM25
+        ↓
+       RRF
+        ↓
+Candidate Pool
+        ↓
+BGE Cross-Encoder
+        ↓
+Top-K Evidence
+        ↓
+       LLM
+```
+
+Reranking is intentionally an optimization layer rather than a hard dependency. If the configured reranker is unavailable, Dasaiko can fall back to the existing hybrid ranking instead of failing the entire RAG request.
+
+The benchmark is an engineering evaluation rather than a universal claim about retrieval quality. As the evaluation suite expands, the same metrics can be used to track regressions and improvements across retrieval changes.
 
 ---
 
@@ -519,6 +578,8 @@ The objective is not to replace the paper with an AI-generated summary. The obje
 - [x] Query-aware retrieval
 - [x] Document-scoped retrieval
 - [x] Duplicate evidence filtering
+- [x] Automated retrieval evaluation
+- [x] Recall@K, MRR, and nDCG evaluation
 
 ### Research Learning
 
@@ -530,11 +591,10 @@ The objective is not to replace the paper with an AI-generated summary. The obje
 
 ### Production
 
-- [ ] Expanded automated evaluation suite
-- [ ] Formal retrieval metrics such as Recall@K, MRR, and nDCG
 - [ ] Production deployment
 - [ ] Automated CI pipeline
 - [ ] Production observability
+- [ ] Expanded evaluation dataset and automated regression tracking
 
 ---
 
@@ -550,7 +610,8 @@ The objective is not to replace the paper with an AI-generated summary. The obje
 - Page-aware evidence objects for source navigation
 - Citation-aware LLM context construction
 - Streaming responses through Server-Sent Events
-- Dedicated retrieval evaluation tooling
+- Dedicated retrieval evaluation tooling with Recall@K, MRR, and nDCG metrics
+- Local reranker fallback for graceful degradation
 
 ---
 
@@ -558,9 +619,9 @@ The objective is not to replace the paper with an AI-generated summary. The obje
 
 **Active development — portfolio-ready MVP**
 
-The core research workspace, document management, context-aware retrieval, hybrid RAG pipeline, evidence system, and conversational workflow are implemented.
+The core research workspace, document management, context-aware retrieval, hybrid RAG pipeline, evidence system, conversational workflow, and retrieval evaluation suite are implemented.
 
-Current development is focused on completing authentication hardening, expanding automated evaluation, production deployment, and the longer-term research-learning layer.
+Current development is focused on completing authentication hardening, production deployment, and the longer-term research-learning layer.
 
 ---
 
