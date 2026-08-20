@@ -2,7 +2,12 @@ from functools import lru_cache
 import os
 import traceback
 
+from dotenv import load_dotenv
 import requests
+
+
+# Load environment variables before any service logic runs.
+load_dotenv()
 
 
 MODEL_NAME = "BAAI/bge-reranker-v2-m3"

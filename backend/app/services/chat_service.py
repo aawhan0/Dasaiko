@@ -36,6 +36,46 @@ class ChatService:
     SELECTED_PAPER_SCORE_MARGIN = 3.0
 
     # ========================================================
+    # SOURCE CITATION VALIDATION
+    # ========================================================
+
+    @staticmethod
+    def _validate_source_citations(
+        answer: str,
+        evidence_count: int,
+    ) -> str:
+
+        import re
+
+        valid_source_ids = {
+            f"SOURCE_{index}"
+            for index in range(
+                1,
+                evidence_count + 1,
+            )
+        }
+
+        pattern = re.compile(
+            r"\[SOURCE_(\d+)\]"
+        )
+
+        def replace_match(match):
+
+            source_id = (
+                f"SOURCE_{match.group(1)}"
+            )
+
+            if source_id in valid_source_ids:
+                return match.group(0)
+
+            return ""
+
+        return pattern.sub(
+            replace_match,
+            answer,
+        )
+
+    # ========================================================
     # CASUAL MESSAGE DETECTION
     # ========================================================
 
@@ -776,7 +816,7 @@ class ChatService:
         )
 
         # ====================================================
-        # BUILD CONTEXT
+        # BUILD CITATION-AWARE CONTEXT
         # ====================================================
 
         if not usable_results:
@@ -801,13 +841,21 @@ class ChatService:
 
                 chunk = result["chunk"]
 
+                source_id = (
+                    f"SOURCE_{index}"
+                )
+
                 context_parts.append(
                     f"""
+[{source_id}]
 Document: {chunk.document.title}
+Document ID: {chunk.document_id}
+Chunk ID: {chunk.id}
 Page: {result["page_number"]}
-Chunk {index}
+Chunk Index: {chunk.chunk_index}
 ----------------------------------------
 {chunk.content}
+[/{source_id}]
 """
                 )
 
@@ -816,7 +864,7 @@ Chunk {index}
             )
 
             print(
-                "✓ Context built"
+                "✓ Citation-aware context built"
             )
 
         # ====================================================
@@ -1113,6 +1161,23 @@ Chunk {index}
 
         print(
             "✓ Groq returned"
+        )
+
+        # ====================================================
+        # VALIDATE SOURCE CITATIONS
+        # ====================================================
+
+        answer = (
+            ChatService._validate_source_citations(
+                answer=answer,
+                evidence_count=len(
+                    usable_results
+                ),
+            )
+        )
+
+        print(
+            "✓ Source citations validated"
         )
 
         # ====================================================
