@@ -9,11 +9,24 @@
 <p align="center"><strong>AI-powered research workspace for reading, questioning, and understanding research papers.</strong></p>
 
 <p align="center">
-  <a href="https://www.dasaiko.dev">Live Demo</a>
-  ·
-  <a href="https://github.com/aawhan0/Dasaiko">Repository</a>
-  ·
-  <a href="./docs/architecture.md">Architecture</a>
+  <a href="https://www.dasaiko.dev">
+    <img src="https://img.shields.io/badge/Live%20Demo-dasaiko.dev-7c3aed?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+  <a href="https://github.com/aawhan0/Dasaiko">
+    <img src="https://img.shields.io/badge/GitHub-Repository-18181b?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository" />
+  </a>
+  <a href="./docs/architecture.md">
+    <img src="https://img.shields.io/badge/Architecture-Docs-27272a?style=for-the-badge" alt="Architecture" />
+  </a>
+  <a href="https://www.linkedin.com/in/aawhanvyas/">
+    <img src="https://img.shields.io/badge/LinkedIn-Aawhan%20Vyas-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/license/aawhan0/Dasaiko?style=flat-square&color=7c3aed" alt="MIT License" />
+  <img src="https://img.shields.io/github/stars/aawhan0/Dasaiko?style=flat-square&color=7c3aed" alt="GitHub stars" />
+  <img src="https://img.shields.io/github/last-commit/aawhan0/Dasaiko?style=flat-square&color=7c3aed" alt="Last commit" />
 </p>
 
 <p align="center"><sub>Grounded answers · Hybrid retrieval · Research context · Evidence-first workflow</sub></p>
