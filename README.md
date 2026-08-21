@@ -71,55 +71,89 @@ Inspect the source
 
 ---
 
-## Architecture
+# Architecture
+
+Dasaiko is organized around a clear separation between the **research workspace**, **application services**, **retrieval and reasoning pipeline**, and **persistent evidence layer**.
+
+The architecture documentation below is intentionally presented at multiple levels: system boundaries first, then the research pipeline, document ingestion, and persistent data model.
+
+## System Architecture
+
+<p align="center">
+  <img src="./docs/assets/diagrams/01-dasaiko-system-architecture.svg" alt="Dasaiko system architecture" />
+</p>
+
+The system architecture shows the major runtime boundaries and how the frontend, FastAPI backend, application services, database, and external inference/authentication providers interact.
+
+It is the high-level view of Dasaiko: the other diagrams below progressively zoom into the parts that make the research workflow work.
+
+## Research Pipeline
+
+<p align="center">
+  <img src="./docs/assets/diagrams/02-dasaiko-research-pipeline.svg" alt="Dasaiko research and RAG pipeline" />
+</p>
+
+Dasaiko separates broad retrieval from relevance refinement and evidence selection.
+
+The research path combines query analysis, hybrid retrieval, ranking fusion, cross-encoder reranking, evidence filtering, prompt construction, and grounded generation. The important architectural boundary is that the LLM receives **selected research evidence**, rather than treating the model itself as the source of truth.
+
+### Why hybrid retrieval?
+
+Vector search handles semantic similarity. BM25 handles exact terminology, technical phrases, names, and keyword-sensitive queries.
+
+RRF combines their **rankings** rather than pretending their raw scores are directly comparable.
+
+### Why rerank?
+
+Initial retrieval optimizes recall. A cross-encoder can then evaluate the query and passage together to refine the ordering of the candidate pool.
+
+That gives Dasaiko a clear separation of responsibilities:
 
 ```text
-                                  DASAIKO
-                                     │
-                    ┌────────────────┴────────────────┐
-                    │                                 │
-             React Research Workspace             FastAPI
-                    │                                 │
-                    │                         REST + SSE APIs
-                    │                                 │
-                    │              ┌──────────────────┼──────────────────┐
-                    │              │                  │                  │
-                    │              ▼                  ▼                  ▼
-                    │        PDF Ingestion      Conversations        Chat / RAG
-                    │              │                                   │
-                    │              ▼                                   ▼
-                    │        Text + Layout                        Query Analysis
-                    │              │                                   │
-                    │              ▼                                   ▼
-                    │          Chunking                          Retrieval Scope
-                    │              │                                   │
-                    │              ▼                                   ▼
-                    │         Embeddings                   ┌────────────┴────────────┐
-                    │              │                       │                         │
-                    │              │                       ▼                         ▼
-                    │              └─────────────────► Vector Search              BM25
-                    │                                      │                         │
-                    │                                      └──────────┬──────────────┘
-                    │                                                 ▼
-                    │                                            RRF Fusion
-                    │                                                 │
-                    │                                                 ▼
-                    │                                      BGE Cross-Encoder
-                    │                                           Reranking
-                    │                                                 │
-                    │                                                 ▼
-                    │                                      RRF + BGE Fusion
-                    │                                                 │
-                    │                                                 ▼
-                    │                                       Evidence Selection
-                    │                                                 │
-                    │                                                 ▼
-                    │                                             Groq LLM
-                    │                                                 │
-                    └──────────────────────────────────────────────► SSE Response
+Vector + BM25 → broad retrieval
+RRF           → ranking fusion
+BGE           → semantic refinement
+Evidence      → grounded context
+LLM           → answer generation
 ```
 
-### Deployment
+## Document Ingestion
+
+<p align="center">
+  <img src="./docs/assets/diagrams/03-dasaiko-document-ingestion.svg" alt="Dasaiko document ingestion pipeline" />
+</p>
+
+Research documents enter Dasaiko through an ingestion path that transforms the source document into structured, searchable evidence.
+
+The important relationship is:
+
+```text
+Document
+   ↓
+Parsed content
+   ↓
+Chunks + metadata
+   ↓
+Embeddings
+   ↓
+Searchable corpus
+```
+
+This keeps document processing separate from question-time retrieval while preserving the metadata needed to trace retrieved evidence back to the source.
+
+## Data Architecture
+
+<p align="center">
+  <img src="./docs/assets/diagrams/04-dasaiko-data-architecture.svg" alt="Dasaiko data and entity architecture" />
+</p>
+
+The data architecture focuses on the persistent entities that matter to the research workflow rather than exposing every implementation-level database detail.
+
+At a high level, users own research documents and conversations; documents are decomposed into chunks and embeddings; conversations contain messages; and verification state supports the authentication flow.
+
+---
+
+## Deployment
 
 ```text
              https://www.dasaiko.dev
