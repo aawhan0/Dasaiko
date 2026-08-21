@@ -1,25 +1,20 @@
 # Dasaiko
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/aawhan0/Dasaiko/main/frontend/public/assets/brand/dasaiko-mark-black.png" width="72" alt="Dasaiko logo" />
+  <img src="https://raw.githubusercontent.com/aawhan0/Dasaiko/main/frontend/public/assets/brand/dasaiko-wordmark-transparent-bg.png" width="260" alt="Dasaiko" />
 </p>
-
-<h1 align="center">Dasaiko</h1>
 
 <p align="center"><strong>AI-powered research workspace for reading, questioning, and understanding research papers.</strong></p>
 
 <p align="center">
   <a href="https://www.dasaiko.dev">
-    <img src="https://img.shields.io/badge/Live%20Demo-dasaiko.dev-7c3aed?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
-  </a>
-  <a href="https://github.com/aawhan0/Dasaiko">
-    <img src="https://img.shields.io/badge/GitHub-Repository-18181b?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository" />
+    <img src="https://img.shields.io/badge/Live%20Demo-dasaiko.dev-7c3aed?style=flat-square&logo=vercel&logoColor=white" alt="Live Demo" />
   </a>
   <a href="./docs/architecture.md">
-    <img src="https://img.shields.io/badge/Architecture-Docs-27272a?style=for-the-badge" alt="Architecture" />
+    <img src="https://img.shields.io/badge/Architecture-Docs-27272a?style=flat-square" alt="Architecture" />
   </a>
   <a href="https://www.linkedin.com/in/aawhanvyas/">
-    <img src="https://img.shields.io/badge/LinkedIn-Aawhan%20Vyas-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square&logo=linkedin&logoColor=white" alt="LinkedIn" />
   </a>
 </p>
 
@@ -54,27 +49,35 @@ The workspace combines document-aware retrieval, hybrid search, reciprocal rank 
 | **Context-aware routing** | Keep retrieval scoped to the active paper unless the user explicitly changes scope. |
 | **Query-aware retrieval** | Use specialized strategies for metadata, summaries, and comparisons. |
 
-## Product Showcase
+## Product Story
+
+Dasaiko is designed around a simple research loop: **start with the paper, ask a question, refine what is relevant, inspect the evidence, and then generate an answer.**
+
+### 01 · The research workspace
 
 <p align="center">
   <img src="./docs/assets/screenshots/dasaiko-research-workspace-mockup.png" alt="Dasaiko research workspace shown in a product mockup" />
 </p>
 
-<p align="center"><sub>Research workspace · paper-aware conversation · source evidence</sub></p>
+<p align="center"><strong>Paper-aware research, in one workspace</strong><br><sub>Read the paper, ask questions, and inspect the source evidence without leaving the research context.</sub></p>
+
+### 02 · The evidence path
 
 <p align="center">
   <img src="./docs/assets/screenshots/dasaiko-research-pipeline.png" alt="Dasaiko research pipeline from question to evidence-backed answer" />
 </p>
 
-<p align="center"><sub>Question → Retrieve → Rerank → Evidence → Answer</sub></p>
+<p align="center"><strong>From question to grounded answer</strong><br><sub>Retrieval and reranking narrow the search space before selected evidence reaches the answer stage.</sub></p>
+
+### 03 · The visual language
 
 <p align="center">
-  <img src="./docs/assets/screenshots/dasaiko-branding-dark.png" alt="Dasaiko dark brand visual" />
+  <img src="./docs/assets/screenshots/dasaiko-branding-dark.png" alt="Dasaiko dark visual identity" />
 </p>
 
-<p align="center"><sub>Dasaiko visual identity · dark research workspace aesthetic</sub></p>
+<p align="center"><strong>A research tool with a deliberate visual identity</strong><br><sub>The dark interface, restrained violet accents, and evidence-first presentation carry through the product.</sub></p>
 
-Dasaiko keeps the paper, conversation, retrieval context, and evidence in the same research workspace rather than hiding the source behind a generic chat interface.
+The three visuals tell the same story at different levels: **the workspace is where research happens, the pipeline explains how answers are grounded, and the visual identity ties the experience together.**
 
 ---
 
@@ -90,7 +93,7 @@ The full architecture reference is available in [`docs/architecture.md`](./docs/
   <img src="./docs/assets/diagrams/01-dasaiko-system-architecture.svg" alt="Dasaiko system architecture" />
 </p>
 
-The system architecture shows the runtime boundaries between the frontend, FastAPI backend, application services, database, and external inference/authentication providers.
+<p align="center"><strong>01 · System Architecture</strong><br><sub>The high-level runtime view: frontend, FastAPI backend, application services, persistence, and external inference/authentication boundaries.</sub></p>
 
 ## Research Pipeline
 
@@ -98,7 +101,7 @@ The system architecture shows the runtime boundaries between the frontend, FastA
   <img src="./docs/assets/diagrams/02-dasaiko-research-pipeline.svg" alt="Dasaiko research and RAG pipeline" />
 </p>
 
-The important architectural boundary is that the LLM receives **selected research evidence**, rather than being treated as the source of truth.
+<p align="center"><strong>02 · Research &amp; RAG Pipeline</strong><br><sub>Shows how broad retrieval is refined into ranked, selected evidence before grounded generation.</sub></p>
 
 ## Document Ingestion
 
@@ -106,7 +109,7 @@ The important architectural boundary is that the LLM receives **selected researc
   <img src="./docs/assets/diagrams/03-dasaiko-document-ingestion.svg" alt="Dasaiko document ingestion pipeline" />
 </p>
 
-Research documents enter Dasaiko through a structured ingestion path:
+<p align="center"><strong>03 · Document Ingestion</strong><br><sub>Shows how uploaded research becomes structured, chunked, embedded, and searchable knowledge.</sub></p>
 
 ```text
 Document
@@ -126,7 +129,7 @@ Searchable corpus
   <img src="./docs/assets/diagrams/04-dasaiko-data-architecture.svg" alt="Dasaiko data and entity architecture" />
 </p>
 
-Users own research documents and conversations; documents are decomposed into chunks and embeddings; conversations contain messages; and verification state supports authentication.
+<p align="center"><strong>04 · Data Architecture</strong><br><sub>Defines the persistent relationships between users, documents, chunks, embeddings, conversations, messages, and verification state.</sub></p>
 
 ---
 
