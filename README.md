@@ -12,11 +12,11 @@
   <a href="https://www.dasaiko.dev">Live Demo</a>
   ·
   <a href="https://github.com/aawhan0/Dasaiko">Repository</a>
+  ·
+  <a href="./docs/architecture.md">Architecture</a>
 </p>
 
-<p align="center">
-  <sub>Grounded answers · Hybrid retrieval · Research context · Evidence-first workflow</sub>
-</p>
+<p align="center"><sub>Grounded answers · Hybrid retrieval · Research context · Evidence-first workflow</sub></p>
 
 ---
 
@@ -41,9 +41,15 @@ The workspace combines document-aware retrieval, hybrid search, reciprocal rank 
 | **Context-aware routing** | Keep retrieval scoped to the active paper unless the user explicitly changes scope. |
 | **Query-aware retrieval** | Use specialized strategies for metadata, summaries, and comparisons. |
 
----
+## Product Showcase
 
-## Product Flow
+<p align="center">
+  <img src="./docs/assets/screenshots/dasaiko-research-workspace-mockup.png" alt="Dasaiko research workspace" />
+</p>
+
+Dasaiko keeps the paper, conversation, retrieval context, and evidence in the same research workspace rather than hiding the source behind a generic chat interface.
+
+## Research Flow
 
 ```text
 Upload a paper
@@ -58,7 +64,7 @@ Vector Search + BM25
       ↓
 RRF candidate fusion
       ↓
-BGE Cross-Encoder reranking
+BGE cross-encoder reranking
       ↓
 Evidence selection
       ↓
@@ -67,15 +73,17 @@ Grounded LLM response
 Inspect the source
 ```
 
-> Media will be added to this section as the product showcase assets are captured.
+<p align="center">
+  <img src="./docs/assets/screenshots/dasaiko-research-pipeline.png" alt="Dasaiko research pipeline" />
+</p>
 
 ---
 
 # Architecture
 
-Dasaiko is organized around a clear separation between the **research workspace**, **application services**, **retrieval and reasoning pipeline**, and **persistent evidence layer**.
+Dasaiko separates the **research workspace**, **application services**, **retrieval and reasoning pipeline**, and **persistent evidence layer**.
 
-The architecture documentation below is intentionally presented at multiple levels: system boundaries first, then the research pipeline, document ingestion, and persistent data model.
+The full architecture reference is available in [`docs/architecture.md`](./docs/architecture.md).
 
 ## System Architecture
 
@@ -83,9 +91,7 @@ The architecture documentation below is intentionally presented at multiple leve
   <img src="./docs/assets/diagrams/01-dasaiko-system-architecture.svg" alt="Dasaiko system architecture" />
 </p>
 
-The system architecture shows the major runtime boundaries and how the frontend, FastAPI backend, application services, database, and external inference/authentication providers interact.
-
-It is the high-level view of Dasaiko: the other diagrams below progressively zoom into the parts that make the research workflow work.
+The system architecture shows the runtime boundaries between the frontend, FastAPI backend, application services, database, and external inference/authentication providers.
 
 ## Research Pipeline
 
@@ -93,29 +99,7 @@ It is the high-level view of Dasaiko: the other diagrams below progressively zoo
   <img src="./docs/assets/diagrams/02-dasaiko-research-pipeline.svg" alt="Dasaiko research and RAG pipeline" />
 </p>
 
-Dasaiko separates broad retrieval from relevance refinement and evidence selection.
-
-The research path combines query analysis, hybrid retrieval, ranking fusion, cross-encoder reranking, evidence filtering, prompt construction, and grounded generation. The important architectural boundary is that the LLM receives **selected research evidence**, rather than treating the model itself as the source of truth.
-
-### Why hybrid retrieval?
-
-Vector search handles semantic similarity. BM25 handles exact terminology, technical phrases, names, and keyword-sensitive queries.
-
-RRF combines their **rankings** rather than pretending their raw scores are directly comparable.
-
-### Why rerank?
-
-Initial retrieval optimizes recall. A cross-encoder can then evaluate the query and passage together to refine the ordering of the candidate pool.
-
-That gives Dasaiko a clear separation of responsibilities:
-
-```text
-Vector + BM25 → broad retrieval
-RRF           → ranking fusion
-BGE           → semantic refinement
-Evidence      → grounded context
-LLM           → answer generation
-```
+The important architectural boundary is that the LLM receives **selected research evidence**, rather than being treated as the source of truth.
 
 ## Document Ingestion
 
@@ -123,23 +107,19 @@ LLM           → answer generation
   <img src="./docs/assets/diagrams/03-dasaiko-document-ingestion.svg" alt="Dasaiko document ingestion pipeline" />
 </p>
 
-Research documents enter Dasaiko through an ingestion path that transforms the source document into structured, searchable evidence.
-
-The important relationship is:
+Research documents enter Dasaiko through a structured ingestion path:
 
 ```text
 Document
    ↓
-Parsed content
+Parsed content + metadata
    ↓
-Chunks + metadata
+Chunks
    ↓
 Embeddings
    ↓
 Searchable corpus
 ```
-
-This keeps document processing separate from question-time retrieval while preserving the metadata needed to trace retrieved evidence back to the source.
 
 ## Data Architecture
 
@@ -147,32 +127,11 @@ This keeps document processing separate from question-time retrieval while prese
   <img src="./docs/assets/diagrams/04-dasaiko-data-architecture.svg" alt="Dasaiko data and entity architecture" />
 </p>
 
-The data architecture focuses on the persistent entities that matter to the research workflow rather than exposing every implementation-level database detail.
-
-At a high level, users own research documents and conversations; documents are decomposed into chunks and embeddings; conversations contain messages; and verification state supports the authentication flow.
+Users own research documents and conversations; documents are decomposed into chunks and embeddings; conversations contain messages; and verification state supports authentication.
 
 ---
 
-## Deployment
-
-```text
-             https://www.dasaiko.dev
-                        │
-                      Vercel
-                        │
-                        │ HTTPS
-                        ▼
-            https://dasaiko-api.onrender.com
-                        │
-                      Render
-                        │
-                        ▼
-              PostgreSQL + pgvector
-```
-
----
-
-## Retrieval Pipeline
+## Retrieval Engineering
 
 Dasaiko deliberately separates **candidate retrieval** from **fine-grained relevance ranking**.
 
@@ -220,8 +179,6 @@ RRF combines their **rankings** rather than pretending their raw scores are dire
 
 Initial retrieval optimizes recall. A cross-encoder can then evaluate the query and passage together to refine the ordering of the candidate pool.
 
-That gives Dasaiko a clear separation of responsibilities:
-
 ```text
 Vector + BM25 → broad retrieval
 RRF           → ranking fusion
@@ -230,27 +187,15 @@ Evidence      → grounded context
 LLM           → answer generation
 ```
 
----
-
 ## Context-Aware Retrieval
 
 A research assistant should know **which paper the researcher is talking about**.
 
-### Selected paper
-
-Normal questions remain scoped to the active research paper.
-
-### Explicit paper reference
-
-When the user refers to another uploaded paper, Dasaiko resolves that document and scopes retrieval to it for the current query.
-
-### External or global research
-
-Retrieval scope is intentionally expanded only when the user explicitly asks for broader research context.
+- **Selected paper:** normal questions remain scoped to the active research paper.
+- **Explicit paper reference:** when the user refers to another uploaded paper, Dasaiko resolves that document and scopes retrieval to it for the current query.
+- **External or global research:** retrieval scope is expanded only when the user explicitly asks for broader research context.
 
 This prevents unrelated uploaded documents from silently becoming evidence for a question about the active paper.
-
----
 
 ## Query-Aware Retrieval
 
@@ -261,8 +206,6 @@ Not every question benefits from the same retrieval strategy.
 **Summary queries** prioritize abstract, introduction, motivation, main findings, conclusions, and nearby coherent passages.
 
 **Comparison queries** are enriched to favor complementary evidence covering mechanisms, objectives, training procedures, strengths, limitations, and outcomes on each side of the comparison.
-
----
 
 ## Evidence and Citations
 
@@ -314,7 +257,7 @@ The benchmark compares dense retrieval, lexical retrieval, hybrid fusion, local 
 | MRR | 0.4706 | **0.8220** | **+74.67%** |
 | nDCG@10 | 0.4132 | **0.7592** | **+83.74%** |
 
-The measured results support the final architecture:
+The measured results support the current architecture:
 
 ```text
 Vector Search + BM25
@@ -329,8 +272,6 @@ Vector Search + BM25
 ```
 
 The benchmark is an engineering evaluation of Dasaiko's current relevance set, not a universal claim that one reranker is best for every retrieval problem.
-
----
 
 <details>
 <summary><strong>Engineering decisions</strong></summary>
@@ -384,14 +325,38 @@ Dasaiko/
 │   │   ├── rag/
 │   │   ├── schemas/
 │   │   ├── services/
+│   │   ├── utils/
 │   │   └── main.py
 │   ├── evaluation/
-│   └── alembic/
+│   ├── alembic/
+│   ├── Dockerfile
+│   └── requirements.txt
 │
 ├── frontend/
 ├── docs/
+│   ├── architecture.md
+│   └── assets/
 ├── docker-compose.yml
 └── README.md
+```
+
+---
+
+## Deployment
+
+```text
+             https://www.dasaiko.dev
+                        │
+                      Vercel
+                        │
+                        │ HTTPS
+                        ▼
+            https://dasaiko-api.onrender.com
+                        │
+                      Render
+                        │
+                        ▼
+              PostgreSQL + pgvector
 ```
 
 ---
@@ -401,7 +366,7 @@ Dasaiko/
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 18+
+- Node.js 20+
 - Docker / Docker Compose
 - Groq API key
 
