@@ -62,17 +62,19 @@ The workspace combines document-aware retrieval, hybrid search, reciprocal rank 
 
 <p align="center"><sub>Research workspace · paper-aware conversation · source evidence</sub></p>
 
-Dasaiko keeps the paper, conversation, retrieval context, and evidence in the same research workspace rather than hiding the source behind a generic chat interface.
-
-## Research Flow
-
 <p align="center">
   <img src="./docs/assets/screenshots/dasaiko-research-pipeline.png" alt="Dasaiko research pipeline from question to evidence-backed answer" />
 </p>
 
 <p align="center"><sub>Question → Retrieve → Rerank → Evidence → Answer</sub></p>
 
-The research workflow combines query analysis, hybrid retrieval, ranking fusion, cross-encoder reranking, evidence filtering, prompt construction, and grounded generation.
+<p align="center">
+  <img src="./docs/assets/screenshots/dasaiko-branding-dark.png" alt="Dasaiko dark brand visual" />
+</p>
+
+<p align="center"><sub>Dasaiko visual identity · dark research workspace aesthetic</sub></p>
+
+Dasaiko keeps the paper, conversation, retrieval context, and evidence in the same research workspace rather than hiding the source behind a generic chat interface.
 
 ---
 
