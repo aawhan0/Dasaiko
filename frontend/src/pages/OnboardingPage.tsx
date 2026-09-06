@@ -112,7 +112,7 @@ export function OnboardingPage() {
   );
 
   function finish() {
-    if (!user) return;
+    if (!user || !selectedPaper) return;
     sessionStorage.setItem("dasaiko.pendingStarterPaper", selectedPaper.id);
     sessionStorage.setItem("dasaiko.pendingStarterQuestion", selectedPaper.starterQuestion);
     localStorage.setItem(
