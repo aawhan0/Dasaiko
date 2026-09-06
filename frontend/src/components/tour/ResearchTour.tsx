@@ -241,22 +241,36 @@ function CompletionStep({ onFinish }: { onFinish: () => void }) {
 }
 
 export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
+  const { activeStep, startTour } = useResearchTour();
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState<ResearchTourStep>("preferences");
 
+  useEffect(() => {
+    if (open) {
+      const resumeStep = activeStep ?? "preferences";
+      setStep(resumeStep);
+      setStarted(false);
+    } else {
+      setStarted(false);
+    }
+  }, [activeStep, open]);
+
+  const goToStep = useCallback((nextStep: ResearchTourStep) => {
+    setStep(nextStep);
+    startTour(nextStep);
+  }, [startTour]);
+
   const finish = useCallback((completed = false) => {
-    if (completed) markResearchTourCompleted();
+    if (completed) {
+      markResearchTourCompleted();
+    }
     setStarted(false);
     setStep("preferences");
     onSkip();
-  }, [onSkip, onStepChange]);
+  }, [onSkip]);
 
   useEffect(() => {
-    if (!open) {
-      setStarted(false);
-      setStep(initialStep);
-      return;
-    }
+    if (!open) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -267,7 +281,7 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [finish, initialStep, open]);
+  }, [finish, open]);
 
   return (
     <AnimatePresence>
@@ -275,12 +289,21 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
         step === "preferences" ? <PreferencesStep onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
         step === "question" ? <QuestionStep onBack={() => setStarted(false)} onNext={() => goToStep("paper")} onFinish={() => finish(false)} /> :
         step === "paper" ? <PaperStep onBack={() => goToStep("question")} onNext={() => goToStep("viewer")} onFinish={() => finish(false)} /> :
-        step === "viewer" ? <ViewerStep onBack={() => setStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
-        step === "inference" ? <InferenceStep onBack={() => setStep("viewer")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
-        step === "evidence" ? <EvidenceStep onBack={() => setStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
+        step === "viewer" ? <ViewerStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
+        step === "inference" ? <InferenceStep onBack={() => goToStep("viewer")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
+        step === "evidence" ? <EvidenceStep onBack={() => goToStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
         <CompletionStep onFinish={() => finish(true)} />
       ) : (
-        <ResearchTourWelcome onStart={() => { markResearchTourActive(); setStarted(true); setStep("preferences"); onStart(); }} onSkip={() => finish(false)} />
+        <ResearchTourWelcome
+          onStart={() => {
+            markResearchTourActive();
+            startTour("preferences");
+            setStep("preferences");
+            setStarted(true);
+            onStart();
+          }}
+          onSkip={() => finish(false)}
+        />
       ))}
     </AnimatePresence>
   );
