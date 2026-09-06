@@ -47,7 +47,7 @@ def get_starter_recommendations(
                 topics=list(item.paper.topics),
                 difficulty=item.paper.difficulty,
                 score=round(item.score, 4),
-                reason=item.paper.reason,
+                reason=RecommendationService.build_reason(item),
                 matched_interests=list(item.matched_interests),
                 matched_goals=list(item.matched_goals),
                 starter_question=item.paper.starter_question,
