@@ -15,6 +15,7 @@ from app.api.conversations import router as conversation_router
 from app.api.messages import router as message_router
 from app.api.diagnostics import router as diagnostics_router
 from app.api.profile import router as profile_router
+from app.api.recommendations import router as recommendations_router
 
 
 app = FastAPI(
@@ -77,6 +78,7 @@ app.include_router(conversation_router)
 app.include_router(message_router)
 app.include_router(diagnostics_router)
 app.include_router(profile_router)
+app.include_router(recommendations_router)
 
 
 @app.get("/")
