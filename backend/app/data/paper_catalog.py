@@ -13,23 +13,24 @@ class PaperCatalogEntry:
     reason: str
     starter_question: str
     tags: tuple[str, ...]
+    prerequisites: tuple[str, ...] = ()
 
 
 PAPER_CATALOG: tuple[PaperCatalogEntry, ...] = (
     PaperCatalogEntry(
         id="attention-is-all-you-need", title="Attention Is All You Need", authors="Vaswani et al.", year=2017,
         topics=("Deep Learning", "Natural Language Processing", "Generative AI", "Multimodal AI"), difficulty="Foundational", importance=0.99,
-        reason="A landmark paper behind the Transformer architecture and modern generative AI.", starter_question="Why did the authors replace recurrence with self-attention in the Transformer?", tags=("transformer", "attention", "foundation"),
+        reason="A landmark paper behind the Transformer architecture and modern generative AI.", starter_question="Why did the authors replace recurrence with self-attention in the Transformer?", tags=("transformer", "attention", "foundation"), prerequisites=(),
     ),
     PaperCatalogEntry(
         id="deep-residual-learning", title="Deep Residual Learning for Image Recognition", authors="He et al.", year=2015,
         topics=("Computer Vision", "Deep Learning", "Machine Learning"), difficulty="Foundational", importance=0.98,
-        reason="A widely known milestone in deep learning and the foundation of ResNet.", starter_question="What problem do residual connections solve when training very deep networks?", tags=("resnet", "cnn", "foundation"),
+        reason="A widely known milestone in deep learning and the foundation of ResNet.", starter_question="What problem do residual connections solve when training very deep networks?", tags=("resnet", "cnn", "foundation"), prerequisites=("convolution",),
     ),
     PaperCatalogEntry(
         id="retrieval-augmented-generation", title="Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", authors="Lewis et al.", year=2020,
         topics=("Generative AI", "Natural Language Processing", "Machine Learning"), difficulty="Accessible", importance=0.95,
-        reason="A practical introduction to combining retrieval with language generation.", starter_question="Why does RAG retrieve external documents instead of relying only on the language model?", tags=("rag", "retrieval", "foundation"),
+        reason="A practical introduction to combining retrieval with language generation.", starter_question="Why does RAG retrieve external documents instead of relying only on the language model?", tags=("rag", "retrieval", "foundation"), prerequisites=("transformer", "retrieval"),
     ),
     PaperCatalogEntry(
         id="bert", title="BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", authors="Devlin et al.", year=2018,
