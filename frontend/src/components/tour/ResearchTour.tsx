@@ -125,13 +125,16 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
       setRect(element?.getBoundingClientRect() ?? null);
     };
     update();
+    const target = document.querySelector('[data-tour="document-list"]');
+    target?.addEventListener("click", onNext);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
     return () => {
+      target?.removeEventListener("click", onNext);
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, []);
+  }, [onNext]);
 
   const spotlightStyle = rect
     ? { left: rect.left - 8, top: rect.top - 8, width: rect.width + 16, height: rect.height + 16 }
@@ -150,7 +153,7 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-8 left-1/2 z-[102] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl border border-white/[0.09] bg-[#0a0a0a] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.65)]"
+        className="pointer-events-auto fixed bottom-8 left-1/2 z-[102] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl border border-white/[0.09] bg-[#0a0a0a] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.65)]"
       >
         <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">2 of 3</span>
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">Pick the source you want to explore.</h2>
