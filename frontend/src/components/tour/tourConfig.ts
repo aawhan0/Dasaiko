@@ -21,7 +21,7 @@ export const RESEARCH_TOPICS = [
   "Multimodal",
 ] as const;
 
-export const TOUR_STORAGE_KEYS = {
+export const RESEARCH_TOUR_SEQUENCE = [\n  "preferences",\n  "question",\n  "paper",\n  "viewer",\n  "inference",\n  "evidence",\n  "complete",\n] as const;\n\nexport const TOUR_STORAGE_KEYS = {
   prompt: "dasaiko.tourPrompt",
   completed: "dasaiko.researchTour.completed",
   active: "dasaiko.researchTour.active",
