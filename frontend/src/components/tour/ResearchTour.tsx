@@ -114,21 +114,6 @@ function PreferencesStep({ onNext, onFinish }: { onNext: () => void; onFinish: (
   );
 }
 
-function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
-  const rect = useTourTarget('[data-tour="research-question"]', true);
-  return (
-    <ResearchTourOverlay>
-      <Spotlight rect={rect} />
-      <TourCard>
-        <div className="flex items-center justify-between"><StepLabel step="question" /><SkipButton onSkip={onFinish} /></div>
-        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.question.title}</h2>
-        <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.question.description}</p>
-        <Navigation onBack={onBack} onNext={onNext} nextLabel="Open the research view" />
-      </TourCard>
-    </ResearchTourOverlay>
-  );
-}
-
 function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
   const rect = useTourTarget('[data-tour="first-document"]', true);
   const {
@@ -213,56 +198,6 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
           <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
           <span className="text-[10px] font-medium text-zinc-600">{rect ? "Click the highlighted paper" : "Opening your library…"}</span>
         </div>
-      </TourCard>
-    </ResearchTourOverlay>
-  );
-}
-
-function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
-  const rect = useTourTarget('[data-tour="research-question"]', true);
-  const { messages } = useWorkspaceStore();
-  const initialCount = useRef(messages.length);
-  const hasQuestion = messages.length > initialCount.current && messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));
-
-  useEffect(() => {
-    if (!rect) return;
-    const input = document.querySelector<HTMLTextAreaElement>('[data-tour="research-question"]');
-    input?.focus();
-    input?.setSelectionRange(input.value.length, input.value.length);
-  }, [rect]);
-
-  useEffect(() => {
-    if (hasQuestion) onNext();
-  }, [hasQuestion, onNext]);
-
-  return (
-    <ResearchTourOverlay>
-      <Spotlight rect={rect} />
-      <TourCard>
-        <div className="flex items-center justify-between"><StepLabel step="question" /><SkipButton onSkip={onFinish} /></div>
-        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.question.title}</h2>
-        <p className="mt-2 text-sm leading-5 text-zinc-500">We prepared a question from the paper. Edit it if you want, then click the send arrow or press Enter.</p>
-        {!rect && <p className="mt-3 text-[11px] leading-4 text-zinc-600">Preparing the research question…</p>}
-        <div className="mt-5 flex items-center justify-between">
-          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
-          <span className="text-[10px] font-medium text-zinc-600">{hasQuestion ? "Question submitted" : "Edit or send the question"}</span>
-        </div>
-      </TourCard>
-    </ResearchTourOverlay>
-  );
-}
-
-function ViewerStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
-  const rect = useTourTarget('[data-tour="paper-viewer"]', true);
-  return (
-    <ResearchTourOverlay>
-      <Spotlight rect={rect} />
-      <TourCard>
-        <div className="flex items-center justify-between"><StepLabel step="viewer" /><SkipButton onSkip={onFinish} /></div>
-        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.viewer.title}</h2>
-        <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.viewer.description}</p>
-        {!rect && <p className="mt-3 text-[11px] leading-4 text-zinc-600">Opening the paper viewer…</p>}
-        <Navigation onBack={onBack} onNext={onNext} nextLabel="Ask this question" />
       </TourCard>
     </ResearchTourOverlay>
   );
@@ -366,9 +301,8 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
       {open && (started ? (
         step === "preferences" ? <PreferencesStep onNext={() => goToStep("paper")} onFinish={() => finish(false)} /> :
         step === "paper" ? <PaperStep onBack={() => goToStep("preferences")} onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
-        step === "question" ? <QuestionStep onBack={() => goToStep("paper")} onNext={() => goToStep("viewer")} onFinish={() => finish(false)} /> :
-        step === "viewer" ? <ViewerStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
-        step === "inference" ? <InferenceStep onBack={() => goToStep("viewer")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
+        step === "question" ? <QuestionStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
+        step === "inference" ? <InferenceStep onBack={() => goToStep("question")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
         step === "evidence" ? <EvidenceStep onBack={() => goToStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
         <CompletionStep onFinish={() => finish(true)} />
       ) : (
