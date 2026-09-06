@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ResearchTourOverlay } from "./ResearchTourOverlay";
 import { ResearchTourWelcome } from "./ResearchTourWelcome";
