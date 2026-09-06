@@ -1,11 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, JSON, String, Text
-from sqlalchemy.orm import (
-    Mapped,
-    mapped_column,
-    relationship,
-)
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -43,9 +39,15 @@ class User(Base):
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False,
     )
 
-    documents = relationship("Document", back_populates="user", cascade="all, delete-orphan")
-    conversations = relationship("Conversation", back_populates="user", cascade="all, delete-orphan")
-    email_verification_otps = relationship("EmailVerificationOTP", back_populates="user", cascade="all, delete-orphan")
+    documents = relationship(
+        "Document", back_populates="user", cascade="all, delete-orphan",
+    )
+    conversations = relationship(
+        "Conversation", back_populates="user", cascade="all, delete-orphan",
+    )
+    email_verification_otps = relationship(
+        "EmailVerificationOTP", back_populates="user", cascade="all, delete-orphan",
+    )
     research_profile = relationship(
         "ResearchProfile",
         back_populates="user",
