@@ -54,7 +54,7 @@ const interests = [
   "AI Safety & Alignment",
 ];
 
-const researchFamiliarity = [
+const researchFamiliarityOptions = [
   { id: "new" as ResearchFamiliarity, title: "I've never really read one", description: "I mostly learn AI/ML through courses, videos, or blogs." },
   { id: "few" as ResearchFamiliarity, title: "I've seen a few", description: "I've opened a few papers, but I'm still learning how to read them." },
   { id: "sometimes" as ResearchFamiliarity, title: "I read papers sometimes", description: "I can follow most papers, but some sections still get confusing." },
@@ -256,7 +256,7 @@ export function OnboardingPage() {
             {step === 3 && (
               <Question title="How familiar are you with research papers?" subtitle="No right or wrong answer — this helps us choose the right starting point for you.">
                 <div className="grid gap-3">
-                  {researchFamiliarity.map((item) => {
+                  {researchFamiliarityOptions.map((item) => {
                     const selected = researchFamiliarity === item.id;
                     return <ChoiceCard key={item.id} selected={selected} onClick={() => setResearchFamiliarity(item.id)} title={item.title} description={item.description} icon={<Microscope className="h-5 w-5" />} />;
                   })}
