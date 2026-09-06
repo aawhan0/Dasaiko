@@ -213,20 +213,26 @@ function ViewerStep({ onBack, onFinish }: { onBack: () => void; onFinish: () => 
 
   return (
     <AnimatePresence>
-      {open && (
-        started ? (
-          {step === "question" ? (
+      {open &&
+        (started ? (
+          step === "question" ? (
             <QuestionStep
               onBack={() => setStarted(false)}
               onNext={() => setStep("paper")}
               onFinish={finish}
             />
-          ) : (
+          ) : step === "paper" ? (
             <PaperStep
               onBack={() => setStep("question")}
+              onNext={() => setStep("viewer")}
               onFinish={finish}
             />
-          )}
+          ) : (
+            <ViewerStep
+              onBack={() => setStep("paper")}
+              onFinish={finish}
+            />
+          )
         ) : (
           <ResearchTourWelcome
             onStart={() => {
@@ -235,8 +241,8 @@ function ViewerStep({ onBack, onFinish }: { onBack: () => void; onFinish: () => 
             }}
             onSkip={onSkip}
           />
-        )
-      )}
+        ))}
     </AnimatePresence>
   );
+}
 }
