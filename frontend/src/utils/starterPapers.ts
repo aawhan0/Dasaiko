@@ -111,8 +111,10 @@ export const STARTER_PAPERS: StarterPaper[] = [
   },
 ];
 
+const FALLBACK_INTERESTS = ["Machine Learning", "Deep Learning", "Generative AI", "Natural Language Processing", "Computer Vision", "Reinforcement Learning"];
+
 export function recommendStarterPapers(interests: string[], limit = 3): StarterPaper[] {
-  const normalized = interests.map((interest) => interest.trim().toLowerCase()).filter(Boolean);
+  const normalized = (interests.length ? interests : FALLBACK_INTERESTS).map((interest) => interest.trim().toLowerCase()).filter(Boolean);
 
   const ranked = STARTER_PAPERS
     .map((paper, index) => {
