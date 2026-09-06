@@ -26,8 +26,25 @@ import {
   useState,
 } from "react";
 
+import { useNavigate } from "react-router-dom";
+import { onboardingStorageKey } from "@/pages/OnboardingPage";
+
+
+function userStarterData(): { starterPaper?: string; starterQuestion?: string } | null {
+  try {
+    const rawUser = localStorage.getItem("dasaiko.auth.user");
+    if (!rawUser) return null;
+    const user = JSON.parse(rawUser);
+    const onboarding = localStorage.getItem(onboardingStorageKey(Number(user.id)));
+    return onboarding ? JSON.parse(onboarding) : null;
+  } catch {
+    return null;
+  }
+}
 
 export function WorkspacePage() {
+
+  const navigate = useNavigate();
 
   const {
     setDocuments,
@@ -71,6 +88,19 @@ export function WorkspacePage() {
   ====================================================== */
 
   useEffect(() => {
+    /*
+     * First-time users can carry their curated starter paper
+     * selection from onboarding into the workspace. The actual
+     * sample-document ingestion is intentionally handled by the
+     * document pipeline rather than pretending a local PDF exists.
+     */
+    const raw = userStarterData();
+    if (raw?.starterPaper) {
+      sessionStorage.setItem("dasaiko.pendingStarterPaper", raw.starterPaper);
+      if (raw.starterQuestion) {
+        sessionStorage.setItem("dasaiko.pendingStarterQuestion", raw.starterQuestion);
+      }
+    }
 
     let cancelled = false;
 
@@ -190,6 +220,21 @@ export function WorkspacePage() {
 
   }, []);
 
+
+  /* =====================================================
+     STARTER PAPER HANDOFF
+  ====================================================== */
+
+  useEffect(() => {
+    const pendingPaper = sessionStorage.getItem("dasaiko.pendingStarterPaper");
+    if (pendingPaper) {
+      /*
+       * Keep the handoff marker available until sample ingestion is
+       * wired to the real backend document pipeline.
+       */
+      console.info("Starter paper selected:", pendingPaper);
+    }
+  }, []);
 
   /* =====================================================
      DETERMINE WHEN EVIDENCE PANEL SHOULD EXIST
