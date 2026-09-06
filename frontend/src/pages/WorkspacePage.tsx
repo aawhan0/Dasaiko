@@ -9,6 +9,8 @@ import { PDFBottomSheet } from "@/components/pdf/PDFBottomSheet";
 import { ResearchWorkbench } from "@/components/chat/ResearchWorkbench";
 import { EvidenceVault } from "@/components/evidence/EvidenceVault";
 import { ResearchTour } from "@/components/tour/ResearchTour";
+import { ResearchPath } from "@/components/research/ResearchPath";
+import { getResearchPathStage } from "@/utils/researchPath";
 import { useResearchTour } from "@/hooks/useResearchTour";
 
 import { listDocuments } from "@/services/documents";
@@ -191,7 +193,7 @@ export function WorkspacePage() {
      DETERMINE WHEN EVIDENCE PANEL SHOULD EXIST
   ====================================================== */
 
-  const hasAssistantResponse =
+  const hasQuestion = messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));\n\n  const hasAssistantResponse =
     messages.some(
       (message) =>
         message.role === "assistant" &&
