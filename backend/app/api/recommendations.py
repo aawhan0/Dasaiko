@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.dependencies import get_current_user
 from app.db.dependencies import get_db
 from app.models.user import User
+from app.models.research_profile import ResearchProfile
 from app.schemas.recommendations import (
     StarterPaperRecommendation,
     StarterRecommendationsResponse,
@@ -25,11 +26,12 @@ def get_starter_recommendations(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    del db
+    profile = db.query(ResearchProfile).filter(ResearchProfile.user_id == current_user.id).first()
 
     ranked = RecommendationService.rank_starter_papers(
         current_user,
         limit=3,
+        profile=profile,
     )
 
     return StarterRecommendationsResponse(
