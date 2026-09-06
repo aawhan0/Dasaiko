@@ -38,7 +38,7 @@ function QuestionStep({
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [onNext]);
+  }, []);
 
   const spotlightStyle = rect
     ? {
@@ -113,7 +113,7 @@ function QuestionStep({
   );
 }
 
-function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
+function PaperStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
   const [rect, setRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
@@ -231,7 +231,6 @@ export function ResearchTour({
             <PaperStep
               onBack={() => setStep("question")}
               onNext={() => setStep("viewer")}
-              onFinish={finish}
             />
           ) : (
             <ViewerStep
