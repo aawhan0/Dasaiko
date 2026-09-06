@@ -242,10 +242,23 @@ function PaperStep({
 }) {
   const rect = useTourTarget('[data-tour="first-document"]', true);
   const documents = useWorkspaceStore((state) => state.documents);
+  const { preferences } = useResearchPreferences();
   const setActiveDocument = useWorkspaceStore((state) => state.setActiveDocument);
   const setSelectedEvidence = useWorkspaceStore((state) => state.setSelectedEvidence);
   const setSelectedPdf = useWorkspaceStore((state) => state.setSelectedPdf);
   const [error, setError] = useState<string | null>(null);
+
+  const recommendedDocument = documents
+    .filter((document) => document.status === "ready")
+    .map((document) => {
+      const haystack = `${document.title} ${document.name} ${document.summary ?? ""}`.toLowerCase();
+      const score = preferences.topics.reduce(
+        (total, topic) => total + (haystack.includes(topic.toLowerCase()) ? 1 : 0),
+        0,
+      );
+      return { document, score };
+    })
+    .sort((a, b) => b.score - a.score)[0]?.document;
 
   useEffect(() => {
     const target = document.querySelector<HTMLElement>(
@@ -322,6 +335,14 @@ function PaperStep({
           Choose a paper from your workspace. Dasaiko keeps the question tied
           to the evidence you are reading.
         </p>
+
+        {recommendedDocument && preferences.topics.length > 0 && (
+          <div className="mt-4 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-primary/70">Recommended for you</p>
+            <p className="mt-1 truncate text-xs font-medium text-zinc-200">{recommendedDocument.title}</p>
+            <p className="mt-1 text-[10px] leading-4 text-zinc-600">Based on: {preferences.topics.join(" · ")}</p>
+          </div>
+        )}
 
         {error && (
           <p role="alert" className="mt-3 text-[11px] leading-4 text-amber-400">
