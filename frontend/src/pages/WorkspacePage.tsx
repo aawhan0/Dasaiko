@@ -217,13 +217,15 @@ export function WorkspacePage() {
      */
     const activityKey = `dasaiko.activity.opened.${pendingPaper}`;
     try {
+      const hasOpenedBefore = localStorage.getItem(activityKey) === "1";
       if (sessionStorage.getItem(activityKey) === "1") return;
       sessionStorage.setItem(activityKey, "1");
+      localStorage.setItem(activityKey, "1");
+      void record(pendingPaper, hasOpenedBefore ? "paper_revisited" : "paper_opened");
     } catch {
       // Activity tracking should never block the workspace.
+      void record(pendingPaper, "paper_opened");
     }
-
-    void record(pendingPaper, "paper_opened");
   }, [record]);
 
   /* =====================================================
