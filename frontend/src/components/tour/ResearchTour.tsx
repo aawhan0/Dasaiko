@@ -277,14 +277,17 @@ function InferenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack
     ? messages.findIndex((message) => message.id === questionMessageId)
     : -1;
 
-  const hasAnswer = questionIndex >= 0
-    ? messages.slice(questionIndex + 1).some(
-        (message) =>
-          message.role === "assistant" &&
-          !message.isStreaming &&
-          Boolean(message.content?.trim()),
-      )
-    : false;
+  const answerMessage = questionIndex >= 0
+    ? messages
+        .slice(questionIndex + 1)
+        .find((message) => message.role === "assistant")
+    : undefined;
+
+  const hasAnswer = Boolean(
+    answerMessage &&
+      !answerMessage.isStreaming &&
+      answerMessage.content?.trim(),
+  );
 
   useEffect(() => {
     if (hasAnswer) onNext();
