@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { useResearchPreferences } from "@/hooks/useResearchPreferences";
@@ -472,7 +472,8 @@ function InferenceStep({
 }) {
   const rect = useTourTarget('[data-tour="research-question"]', true);
   const messages = useWorkspaceStore((state) => state.messages);
-  const hasAnswer = messages.some(
+  const initialMessageCount = useRef(messages.length);
+  const hasAnswer = messages.length > initialMessageCount.current && messages.some(
     (message) => message.role === "assistant" && Boolean(message.content?.trim()),
   );
 
