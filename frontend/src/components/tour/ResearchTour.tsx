@@ -91,6 +91,16 @@ function Navigation({ onBack, onNext, nextLabel }: { onBack?: () => void; onNext
   );
 }
 
+function findTourAnswer(messages: ReturnType<typeof useWorkspaceStore.getState>["messages"], questionMessageId: string | null) {
+  const questionIndex = questionMessageId
+    ? messages.findIndex((message) => message.id === questionMessageId)
+    : -1;
+
+  return questionIndex >= 0
+    ? messages.slice(questionIndex + 1).find((message) => message.role === "assistant")
+    : undefined;
+}
+
 function PreferencesStep({ onNext, onFinish }: { onNext: () => void; onFinish: () => void }) {
   const { preferences, updatePreferences } = useResearchPreferences();
   const [topics, setTopics] = useState(preferences.topics);
@@ -273,15 +283,7 @@ function QuestionStep({ onBack, onNext, onFinish, onQuestionSubmitted }: { onBac
 function InferenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack: () => void; onNext: () => void; onFinish: () => void; questionMessageId: string | null }) {
   const rect = useTourTarget('[data-tour="research-question"]', true);
   const { messages } = useWorkspaceStore();
-  const questionIndex = questionMessageId
-    ? messages.findIndex((message) => message.id === questionMessageId)
-    : -1;
-
-  const answerMessage = questionIndex >= 0
-    ? messages
-        .slice(questionIndex + 1)
-        .find((message) => message.role === "assistant")
-    : undefined;
+  const answerMessage = findTourAnswer(messages, questionMessageId);
 
   const hasAnswer = Boolean(
     answerMessage &&
@@ -309,12 +311,7 @@ function InferenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack
 function EvidenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack: () => void; onNext: () => void; onFinish: () => void; questionMessageId: string | null }) {
   const rect = useTourTarget('[data-tour="research-evidence"]', true);
   const { messages } = useWorkspaceStore();
-  const questionIndex = questionMessageId
-    ? messages.findIndex((message) => message.id === questionMessageId)
-    : -1;
-  const answerMessage = questionIndex >= 0
-    ? messages.slice(questionIndex + 1).find((message) => message.role === "assistant")
-    : undefined;
+  const answerMessage = findTourAnswer(messages, questionMessageId);
   const evidence = answerMessage?.evidence ?? [];
   const hasEvidence = evidence.length > 0;
   return (
