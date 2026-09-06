@@ -195,7 +195,9 @@ export function WorkspacePage() {
      DETERMINE WHEN EVIDENCE PANEL SHOULD EXIST
   ====================================================== */
 
-  const hasQuestion = messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));\n\n  const hasAssistantResponse =
+  const hasQuestion = messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));
+
+  const hasAssistantResponse =
     messages.some(
       (message) =>
         message.role === "assistant" &&
