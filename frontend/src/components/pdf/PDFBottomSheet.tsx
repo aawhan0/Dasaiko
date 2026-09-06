@@ -60,6 +60,7 @@ export function PDFBottomSheet() {
           ================================================== */}
 
           <motion.div
+            data-tour="paper-viewer"
             initial={{
               opacity: 0,
               scale: 0.985,
