@@ -68,6 +68,7 @@ class RecommendationService:
 
             behavioral_score = sum(profile_topics.get(topic.casefold(), 0.0) for topic in paper.topics) if profile_topics else 0.0
             topic_score = min(len(topic_matches), 3) * 3.0 + min(behavioral_score, 6.0)
+            exploration_score = 1.5 if paper.id not in completed_ids and not topic_matches else 0.0
             history_adjustment = -8.0 if paper.id in skipped_ids else (-2.0 if paper.id in completed_ids else 0.0)
             goal_score = len(matched_goals) * 2.0 * role_multiplier
             importance_score = paper.importance * 2.0
@@ -76,7 +77,7 @@ class RecommendationService:
             ranked.append(
                 RankedPaper(
                     paper=paper,
-                    score=topic_score + goal_score + importance_score + difficulty_score + history_adjustment,
+                    score=topic_score + goal_score + importance_score + difficulty_score + exploration_score + history_adjustment,
                     matched_interests=topic_matches,
                     matched_goals=matched_goals,
                 )
