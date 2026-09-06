@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, Check, GraduationCap, Lightbulb, Microscope, BriefcaseBusiness, BookOpen, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -279,7 +279,7 @@ export function OnboardingPage() {
   );
 }
 
-function Question({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+function Question({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   return (
     <div>
       <div className="mb-8">
@@ -302,7 +302,7 @@ function ChoiceCard({
 }: {
   selected: boolean;
   onClick: () => void;
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
 }) {
