@@ -53,10 +53,12 @@ export function MessageInput({
   hasDocuments = false,
 }: MessageInputProps) {
 
-  const [
-    value,
-    setValue,
-  ] = useState("");
+  const [value, setValue] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const tourPrompt = window.localStorage.getItem("dasaiko.tourPrompt");
+    if (tourPrompt) window.localStorage.removeItem("dasaiko.tourPrompt");
+    return tourPrompt ?? "";
+  });
 
 
   const textareaRef =
