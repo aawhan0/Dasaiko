@@ -14,6 +14,8 @@ import { listConversations } from "@/services/conversations";
 import { listMessages } from "@/services/messages";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import { useResearchActivity } from "@/hooks/useResearchActivity";
+import { STARTER_PAPERS } from "@/utils/starterPapers";
 
 import {
   useEffect,
@@ -43,6 +45,8 @@ export function WorkspacePage() {
 
     messages,
   } = useWorkspaceStore();
+
+  const { record } = useResearchActivity();
 
 
   /* =====================================================
@@ -199,14 +203,28 @@ export function WorkspacePage() {
 
   useEffect(() => {
     const pendingPaper = sessionStorage.getItem("dasaiko.pendingStarterPaper");
-    if (pendingPaper) {
-      /*
-       * Keep the handoff marker available until sample ingestion is
-       * wired to the real backend document pipeline.
-       */
-      console.info("Starter paper selected:", pendingPaper);
+    if (!pendingPaper) return;
+
+    const isCanonicalStarter = STARTER_PAPERS.some(
+      (paper) => paper.id === pendingPaper,
+    );
+    if (!isCanonicalStarter) return;
+
+    /*
+     * The starter-paper handoff is also the first real research signal.
+     * Record it once per browser session so a rerender does not inflate
+     * the user's profile while the starter document pipeline is loading.
+     */
+    const activityKey = `dasaiko.activity.opened.${pendingPaper}`;
+    try {
+      if (sessionStorage.getItem(activityKey) === "1") return;
+      sessionStorage.setItem(activityKey, "1");
+    } catch {
+      // Activity tracking should never block the workspace.
     }
-  }, []);
+
+    void record(pendingPaper, "paper_opened");
+  }, [record]);
 
   /* =====================================================
      DETERMINE WHEN EVIDENCE PANEL SHOULD EXIST
