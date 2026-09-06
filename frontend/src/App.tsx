@@ -54,6 +54,10 @@ import {
 } from "@/pages/WorkspacePage";
 
 import {
+  OnboardingPage,
+} from "@/pages/OnboardingPage";
+
+import {
   SettingsPage,
 } from "@/pages/SettingsPage";
 
@@ -162,6 +166,13 @@ export function App() {
                     <ProtectedRoute />
                   }
                 >
+
+                  <Route
+                    path="/onboarding"
+                    element={
+                      <OnboardingPage />
+                    }
+                  />
 
                   <Route
                     path="/workspace"
