@@ -143,7 +143,7 @@ export function KnowledgeLibrary() {
     };
 
   return (
-    <div
+    <div data-tour="document-list">
       className="
         flex
         h-full
