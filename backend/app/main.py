@@ -44,6 +44,15 @@ if settings.frontend_base_url:
     )
 
 
+if settings.frontend_allowed_origins:
+    allowed_origins.extend(
+        origin.strip().rstrip("/")
+        for origin in settings.frontend_allowed_origins.split(",")
+        if origin.strip()
+    )
+
+allowed_origins = list(dict.fromkeys(allowed_origins))
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -91,3 +100,4 @@ def root():
         "message": f"Welcome to {settings.app_name}",
         "environment": settings.environment,
     }
+

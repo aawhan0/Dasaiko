@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     resend_from_email: str
 
     frontend_base_url: str = "http://localhost:5173"
+    frontend_allowed_origins: str = ""
 
     # Embeddings
     embedding_provider: str = "local"
@@ -36,3 +37,5 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
