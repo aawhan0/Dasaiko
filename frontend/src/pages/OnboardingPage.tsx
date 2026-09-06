@@ -20,6 +20,8 @@ export function hasCompletedOnboarding(userId: number | undefined) {
 }
 
 type Role = "student" | "educator" | "researcher" | "curious" | "professional";
+type ResearchFamiliarity = "new" | "few" | "sometimes" | "comfortable" | "advanced";
+
 type Goal =
   | "understand-papers"
   | "discover-papers"
@@ -52,6 +54,14 @@ const interests = [
   "AI Safety & Alignment",
 ];
 
+const researchFamiliarity = [
+  { id: "new" as ResearchFamiliarity, title: "I've never really read one", description: "I mostly learn AI/ML through courses, videos, or blogs." },
+  { id: "few" as ResearchFamiliarity, title: "I've seen a few", description: "I've opened a few papers, but I'm still learning how to read them." },
+  { id: "sometimes" as ResearchFamiliarity, title: "I read papers sometimes", description: "I can follow most papers, but some sections still get confusing." },
+  { id: "comfortable" as ResearchFamiliarity, title: "I'm pretty comfortable", description: "I regularly read papers and understand most technical details." },
+  { id: "advanced" as ResearchFamiliarity, title: "I live in research papers", description: "I compare papers, follow citations, and dig into the details." },
+];
+
 const goals = [
   { id: "understand-papers" as Goal, label: "Understand research papers" },
   { id: "discover-papers" as Goal, label: "Discover important papers" },
@@ -68,27 +78,29 @@ export function OnboardingPage() {
   const [role, setRole] = useState<Role | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedGoals, setSelectedGoals] = useState<Goal[]>([]);
+  const [researchFamiliarity, setResearchFamiliarity] = useState<ResearchFamiliarity | null>(null);
   const [selectedPaper, setSelectedPaper] = useState<StarterPaper | null>(null);
   const { onFileInputChange } = useUpload();
   const handleLocalFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     onFileInputChange(event);
     if (event.target.files?.length) {
       if (!user) return;
-      localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({ status: "completed", role, interests: selectedInterests, goals: selectedGoals, starterPaper: null, starterQuestion: null, completedAt: new Date().toISOString() }));
+      localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({ status: "completed", role, interests: selectedInterests, goals: selectedGoals, researchFamiliarity, starterPaper: null, starterQuestion: null, completedAt: new Date().toISOString() }));
       navigate("/workspace", { replace: true });
     }
   };
 
-  const totalSteps = 5;
+  const totalSteps = 6;
   const progress = ((step + 1) / totalSteps) * 100;
 
   const canContinue = useMemo(() => {
     if (step === 0) return true;
     if (step === 1) return role !== null;
     if (step === 2) return selectedInterests.length > 0;
-    if (step === 3) return selectedGoals.length > 0;
+    if (step === 3) return researchFamiliarity !== null;
+    if (step === 4) return selectedGoals.length > 0;
     return selectedPaper !== null;
-  }, [role, selectedGoals.length, selectedInterests.length, selectedPaper, step]);
+  }, [role, researchFamiliarity, selectedGoals.length, selectedInterests.length, selectedPaper, step]);
 
   function toggleInterest(value: string) {
     setSelectedInterests((current) =>
@@ -122,6 +134,7 @@ export function OnboardingPage() {
         role,
         interests: selectedInterests,
         goals: selectedGoals,
+        researchFamiliarity,
         starterPaper: selectedPaper?.id ?? null,
         starterQuestion: selectedPaper?.starterQuestion ?? null,
         completedAt: new Date().toISOString(),
@@ -240,7 +253,18 @@ export function OnboardingPage() {
               </Question>
             )}
 
-            {step === 4 && (
+            {step === 3 && (
+              <Question title="How familiar are you with research papers?" subtitle="No right or wrong answer — this helps us choose the right starting point for you.">
+                <div className="grid gap-3">
+                  {researchFamiliarity.map((item) => {
+                    const selected = researchFamiliarity === item.id;
+                    return <ChoiceCard key={item.id} selected={selected} onClick={() => setResearchFamiliarity(item.id)} title={item.title} description={item.description} icon={<Microscope className="h-5 w-5" />} />;
+                  })}
+                </div>
+              </Question>
+            )}
+
+            {step === 5 && (
               <Question
                 title="Pick your first paper."
                 subtitle="Based on your interests, these are great places to start. You can always bring your own paper later."
