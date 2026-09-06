@@ -439,7 +439,7 @@ export function ResearchTour({
   useEffect(() => {
     if (!open) {
       setStarted(false);
-      setStep("question");
+      setStep("preferences");
     }
   }, [open]);
 
@@ -464,7 +464,7 @@ export function ResearchTour({
 
   const finish = useCallback(() => {
     setStarted(false);
-    setStep("question");
+    setStep("preferences");
     onSkip();
   }, [onSkip]);
 
@@ -472,7 +472,12 @@ export function ResearchTour({
     <AnimatePresence>
       {open &&
         (started ? (
-          step === "preferences" ? (\n            <PreferencesStep\n              onNext={() => setStep("question")}\n              onFinish={finish}\n            />\n          ) : step === "question" ? (
+          step === "preferences" ? (
+            <PreferencesStep
+              onNext={() => setStep("question")}
+              onFinish={finish}
+            />
+          ) : step === "question" ? (
             <QuestionStep
               onBack={() => setStarted(false)}
               onNext={() => setStep("paper")}
@@ -494,6 +499,7 @@ export function ResearchTour({
           <ResearchTourWelcome
             onStart={() => {
               setStarted(true);
+              setStep("preferences");
               onStart();
             }}
             onSkip={onSkip}
