@@ -306,10 +306,17 @@ function InferenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack
   );
 }
 
-function EvidenceStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
+function EvidenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack: () => void; onNext: () => void; onFinish: () => void; questionMessageId: string | null }) {
   const rect = useTourTarget('[data-tour="research-evidence"]', true);
-  const { activeEvidence } = useWorkspaceStore();
-  const hasEvidence = activeEvidence.length > 0;
+  const { messages } = useWorkspaceStore();
+  const questionIndex = questionMessageId
+    ? messages.findIndex((message) => message.id === questionMessageId)
+    : -1;
+  const answerMessage = questionIndex >= 0
+    ? messages.slice(questionIndex + 1).find((message) => message.role === "assistant")
+    : undefined;
+  const evidence = answerMessage?.evidence ?? [];
+  const hasEvidence = evidence.length > 0;
   return (
     <ResearchTourOverlay>
       <Spotlight rect={rect} />
@@ -317,7 +324,7 @@ function EvidenceStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext
         <div className="flex items-center justify-between"><StepLabel step="evidence" /><SkipButton onSkip={onFinish} /></div>
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.evidence.title}</h2>
         <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.evidence.description}</p>
-        <p className="mt-3 text-[10px] text-zinc-600">{activeEvidence.length} evidence source{activeEvidence.length === 1 ? "" : "s"} retrieved.</p>
+        <p className="mt-3 text-[10px] text-zinc-600">{evidence.length} evidence source{evidence.length === 1 ? "" : "s"} retrieved.</p>
         {hasEvidence ? (
           <Navigation onBack={onBack} onNext={onNext} nextLabel="Finish tour" />
         ) : (
@@ -409,7 +416,7 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
         step === "paper" ? <PaperStep onBack={() => goToStep("preferences")} onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
         step === "question" ? <QuestionStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} onQuestionSubmitted={setQuestionMessageId} /> :
         step === "inference" ? <InferenceStep onBack={() => goToStep("question")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} questionMessageId={questionMessageId} /> :
-        step === "evidence" ? <EvidenceStep onBack={() => goToStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
+        step === "evidence" ? <EvidenceStep onBack={() => goToStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} questionMessageId={questionMessageId} /> :
         <CompletionStep onFinish={() => finish(true)} />
       ) : (
         <ResearchTourWelcome
