@@ -41,6 +41,8 @@ import {
   mapSources,
 } from "@/mappers/chatMapper";
 
+import { useResearchActivity } from "@/hooks/useResearchActivity";
+
 
 interface MessageInputProps {
   centered?: boolean;
@@ -54,6 +56,8 @@ export function MessageInput({
 }: MessageInputProps) {
 
   const [value, setValue] = useState("");
+
+  const { record } = useResearchActivity();
 
 
   const textareaRef =
@@ -326,6 +330,15 @@ export function MessageInput({
           setActiveEvidence(
             mappedEvidence,
           );
+
+          try {
+            const pendingPaper = sessionStorage.getItem("dasaiko.pendingStarterPaper");
+            if (pendingPaper) {
+              void record(pendingPaper, "paper_completed");
+            }
+          } catch {
+            // Activity tracking must never block a completed response.
+          }
 
 
           return;
