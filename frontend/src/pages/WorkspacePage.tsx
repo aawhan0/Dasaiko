@@ -26,7 +26,6 @@ import {
   useState,
 } from "react";
 
-import { useNavigate } from "react-router-dom";
 import { onboardingStorageKey } from "@/pages/OnboardingPage";
 
 
@@ -43,8 +42,6 @@ function userStarterData(): { starterPaper?: string; starterQuestion?: string } 
 }
 
 export function WorkspacePage() {
-
-  const navigate = useNavigate();
 
   const {
     setDocuments,
