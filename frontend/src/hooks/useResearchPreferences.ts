@@ -4,6 +4,7 @@ export const RESEARCH_PREFERENCES_KEY = "dasaiko.researchPreferences";
 
 export interface ResearchPreferences {
   topics: string[];
+  updatedAt?: string;
 }
 
 const DEFAULT_PREFERENCES: ResearchPreferences = { topics: [] };
@@ -20,7 +21,10 @@ export function useResearchPreferences() {
       if (raw) {
         const parsed = JSON.parse(raw) as ResearchPreferences;
         if (Array.isArray(parsed.topics)) {
-          setPreferences({ topics: parsed.topics.filter((topic) => typeof topic === "string") });
+          setPreferences({
+            topics: parsed.topics.filter((topic) => typeof topic === "string"),
+            updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : undefined,
+          });
         }
       }
     } catch {
@@ -31,12 +35,17 @@ export function useResearchPreferences() {
   }, []);
 
   const updatePreferences = useCallback((topics: string[]) => {
-    const next = { topics: Array.from(new Set(topics)) };
+    const next: ResearchPreferences = {
+      topics: Array.from(new Set(topics.map((topic) => topic.trim()).filter(Boolean))),
+      updatedAt: new Date().toISOString(),
+    };
+
     try {
       localStorage.setItem(RESEARCH_PREFERENCES_KEY, JSON.stringify(next));
     } catch {
       // Ignore storage failures.
     }
+
     setPreferences(next);
   }, []);
 
