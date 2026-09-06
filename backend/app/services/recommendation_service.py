@@ -130,3 +130,13 @@ class RecommendationService:
             if len(picked) == limit:
                 break
         return picked
+
+
+    @staticmethod
+    def build_reason(item: RankedPaper) -> str:
+        if item.matched_interests:
+            interests = ", ".join(item.matched_interests[:2])
+            return f"Good starting point because it connects with your interest in {interests}."
+        if item.matched_goals:
+            return "Good starting point because it matches one of your research goals."
+        return item.paper.reason
