@@ -19,17 +19,27 @@ export function useResearchTour() {
   }, []);
 
   const completeTour = useCallback(() => {
-    localStorage.setItem(TOUR_STORAGE_KEYS.completed, "true");
-    localStorage.removeItem(TOUR_STORAGE_KEYS.active);
-    localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
-    localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
+    try {
+      localStorage.setItem(TOUR_STORAGE_KEYS.completed, "true");
+      localStorage.removeItem(TOUR_STORAGE_KEYS.active);
+      localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
+      localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
+    } catch {
+      // The workspace should remain usable if storage is unavailable.
+    }
     setHasCompletedTour(true);
     setActiveStep(null);
   }, []);
 
   const resetTour = useCallback(() => {
-    localStorage.removeItem(TOUR_STORAGE_KEYS.completed);
-    localStorage.removeItem(TOUR_STORAGE_KEYS.active);
+    try {
+      localStorage.removeItem(TOUR_STORAGE_KEYS.completed);
+      localStorage.removeItem(TOUR_STORAGE_KEYS.active);
+      localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
+      localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
+    } catch {
+      // Ignore storage failures.
+    }
     setHasCompletedTour(false);
     setActiveStep(null);
   }, []);
