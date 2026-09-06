@@ -13,9 +13,7 @@ from app.db.base import Base
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(
-        primary_key=True,
-    )
+    id: Mapped[int] = mapped_column(primary_key=True)
 
     username: Mapped[str] = mapped_column(
         String(50),
@@ -67,10 +65,12 @@ class User(Base):
     )
 
     onboarding_interests: Mapped[list | None] = mapped_column(
+        JSON,
         nullable=True,
     )
 
     onboarding_goals: Mapped[list | None] = mapped_column(
+        JSON,
         nullable=True,
     )
 
@@ -107,5 +107,12 @@ class User(Base):
     email_verification_otps = relationship(
         "EmailVerificationOTP",
         back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    research_profile = relationship(
+        "ResearchProfile",
+        back_populates="user",
+        uselist=False,
         cascade="all, delete-orphan",
     )
