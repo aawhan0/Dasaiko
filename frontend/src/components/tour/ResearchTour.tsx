@@ -133,7 +133,7 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   const rect = useTourTarget('[data-tour="first-document"]', true);
   const {
     documents,
-    setActiveDocument,
+    activeDocumentId,
     setSelectedDocumentId,
     setSelectedEvidence,
     setSelectedPdf,
@@ -142,29 +142,42 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   const [error, setError] = useState<string | null>(null);
   const recommendation = recommendResearchDocument(documents, preferences.topics);
 
-  const openPaper = useCallback(() => {
-    const target = document.querySelector<HTMLElement>('[data-tour="first-document"]');
-    const targetId = target?.dataset.tourDocumentId;
-    const selected = recommendation?.document ?? documents.find((item) => item.id === targetId) ?? documents.find((item) => item.status === "ready");
-    if (!selected?.filePath) {
-      setError(documents.length === 0 ? "Your workspace has no paper to open yet." : "A ready paper is still loading.");
+  useEffect(() => {
+    const selected = activeDocumentId
+      ? documents.find((item) => item.id === activeDocumentId)
+      : undefined;
+
+    if (!selected) return;
+
+    if (selected.status !== "ready" || !selected.filePath) {
+      setError("That paper is still being prepared. Pick a ready paper to continue.");
       return;
     }
-    setActiveDocument(selected.id);
+
+    setError(null);
     setSelectedDocumentId(Number(selected.id));
     setSelectedEvidence(null);
     setSelectedPdf(selected.filePath);
+
     try {
-      localStorage.setItem(TOUR_STORAGE_KEYS.prompt, buildResearchTourPrompt(selected.title));
+      const prompt = buildResearchTourPrompt(selected.title);
+      localStorage.setItem(TOUR_STORAGE_KEYS.prompt, prompt);
+      window.dispatchEvent(new CustomEvent("dasaiko:tour-prompt", { detail: prompt }));
     } catch {
       // The tour still works if browser storage is unavailable.
     }
+
     onNext();
-  }, [documents, onNext, recommendation, setActiveDocument, setSelectedDocumentId, setSelectedEvidence, setSelectedPdf]);
+  }, [activeDocumentId, documents, onNext, setSelectedDocumentId, setSelectedEvidence, setSelectedPdf]);
 
   useEffect(() => {
-    document.querySelector<HTMLElement>('[data-tour="first-document"]')?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    document.querySelector<HTMLElement>('[data-tour="first-document"]')?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
   }, [documents.length]);
+
+  const hasReadyPaper = documents.some((item) => item.status === "ready" && item.filePath);
 
   return (
     <ResearchTourOverlay>
@@ -172,10 +185,57 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
       <TourCard>
         <div className="flex items-center justify-between"><StepLabel step="paper" /><SkipButton onSkip={onFinish} /></div>
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.paper.title}</h2>
-        <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.paper.description}</p>
-        {recommendation && preferences.topics.length > 0 && <div className="mt-4 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3"><p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-primary/70">Recommended for you</p><p className="mt-1 truncate text-xs font-medium text-zinc-200">{recommendation.document.title}</p><p className="mt-1 text-[10px] leading-4 text-zinc-600">Matches: {recommendation.matchedTopics.join(" · ") || "your research workspace"}</p></div>}
+        <p className="mt-2 text-sm leading-5 text-zinc-500">
+          {hasReadyPaper
+            ? "Pick any ready paper from your library. Dasaiko will use it to prepare the next step."
+            : "Your library is still loading a paper. Once a ready paper appears, click it to continue."}
+        </p>
+        {recommendation && preferences.topics.length > 0 && (
+          <div className="mt-4 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-primary/70">Suggested starting point</p>
+            <p className="mt-1 truncate text-xs font-medium text-zinc-200">{recommendation.document.title}</p>
+            <p className="mt-1 text-[10px] leading-4 text-zinc-600">Choose it if it matches what you want to explore.</p>
+          </div>
+        )}
         {error && <p role="alert" className="mt-3 text-[11px] leading-4 text-amber-400">{error}</p>}
-        <Navigation onBack={onBack} onNext={openPaper} nextLabel="Open the paper" />
+        <div className="mt-5 flex items-center justify-between">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
+          <span className="text-[10px] font-medium text-zinc-600">{rect ? "Click a paper to continue" : "Opening your library…"}</span>
+        </div>
+      </TourCard>
+    </ResearchTourOverlay>
+  );
+}
+
+function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
+  const rect = useTourTarget('[data-tour="research-question"]', true);
+  const { messages } = useWorkspaceStore();
+  const initialCount = useRef(messages.length);
+  const hasQuestion = messages.length > initialCount.current && messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));
+
+  useEffect(() => {
+    if (!rect) return;
+    const input = document.querySelector<HTMLTextAreaElement>('[data-tour="research-question"]');
+    input?.focus();
+    input?.setSelectionRange(input.value.length, input.value.length);
+  }, [rect]);
+
+  useEffect(() => {
+    if (hasQuestion) onNext();
+  }, [hasQuestion, onNext]);
+
+  return (
+    <ResearchTourOverlay>
+      <Spotlight rect={rect} />
+      <TourCard>
+        <div className="flex items-center justify-between"><StepLabel step="question" /><SkipButton onSkip={onFinish} /></div>
+        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.question.title}</h2>
+        <p className="mt-2 text-sm leading-5 text-zinc-500">We prepared a question from the paper. Edit it if you want, then click the send arrow or press Enter.</p>
+        {!rect && <p className="mt-3 text-[11px] leading-4 text-zinc-600">Preparing the research question…</p>}
+        <div className="mt-5 flex items-center justify-between">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
+          <span className="text-[10px] font-medium text-zinc-600">{hasQuestion ? "Question submitted" : "Edit or send the question"}</span>
+        </div>
       </TourCard>
     </ResearchTourOverlay>
   );
