@@ -46,6 +46,7 @@ export function useResearchTour() {
 
   const startTour = useCallback((step: ResearchTourStep = RESEARCH_TOUR_STEPS[0]) => {
     try {
+      localStorage.removeItem(TOUR_STORAGE_KEYS.completed);
       localStorage.setItem(TOUR_STORAGE_KEYS.active, step);
     } catch {
       // Ignore storage failures.
