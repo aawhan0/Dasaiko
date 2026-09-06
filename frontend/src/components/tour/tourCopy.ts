@@ -6,23 +6,23 @@ export const RESEARCH_TOUR_COPY = {
   },
   question: {
     eyebrow: "2 of 7",
-    title: "Start with a question.",
-    description: "Ask Dasaiko about the research you want to understand. We’ll guide the next step from here.",
+    title: "Start with a paper.",
+    description: "Pick the source that feels most relevant to your interests. We’ll keep your research question tied to it.",
   },
   paper: {
     eyebrow: "3 of 7",
-    title: "Pick the source you want to explore.",
-    description: "Choose a paper from your workspace. Dasaiko keeps the question tied to the evidence you are reading.",
+    title: "Now ask the paper.",
+    description: "We’ll prepare a useful starting question. Edit it if you want, then ask it against the paper you just opened.",
   },
   viewer: {
     eyebrow: "4 of 7",
     title: "Keep the paper in context.",
-    description: "The paper stays beside your research conversation. Ask your question, then inspect the retrieved evidence behind the answer.",
+    description: "The source stays beside your research conversation, so you can move between the paper, question, and answer without losing context.",
   },
   inference: {
     eyebrow: "5 of 7",
-    title: "Now ask the paper.",
-    description: "Edit the prepared question if you want, then ask. The response is grounded in the selected research.",
+    title: "Trace the answer back.",
+    description: "Your answer is grounded in the selected research. Follow the evidence trail instead of treating the model as the source of truth.",
   },
   evidence: {
     eyebrow: "6 of 7",
