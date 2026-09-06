@@ -1,4 +1,6 @@
 from collections import defaultdict
+from datetime import datetime
+import math
 
 from sqlalchemy.orm import Session
 
@@ -78,9 +80,12 @@ class ResearchProfileService:
             if isinstance(interest, str) and interest.strip():
                 topic_affinity[interest.strip()] = 1.0
 
+        now = datetime.utcnow()
         for activity in activities:
             paper = catalog_by_id.get(activity.paper_id)
             weight = cls.EVENT_WEIGHTS.get(activity.event_type, 0.0)
+            age_days = max((now - activity.created_at).total_seconds() / 86400.0, 0.0)
+            weight *= math.exp(-0.035 * age_days)
             if paper is None or weight == 0.0:
                 continue
 
