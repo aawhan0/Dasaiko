@@ -1,7 +1,8 @@
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 from sqlalchemy.orm import Session
 
+from app.data.paper_catalog import PAPER_CATALOG
 from app.models.research_activity import ResearchActivity
 from app.models.research_profile import ResearchProfile
 from app.models.user import User
@@ -61,7 +62,7 @@ class ResearchProfileService:
         )
 
         profile.papers_opened = sum(
-            1 for item in activities if item.event_type == "paper_opened"
+            1 for item in activities if item.event_type in {"paper_opened", "paper_revisited"}
         )
         profile.papers_completed = sum(
             1 for item in activities if item.event_type == "paper_completed"
@@ -70,13 +71,22 @@ class ResearchProfileService:
             1 for item in activities if item.event_type == "paper_saved"
         )
 
-        counts = Counter()
-        for item in activities:
-            counts[item.paper_id] += cls.EVENT_WEIGHTS.get(item.event_type, 0.0)
+        catalog_by_id = {paper.id: paper for paper in PAPER_CATALOG}
+        topic_affinity: dict[str, float] = defaultdict(float)
 
-        profile.topic_affinity = {
-            **(profile.topic_affinity or {}),
-            **{f"paper:{paper_id}": weight for paper_id, weight in counts.items()},
-        }
+        for interest in user.onboarding_interests or []:
+            if isinstance(interest, str) and interest.strip():
+                topic_affinity[interest.strip()] = 1.0
+
+        for activity in activities:
+            paper = catalog_by_id.get(activity.paper_id)
+            weight = cls.EVENT_WEIGHTS.get(activity.event_type, 0.0)
+            if paper is None or weight == 0.0:
+                continue
+
+            for topic in paper.topics:
+                topic_affinity[topic] += weight
+
+        profile.topic_affinity = dict(topic_affinity)
         db.flush()
         return profile
