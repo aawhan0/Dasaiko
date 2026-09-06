@@ -54,6 +54,18 @@ class ResearchProfileService:
         db.flush()
         return profile
 
+    @staticmethod
+    def _aggregate_goals(user, activities, catalog_by_id):
+        scores = defaultdict(float)
+        for goal in user.onboarding_goals or []:
+            if isinstance(goal, str) and goal.strip(): scores[goal.strip()] += 1.0
+        for activity in activities:
+            if catalog_by_id.get(activity.paper_id) is None: continue
+            weight = max(ResearchProfileService.EVENT_WEIGHTS.get(activity.event_type, 0.0), 0.0)
+            for goal in user.onboarding_goals or []:
+                if isinstance(goal, str) and goal.strip(): scores[goal.strip()] += weight * 0.1
+        return scores
+
     @classmethod
     def update_from_activity(cls, db: Session, user: User) -> ResearchProfile:
         profile = cls.sync_from_onboarding(db, user)
@@ -72,6 +84,7 @@ class ResearchProfileService:
         profile.papers_saved = sum(
             1 for item in activities if item.event_type == "paper_saved"
         )
+        profile.goal_affinity = dict(cls._aggregate_goals(user, activities, catalog_by_id))
 
         catalog_by_id = {paper.id: paper for paper in PAPER_CATALOG}
         topic_affinity: dict[str, float] = defaultdict(float)
