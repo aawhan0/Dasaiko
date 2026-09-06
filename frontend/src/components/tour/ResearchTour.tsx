@@ -396,6 +396,16 @@ function ViewerStep({
   const activeDocumentId = useWorkspaceStore((state) => state.activeDocumentId);
   const documents = useWorkspaceStore((state) => state.documents);
 
+  useEffect(() => {
+    const document = documents.find((item) => item.id === activeDocumentId);
+    if (!document) return;
+    try {
+      localStorage.setItem("dasaiko.tourPrompt", `What are the main contributions of "${document.title}" and what evidence supports them?`);
+    } catch {
+      // The tour remains usable if storage is unavailable.
+    }
+  }, [activeDocumentId, documents]);
+
   return (
     <ResearchTourOverlay>
       <Spotlight rect={rect} />
