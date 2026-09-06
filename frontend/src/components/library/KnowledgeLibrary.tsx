@@ -202,9 +202,10 @@ export function KnowledgeLibrary() {
         ) : (
           <div className="space-y-0.5">
             {filteredDocuments.map(
-              (doc) => (
-                <DocumentCard
-                  key={doc.id}
+              (doc, index) => (
+                <div key={doc.id} data-tour={index === 0 ? "first-document" : undefined}>
+                  <DocumentCard
+                    key={doc.id}
                   document={doc}
                   isActive={
                     activeDocumentId ===
@@ -225,7 +226,8 @@ export function KnowledgeLibrary() {
                       y,
                     });
                   }}
-                />
+                  />
+                </div>
               ),
             )}
           </div>
