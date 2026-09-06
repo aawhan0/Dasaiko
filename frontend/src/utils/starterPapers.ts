@@ -9,6 +9,7 @@ export interface StarterPaper {
   reason: string;
   matchedInterests?: string[];
   starterQuestion: string;
+  tags: string[];
 }
 
 export const STARTER_PAPERS: StarterPaper[] = [
@@ -22,6 +23,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "best",
     reason: "A landmark paper behind the Transformer architecture and modern generative AI.",
     starterQuestion: "Why did the authors replace recurrence with self-attention in the Transformer?",
+    tags: ["transformer", "attention", "foundation"],
   },
   {
     id: "deep-residual-learning",
@@ -33,6 +35,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "great",
     reason: "A widely known milestone in deep learning and the foundation of ResNet.",
     starterQuestion: "What problem do residual connections solve when training very deep networks?",
+    tags: ["resnet", "cnn", "foundation"],
   },
   {
     id: "retrieval-augmented-generation",
@@ -44,6 +47,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "great",
     reason: "A practical introduction to combining retrieval with language generation.",
     starterQuestion: "Why does RAG retrieve external documents instead of relying only on the language model?",
+    tags: ["rag", "retrieval", "foundation"],
   },
   {
     id: "bert",
@@ -55,6 +59,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "great",
     reason: "One of the most recognizable papers for understanding modern NLP pre-training.",
     starterQuestion: "How does BERT's bidirectional pre-training help it understand language context?",
+    tags: ["bert", "pretraining", "foundation"],
   },
   {
     id: "alexnet",
@@ -66,6 +71,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "best",
     reason: "A landmark paper for the deep-learning revolution in computer vision.",
     starterQuestion: "What made AlexNet effective enough to dramatically improve ImageNet performance?",
+    tags: ["alexnet", "imagenet", "cnn"],
   },
   {
     id: "dqn",
@@ -77,6 +83,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "best",
     reason: "A famous starting point for understanding deep reinforcement learning.",
     starterQuestion: "How does DQN use a neural network to estimate which action should be taken?",
+    tags: ["dqn", "q-learning", "foundation"],
   },
   {
     id: "vision-transformer",
@@ -88,6 +95,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "great",
     reason: "A clear bridge between the Transformer idea and modern vision models.",
     starterQuestion: "How does Vision Transformer turn an image into a sequence that a Transformer can process?",
+    tags: ["vit", "transformer", "vision"],
   },
   {
     id: "gpt3",
@@ -99,6 +107,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
     starterPriority: "great",
     reason: "A highly recognizable paper for understanding scaling and few-shot language models.",
     starterQuestion: "What does GPT-3 demonstrate about scaling language models for few-shot learning?",
+    tags: ["gpt", "few-shot", "scaling"],
   },
 ];
 
