@@ -359,6 +359,14 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
   }, [activeStep, open]);
 
   const goToStep = useCallback((nextStep: ResearchTourStep) => {
+    if (nextStep === "preferences" || nextStep === "paper") {
+      setQuestionMessageId(null);
+      try {
+        localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
+      } catch {
+        // Ignore storage failures.
+      }
+    }
     setStep(nextStep);
     startTour(nextStep);
   }, [startTour]);
