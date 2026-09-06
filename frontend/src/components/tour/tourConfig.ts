@@ -22,6 +22,7 @@ export const RESEARCH_TOPICS = [
 
 export const TOUR_STORAGE_KEYS = {
   prompt: "dasaiko.tourPrompt",
+  questionMessage: "dasaiko.researchTour.questionMessage",
   completed: "dasaiko.researchTour.completed",
   active: "dasaiko.researchTour.active",
 } as const;
