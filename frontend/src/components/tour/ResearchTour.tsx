@@ -212,6 +212,40 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   );
 }
 
+function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
+  const rect = useTourTarget('[data-tour="research-question"]', true);
+  const { messages } = useWorkspaceStore();
+  const initialCount = useRef(messages.length);
+  const hasQuestion = messages.length > initialCount.current && messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));
+
+  useEffect(() => {
+    if (!rect) return;
+    const input = document.querySelector<HTMLTextAreaElement>('[data-tour="research-question"]');
+    input?.focus();
+    input?.setSelectionRange(input.value.length, input.value.length);
+  }, [rect]);
+
+  useEffect(() => {
+    if (hasQuestion) onNext();
+  }, [hasQuestion, onNext]);
+
+  return (
+    <ResearchTourOverlay>
+      <Spotlight rect={rect} />
+      <TourCard>
+        <div className="flex items-center justify-between"><StepLabel step="question" /><SkipButton onSkip={onFinish} /></div>
+        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.question.title}</h2>
+        <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.question.description}</p>
+        {!rect && <p className="mt-3 text-[11px] leading-4 text-zinc-600">Preparing the research question…</p>}
+        <div className="mt-5 flex items-center justify-between">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
+          <span className="text-[10px] font-medium text-zinc-600">{hasQuestion ? "Question submitted" : "Edit or send the question"}</span>
+        </div>
+      </TourCard>
+    </ResearchTourOverlay>
+  );
+}
+
 function InferenceStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
   const rect = useTourTarget('[data-tour="research-question"]', true);
   const { messages } = useWorkspaceStore();
