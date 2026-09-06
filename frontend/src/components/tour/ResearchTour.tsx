@@ -14,7 +14,7 @@ interface ResearchTourProps {
   onSkip: () => void;
 }
 
-type TourStep = "preferences" | "question" | "paper" | "viewer";
+type TourStep = "preferences" | "question" | "paper" | "viewer" | "inference" | "evidence";
 
 function useTourTarget(selector: string, enabled: boolean) {
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -412,7 +412,7 @@ function ViewerStep({
 
       <TourCard>
         <div className="flex items-center justify-between">
-          <StepLabel>4 of 4</StepLabel>
+          <StepLabel>4 of 7</StepLabel>
           <button
             type="button"
             onClick={onFinish}
@@ -454,6 +454,92 @@ function ViewerStep({
           >
             Try it yourself
             <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </TourCard>
+    </ResearchTourOverlay>
+  );
+}
+
+function InferenceStep({
+  onBack,
+  onNext,
+  onFinish,
+}: {
+  onBack: () => void;
+  onNext: () => void;
+  onFinish: () => void;
+}) {
+  const rect = useTourTarget('[data-tour="research-question"]', true);
+  const messages = useWorkspaceStore((state) => state.messages);
+  const hasAnswer = messages.some(
+    (message) => message.role === "assistant" && Boolean(message.content?.trim()),
+  );
+
+  useEffect(() => {
+    if (hasAnswer) onNext();
+  }, [hasAnswer, onNext]);
+
+  return (
+    <ResearchTourOverlay>
+      <Spotlight rect={rect} />
+      <TourCard>
+        <div className="flex items-center justify-between">
+          <StepLabel>5 of 7</StepLabel>
+          <button type="button" onClick={onFinish} className="text-[11px] font-medium text-zinc-600 transition hover:text-zinc-400">Skip tour</button>
+        </div>
+        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">Now ask the paper.</h2>
+        <p className="mt-2 text-sm leading-5 text-zinc-500">
+          We’ve prepared a question for you. Edit it if you want, then press Ask. Your answer will be grounded in the selected research.
+        </p>
+        <div className="mt-5 flex items-center justify-between">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
+          {hasAnswer ? (
+            <button type="button" onClick={onNext} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110">
+              See the evidence <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <span className="text-[10px] text-zinc-600">Waiting for your question…</span>
+          )}
+        </div>
+      </TourCard>
+    </ResearchTourOverlay>
+  );
+}
+
+function EvidenceStep({
+  onBack,
+  onFinish,
+}: {
+  onBack: () => void;
+  onFinish: () => void;
+}) {
+  const rect = useTourTarget('[data-tour="research-evidence"]', true);
+  const activeEvidence = useWorkspaceStore((state) => state.activeEvidence);
+
+  return (
+    <ResearchTourOverlay>
+      <Spotlight rect={rect} />
+      <TourCard>
+        <div className="flex items-center justify-between">
+          <StepLabel>6 of 7</StepLabel>
+          <button type="button" onClick={onFinish} className="text-[11px] font-medium text-zinc-600 transition hover:text-zinc-400">Skip tour</button>
+        </div>
+        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">Inspect the evidence.</h2>
+        <p className="mt-2 text-sm leading-5 text-zinc-500">
+          These sources are the trail behind the answer. Open one to jump back into the relevant part of the paper.
+        </p>
+        {activeEvidence.length > 0 && (
+          <p className="mt-3 text-[10px] text-zinc-600">{activeEvidence.length} evidence source{activeEvidence.length === 1 ? "" : "s"} retrieved.</p>
+        )}
+        <div className="mt-5 flex items-center justify-between">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200">
+            <ArrowLeft className="h-3.5 w-3.5" /> Back
+          </button>
+          <button type="button" onClick={onFinish} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110">
+            Finish tour <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
       </TourCard>
@@ -519,12 +605,23 @@ export function ResearchTour({
           ) : step === "paper" ? (
             <PaperStep
               onBack={() => setStep("question")}
-              onNext={() => setStep("viewer")}
+              onNext={() => setStep("inference")}
+              onFinish={finish}
+            />
+          ) : step === "viewer" ? (
+            <ViewerStep
+              onBack={() => setStep("paper")}
+              onFinish={finish}
+            />
+          ) : step === "inference" ? (
+            <InferenceStep
+              onBack={() => setStep("viewer")}
+              onNext={() => setStep("evidence")}
               onFinish={finish}
             />
           ) : (
-            <ViewerStep
-              onBack={() => setStep("paper")}
+            <EvidenceStep
+              onBack={() => setStep("inference")}
               onFinish={finish}
             />
           )
