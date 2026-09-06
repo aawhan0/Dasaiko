@@ -178,7 +178,7 @@ export function EvidenceVault({
                   text-zinc-600
                 "
               >
-                Sources behind your answer
+                Evidence selected for this answer
               </p>
 
             </div>
@@ -331,8 +331,27 @@ export function EvidenceVault({
       >
 
         {hasEvidence ? (
+          <>
+            <div
+              className="
+                mb-3
+                rounded-xl
+                border
+                border-primary/10
+                bg-primary/[0.035]
+                px-3.5
+                py-3
+              "
+            >
+              <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-primary/70">
+                Grounded response
+              </p>
+              <p className="mt-1 text-[10px] leading-4 text-zinc-500">
+                The answer above is supported by {evidence.length} selected source{evidence.length === 1 ? "" : "s"}.
+              </p>
+            </div>
 
-          <motion.div
+            <motion.div
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
@@ -354,8 +373,8 @@ export function EvidenceVault({
               ),
             )}
 
-          </motion.div>
-
+            </motion.div>
+          </>
         ) : (
 
           <div
