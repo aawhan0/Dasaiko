@@ -6,3 +6,4 @@ from app.models.message import Message
 from app.models.user import User
 from app.models.email_verification_otp import EmailVerificationOTP
 from app.models.research_profile import ResearchProfile
+from app.models.research_activity import ResearchActivity
