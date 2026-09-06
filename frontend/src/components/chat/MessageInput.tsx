@@ -1245,6 +1245,7 @@ export function MessageInput({
         ================================================== */}
 
         <textarea
+          data-tour="research-question"
           ref={textareaRef}
           value={value}
           onChange={
