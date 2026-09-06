@@ -8,6 +8,8 @@ import { PDFBottomSheet } from "@/components/pdf/PDFBottomSheet";
 
 import { ResearchWorkbench } from "@/components/chat/ResearchWorkbench";
 import { EvidenceVault } from "@/components/evidence/EvidenceVault";
+import { ResearchTour } from "@/components/tour/ResearchTour";
+import { useResearchTour } from "@/hooks/useResearchTour";
 
 import { listDocuments } from "@/services/documents";
 import { listConversations } from "@/services/conversations";
@@ -41,6 +43,23 @@ export function WorkspacePage() {
     evidenceOpen,
     setEvidenceOpen,
   ] = useState(true);
+
+  const {
+    hasCompletedTour,
+    isReady: isTourReady,
+    completeTour,
+  } = useResearchTour();
+
+  const [
+    tourOpen,
+    setTourOpen,
+  ] = useState(false);
+
+  useEffect(() => {
+    if (isTourReady && !hasCompletedTour) {
+      setTourOpen(true);
+    }
+  }, [isTourReady, hasCompletedTour]);
 
 
   /* =====================================================
@@ -184,6 +203,15 @@ export function WorkspacePage() {
 
   return (
     <AppShell>
+
+      <ResearchTour
+        open={tourOpen}
+        onStart={() => setTourOpen(false)}
+        onSkip={() => {
+          completeTour();
+          setTourOpen(false);
+        }}
+      />
 
       <div
         className="
