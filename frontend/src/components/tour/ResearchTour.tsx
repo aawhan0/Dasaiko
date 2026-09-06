@@ -12,9 +12,11 @@ interface ResearchTourProps {
 
 function QuestionStep({
   onBack,
+  onNext,
   onFinish,
 }: {
   onBack: () => void;
+  onNext: () => void;
   onFinish: () => void;
 }) {
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -99,12 +101,60 @@ function QuestionStep({
 
           <button
             type="button"
-            onClick={onFinish}
+            onClick={onNext}
             className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110"
           >
-            Got it
+            Show me a paper
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
+        </div>
+      </motion.div>
+    </ResearchTourOverlay>
+  );
+}
+
+function PaperStep({ onBack, onFinish }: { onBack: () => void; onFinish: () => void }) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const element = document.querySelector('[data-tour="document-list"]');
+      setRect(element?.getBoundingClientRect() ?? null);
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, []);
+
+  const spotlightStyle = rect
+    ? { left: rect.left - 8, top: rect.top - 8, width: rect.width + 16, height: rect.height + 16 }
+    : undefined;
+
+  return (
+    <ResearchTourOverlay>
+      {rect && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="pointer-events-none fixed z-[101] rounded-2xl border border-primary/60 shadow-[0_0_0_9999px_rgba(0,0,0,0.68),0_0_34px_rgba(99,102,241,0.20)]"
+          style={spotlightStyle}
+        />
+      )}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="fixed bottom-8 left-1/2 z-[102] w-[min(92vw,420px)] -translate-x-1/2 rounded-2xl border border-white/[0.09] bg-[#0a0a0a] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.65)]"
+      >
+        <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/80">2 of 3</span>
+        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">Pick the source you want to explore.</h2>
+        <p className="mt-2 text-sm leading-5 text-zinc-500">Choose a paper from your workspace. Dasaiko keeps the question tied to the evidence you are reading.</p>
+        <div className="mt-5 flex items-center justify-between">
+          <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
+          <button type="button" onClick={onFinish} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110">Finish <ArrowRight className="h-3.5 w-3.5" /></button>
         </div>
       </motion.div>
     </ResearchTourOverlay>
@@ -117,15 +167,18 @@ export function ResearchTour({
   onSkip,
 }: ResearchTourProps) {
   const [started, setStarted] = useState(false);
+  const [step, setStep] = useState<"question" | "paper">("question");
 
   useEffect(() => {
     if (!open) {
       setStarted(false);
+      setStep("question");
     }
   }, [open]);
 
   const finish = () => {
     setStarted(false);
+    setStep("question");
     onSkip();
   };
 
@@ -133,10 +186,18 @@ export function ResearchTour({
     <AnimatePresence>
       {open && (
         started ? (
-          <QuestionStep
-            onBack={() => setStarted(false)}
-            onFinish={finish}
-          />
+          {step === "question" ? (
+            <QuestionStep
+              onBack={() => setStarted(false)}
+              onNext={() => setStep("paper")}
+              onFinish={finish}
+            />
+          ) : (
+            <PaperStep
+              onBack={() => setStep("question")}
+              onFinish={finish}
+            />
+          )}
         ) : (
           <ResearchTourWelcome
             onStart={() => {
