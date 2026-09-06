@@ -80,7 +80,7 @@ export function OnboardingPage() {
     if (step === 2) return selectedInterests.length > 0;
     if (step === 3) return selectedGoals.length > 0;
     return selectedPaper !== null;
-  }, [role, selectedGoals.length, selectedInterests.length, step]);
+  }, [role, selectedGoals.length, selectedInterests.length, selectedPaper, step]);
 
   function toggleInterest(value: string) {
     setSelectedInterests((current) =>
