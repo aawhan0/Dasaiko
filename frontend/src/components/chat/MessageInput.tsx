@@ -57,12 +57,7 @@ export function MessageInput({
   hasDocuments = false,
 }: MessageInputProps) {
 
-  const [value, setValue] = useState(() => {
-    if (typeof window === "undefined") return "";
-    const tourPrompt = window.localStorage.getItem(TOUR_STORAGE_KEYS.prompt);
-    if (tourPrompt) window.localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
-    return tourPrompt ?? "";
-  });
+  const [value, setValue] = useState("");
 
 
   const textareaRef =
@@ -70,37 +65,6 @@ export function MessageInput({
       null,
     );
 
-  useEffect(() => {
-    const handleTourPrompt = (event: Event) => {
-      const prompt = (event as CustomEvent<string>).detail;
-      if (typeof prompt !== "string" || !prompt.trim()) return;
-
-      setValue(prompt);
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-        textareaRef.current?.setSelectionRange(
-          prompt.length,
-          prompt.length,
-        );
-      });
-    };
-
-    window.addEventListener("dasaiko:tour-prompt", handleTourPrompt);
-
-    if (value.trim()) {
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-        textareaRef.current?.setSelectionRange(
-          textareaRef.current.value.length,
-          textareaRef.current.value.length,
-        );
-      });
-    }
-
-    return () => {
-      window.removeEventListener("dasaiko:tour-prompt", handleTourPrompt);
-    };
-  }, []);
 
 
   const fileInputRef =
