@@ -41,10 +41,6 @@ import {
   mapSources,
 } from "@/mappers/chatMapper";
 
-import {
-  TOUR_STORAGE_KEYS,
-} from "@/components/tour/tourConfig";
-
 
 interface MessageInputProps {
   centered?: boolean;
@@ -64,7 +60,6 @@ export function MessageInput({
     useRef<HTMLTextAreaElement | null>(
       null,
     );
-
 
 
   const fileInputRef =
@@ -107,16 +102,6 @@ export function MessageInput({
 
     documents,
 
-    setSelectedDocumentId,
-
-    /*
-     * IMPORTANT:
-     *
-     * New Workspace closes the sidebar.
-     *
-     * The sidebar must reopen when the
-     * first valid query is submitted.
-     */
     openSidebar,
 
   } = useWorkspaceStore();
@@ -125,14 +110,6 @@ export function MessageInput({
   /* =====================================================
      CONVERSATION STATE
   ====================================================== */
-
-  /*
-   * The document requirement only applies while
-   * creating the FIRST message of a conversation.
-   *
-   * Once messages exist, the user can continue
-   * asking questions normally.
-   */
 
   const isFirstMessage =
     messages.length === 0;
@@ -159,31 +136,14 @@ export function MessageInput({
       : undefined;
 
 
-  /*
-   * A ready document anywhere in the workspace
-   * is enough to unlock the first query.
-   */
-
   const hasReadyDocument =
     readyDocuments.length > 0;
 
-
-  /*
-   * If the workspace already knows about documents,
-   * preserve that signal as well.
-   */
 
   const workspaceHasDocument =
     hasDocuments ||
     documents.length > 0;
 
-
-  /*
-   * Keep this calculation intentionally explicit.
-   *
-   * It is useful for the UI state even though
-   * the actual send rule is based on documentReady.
-   */
 
   void workspaceHasDocument;
 
@@ -218,14 +178,6 @@ export function MessageInput({
     "error";
 
 
-  /*
-   * A document is considered ready when:
-   *
-   * 1. A selected document is ready
-   * OR
-   * 2. Any ready document exists.
-   */
-
   const documentReady =
     Boolean(
       selectedDocument?.status ===
@@ -238,36 +190,13 @@ export function MessageInput({
      INPUT / SEND RULES
   ====================================================== */
 
-  /*
-   * User is allowed to TYPE regardless of whether
-   * a document exists.
-   *
-   * The only thing that blocks typing is an active
-   * request being generated.
-   */
-
   const canType =
     !isQuerying;
 
 
-  /*
-   * Queries may be submitted without a selected
-   * document. The backend decides whether paper
-   * selection is required and can return the
-   * paper picker response.
-   */
-
   const canSend =
     !isQuerying;
 
-
-  /*
-   * Paperclip attention cue.
-   *
-   * Only show it when the user has not yet
-   * uploaded a document and isn't currently
-   * uploading one.
-   */
 
   const showPaperclipCue =
     !documentReady &&
@@ -354,10 +283,6 @@ export function MessageInput({
           streamFinalResponseRef.current;
 
 
-        /*
-         * Successful response
-         */
-
         if (
           finalResponse
         ) {
@@ -387,12 +312,6 @@ export function MessageInput({
                         evidence:
                           mappedEvidence,
 
-                        /*
-                         * Preserve the streamed
-                         * content because it has
-                         * already been rendered.
-                         */
-
                         content:
                           message.content,
 
@@ -412,10 +331,6 @@ export function MessageInput({
           return;
         }
 
-
-        /*
-         * Request failed
-         */
 
         if (
           streamErrorRef.current
@@ -444,12 +359,6 @@ export function MessageInput({
         }
 
       } catch (error) {
-
-        /*
-         * Even if response mapping or
-         * evidence mapping fails, the
-         * composer MUST unlock.
-         */
 
         console.error(
           "Failed to finalize chat response:",
@@ -481,10 +390,6 @@ export function MessageInput({
         clearStreamTimer();
 
 
-        /*
-         * Critical unlock.
-         */
-
         setIsQuerying(
           false,
         );
@@ -503,10 +408,6 @@ export function MessageInput({
       messageId: string,
     ) => {
 
-      /*
-       * Don't start duplicate render loops.
-       */
-
       if (
         streamTimerRef.current !==
         null
@@ -522,11 +423,6 @@ export function MessageInput({
           const queue =
             streamQueueRef.current;
 
-
-          /*
-           * There is still streamed text
-           * waiting to be displayed.
-           */
 
           if (
             queue.length > 0
@@ -592,13 +488,6 @@ export function MessageInput({
           }
 
 
-          /*
-           * Queue is empty.
-           *
-           * If the backend has finished,
-           * finalize immediately.
-           */
-
           if (
             streamDoneRef.current
           ) {
@@ -610,10 +499,6 @@ export function MessageInput({
             return;
           }
 
-
-          /*
-           * Backend is still running.
-           */
 
           streamTimerRef.current =
             window.setTimeout(
@@ -647,10 +532,6 @@ export function MessageInput({
         value.trim();
 
 
-      /*
-       * Empty question.
-       */
-
       if (
         !question
       ) {
@@ -658,11 +539,6 @@ export function MessageInput({
         return;
       }
 
-
-      /*
-       * Prevent double submission
-       * while a request is running.
-       */
 
       if (
         isQuerying
@@ -672,38 +548,9 @@ export function MessageInput({
       }
 
 
-      /*
-       * A query may be submitted without a
-       * selected document.
-       *
-       * The backend decides whether paper
-       * selection is required and returns the
-       * paper picker when necessary.
-       */
-
-      /* =================================================
-         DETERMINE DOCUMENT
-      ================================================== */
-
       const queryDocumentId =
         selectedDocumentId;
 
-
-      /* =================================================
-         OPEN SIDEBAR
-      ================================================== */
-
-      /*
-       * IMPORTANT UX RULE:
-       *
-       * The sidebar stays hidden while the user
-       * is sitting in a fresh workspace.
-       *
-       * It reappears ONLY when the user actually
-       * submits the first valid query.
-       *
-       * Typing does not trigger this.
-       */
 
       if (
         isFirstMessage
@@ -713,10 +560,6 @@ export function MessageInput({
 
       }
 
-
-      /* =================================================
-         CREATE CONVERSATION
-      ================================================== */
 
       let conversationId =
         activeConversationId;
@@ -781,10 +624,6 @@ export function MessageInput({
       }
 
 
-      /* =================================================
-         CLEAR INPUT
-      ================================================== */
-
       setValue(
         "",
       );
@@ -799,10 +638,6 @@ export function MessageInput({
 
       }
 
-
-      /* =================================================
-         USER MESSAGE
-      ================================================== */
 
       const userMessage = {
 
@@ -825,10 +660,6 @@ export function MessageInput({
         userMessage,
       );
 
-
-      /* =================================================
-         STREAMING PLACEHOLDER
-      ================================================== */
 
       const streamingMessage = {
 
@@ -880,20 +711,10 @@ export function MessageInput({
       );
 
 
-      /*
-       * Start renderer BEFORE the request.
-       *
-       * It will wait for chunks.
-       */
-
       startStreamRenderer(
         streamingMessage.id,
       );
 
-
-      /* =================================================
-         API
-      ================================================== */
 
       try {
 
@@ -929,15 +750,6 @@ export function MessageInput({
           true;
 
 
-        /*
-         * If the renderer isn't currently
-         * running, restart it.
-         *
-         * This also handles the case where
-         * the response arrives with no streamed
-         * chunks.
-         */
-
         if (
           streamTimerRef.current ===
           null
@@ -964,12 +776,6 @@ export function MessageInput({
         streamDoneRef.current =
           true;
 
-
-        /*
-         * If the renderer is somehow not
-         * running, make sure the request
-         * still gets finalized.
-         */
 
         if (
           streamTimerRef.current ===
@@ -1022,11 +828,6 @@ export function MessageInput({
         HTMLTextAreaElement
       >,
   ) => {
-
-    /*
-     * Typing is allowed even without
-     * a document.
-     */
 
     if (
       !canType
@@ -1083,7 +884,7 @@ export function MessageInput({
 
   /* =====================================================
      RENDER
-  ===================================================== */
+  ====================================================== */
 
   return (
 
@@ -1107,10 +908,6 @@ export function MessageInput({
           : "max-w-4xl",
       )}
     >
-
-      {/* =================================================
-          COMPOSER
-      ================================================== */}
 
       <motion.div
         animate={{
@@ -1158,10 +955,6 @@ export function MessageInput({
             `,
         )}
       >
-
-        {/* =================================================
-            PAPERCLIP
-        ================================================== */}
 
         <motion.button
           type="button"
@@ -1242,12 +1035,7 @@ export function MessageInput({
         </motion.button>
 
 
-        {/* =================================================
-            INPUT
-        ================================================== */}
-
         <textarea
-          data-tour="research-question"
           ref={textareaRef}
           value={value}
           onChange={
@@ -1297,10 +1085,6 @@ export function MessageInput({
           )}
         />
 
-
-        {/* =================================================
-            SEND
-        ================================================== */}
 
         <motion.button
           type="button"
@@ -1383,10 +1167,6 @@ export function MessageInput({
         </motion.button>
 
 
-        {/* =================================================
-            FILE INPUT
-        ================================================== */}
-
         <input
           ref={
             fileInputRef
@@ -1411,10 +1191,6 @@ export function MessageInput({
 
       </motion.div>
 
-
-      {/* =================================================
-          DOCUMENT STATUS
-      ================================================== */}
 
       {latestUpload &&
         (
