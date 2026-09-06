@@ -255,6 +255,8 @@ export function OnboardingPage() {
                         key={paper.id}
                         type="button"
                         onClick={() => setSelectedPaper(paper)}
+                        aria-pressed={selected}
+                        aria-label={`Start with ${paper.title}`}
                         className={`relative flex min-h-[280px] flex-col rounded-2xl border p-5 text-left transition-all duration-200 active:scale-[0.99] ${
                           selected
                             ? "border-primary/60 bg-primary/[0.11] shadow-glow-sm"
