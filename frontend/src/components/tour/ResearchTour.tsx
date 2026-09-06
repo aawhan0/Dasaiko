@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
+import { useResearchPreferences } from "@/hooks/useResearchPreferences";
 
 import { ResearchTourOverlay } from "./ResearchTourOverlay";
 import { ResearchTourWelcome } from "./ResearchTourWelcome";
@@ -13,7 +14,7 @@ interface ResearchTourProps {
   onSkip: () => void;
 }
 
-type TourStep = "question" | "paper" | "viewer";
+type TourStep = "preferences" | "question" | "paper" | "viewer";
 
 function useTourTarget(selector: string, enabled: boolean) {
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -109,6 +110,67 @@ function StepLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+function PreferencesStep({
+  onNext,
+  onFinish,
+}: {
+  onNext: () => void;
+  onFinish: () => void;
+}) {
+  const { preferences, updatePreferences } = useResearchPreferences();
+  const [topics, setTopics] = useState(preferences.topics);
+  const options = ["RAG", "NLP", "Computer Vision", "LLMs", "Information Retrieval", "Multimodal"];
+
+  const toggle = (topic: string) => {
+    setTopics((current) =>
+      current.includes(topic)
+        ? current.filter((item) => item !== topic)
+        : [...current, topic],
+    );
+  };
+
+  return (
+    <ResearchTourOverlay>
+      <TourCard>
+        <div className="flex items-center justify-between">
+          <StepLabel>1 of 4</StepLabel>
+          <button type="button" onClick={onFinish} className="text-[11px] font-medium text-zinc-600 transition hover:text-zinc-400">Skip tour</button>
+        </div>
+        <h2 className="mt-3 text-base font-semibold tracking-tight text-white">What are you researching?</h2>
+        <p className="mt-2 text-sm leading-5 text-zinc-500">Pick a few areas. We’ll use them to make the first paper feel relevant.</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {options.map((topic) => {
+            const selected = topics.includes(topic);
+            return (
+              <button
+                key={topic}
+                type="button"
+                onClick={() => toggle(topic)}
+                aria-pressed={selected}
+                className={selected
+                  ? "rounded-xl border border-primary/40 bg-primary/[0.10] px-3 py-2 text-[11px] font-medium text-primary transition"
+                  : "rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:border-white/[0.14] hover:text-zinc-300"}
+              >
+                {topic}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-5 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => { updatePreferences(topics); onNext(); }}
+            className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110"
+          >
+            Continue
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </TourCard>
+    </ResearchTourOverlay>
+  );
+}
+
 function QuestionStep({
   onBack,
   onNext,
@@ -126,7 +188,7 @@ function QuestionStep({
 
       <TourCard>
         <div className="flex items-center justify-between">
-          <StepLabel>1 of 3</StepLabel>
+          <StepLabel>2 of 4</StepLabel>
           <button
             type="button"
             onClick={onFinish}
@@ -242,7 +304,7 @@ function PaperStep({
 
       <TourCard>
         <div className="flex items-center justify-between">
-          <StepLabel>2 of 3</StepLabel>
+          <StepLabel>3 of 4</StepLabel>
           <button
             type="button"
             onClick={onFinish}
@@ -317,7 +379,7 @@ function ViewerStep({
 
       <TourCard>
         <div className="flex items-center justify-between">
-          <StepLabel>3 of 3</StepLabel>
+          <StepLabel>4 of 4</StepLabel>
           <button
             type="button"
             onClick={onFinish}
@@ -410,7 +472,7 @@ export function ResearchTour({
     <AnimatePresence>
       {open &&
         (started ? (
-          step === "question" ? (
+          step === "preferences" ? (\n            <PreferencesStep\n              onNext={() => setStep("question")}\n              onFinish={finish}\n            />\n          ) : step === "question" ? (
             <QuestionStep
               onBack={() => setStarted(false)}
               onNext={() => setStep("paper")}
