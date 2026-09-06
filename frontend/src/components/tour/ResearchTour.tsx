@@ -115,7 +115,6 @@ function PreferencesStep({ onNext, onFinish }: { onNext: () => void; onFinish: (
 }
 
 function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
-  const rect = useTourTarget('[data-tour="first-document"]', true);
   const {
     documents,
     setSelectedDocumentId,
@@ -126,6 +125,12 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   const [error, setError] = useState<string | null>(null);
   const selectionRef = useRef<string | null>(null);
   const recommendation = recommendResearchDocument(documents, preferences.topics);
+  const fallbackPaper = documents.find((item) => item.status === "ready" && item.filePath);
+  const tourPaper = recommendation?.document ?? fallbackPaper;
+  const tourTargetSelector = tourPaper
+    ? `[data-tour-document-id="${tourPaper.id}"]`
+    : '[data-tour="document-list"]';
+  const rect = useTourTarget(tourTargetSelector, true);
 
   const selectPaper = useCallback((documentId: string) => {
     if (selectionRef.current === documentId) return;
@@ -157,12 +162,14 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   useEffect(() => {
     if (!rect) return;
 
-    const target = document.querySelector<HTMLElement>('[data-tour="first-document"]');
+    const target = document.querySelector<HTMLElement>(tourTargetSelector);
     if (!target) return;
 
     const handleClick = () => {
       const documentId = target.dataset.tourDocumentId;
-      if (documentId) selectPaper(documentId);
+      if (documentId) {
+        selectPaper(documentId);
+      }
     };
 
     target.addEventListener("click", handleClick);
@@ -171,7 +178,7 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
     return () => {
       target.removeEventListener("click", handleClick);
     };
-  }, [rect, selectPaper]);
+  }, [rect, selectPaper, tourTargetSelector]);
 
   const hasReadyPaper = documents.some((item) => item.status === "ready" && item.filePath);
 
@@ -183,7 +190,9 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.paper.title}</h2>
         <p className="mt-2 text-sm leading-5 text-zinc-500">
           {hasReadyPaper
-            ? "Pick the highlighted paper in your library to continue."
+            ? recommendation
+              ? "Pick the highlighted paper that matches the interests you selected."
+              : "Pick the highlighted ready paper to continue."
             : "Your library is still loading a paper. Once a ready paper appears, click it to continue."}
         </p>
         {recommendation && preferences.topics.length > 0 && (
