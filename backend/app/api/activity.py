@@ -11,6 +11,11 @@ from app.services.research_profile_service import ResearchProfileService
 router = APIRouter(prefix="/activity", tags=["Research Activity"])
 
 
+@router.get("", response_model=list[ResearchActivityResponse])
+def list_activity(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return ResearchActivityService.recent_for_user(db, current_user.id)
+
+
 @router.post(
     "",
     response_model=ResearchActivityResponse,
