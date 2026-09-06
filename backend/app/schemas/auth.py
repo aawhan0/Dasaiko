@@ -63,6 +63,11 @@ class UserResponse(BaseModel):
     email: EmailStr
     is_active: bool
     email_verified: bool
+    onboarding_completed: bool
+    onboarding_role: str | None = None
+    onboarding_interests: list[str] | None = None
+    onboarding_goals: list[str] | None = None
+    research_familiarity: str | None = None
 
     model_config = {
         "from_attributes": True,
@@ -94,3 +99,20 @@ class PasswordResetResponse(BaseModel):
 
 class PasswordResetConfirmResponse(BaseModel):
     message: str
+
+
+class ResearchProfileUpdateRequest(BaseModel):
+    role: str = Field(min_length=1, max_length=50)
+    interests: list[str] = Field(default_factory=list)
+    goals: list[str] = Field(default_factory=list)
+    research_familiarity: str = Field(min_length=1, max_length=50)
+    onboarding_completed: bool = True
+
+
+class ResearchProfileResponse(BaseModel):
+    onboarding_completed: bool
+    role: str | None = None
+    interests: list[str] = Field(default_factory=list)
+    goals: list[str] = Field(default_factory=list)
+    research_familiarity: str | None = None
+
