@@ -13,16 +13,12 @@ class RankedPaper:
 
 
 class RecommendationService:
-    """Deterministic profile-aware ranking engine.
-
-    This first version intentionally stays explainable and easy to tune.
-    More advanced behavioural and embedding signals can be layered on later.
-    """
+    """Deterministic profile-aware ranking engine."""
 
     ROLE_WEIGHTS = {
-        "student": {"foundation": 1.0},
-        "educator": {"foundation": 0.9},
-        "curious": {"foundation": 0.85},
+        "student": 1.00,
+        "educator": 0.90,
+        "curious": 0.85,
     }
 
     FAMILIARITY_MAX_DIFFICULTY = {
@@ -50,14 +46,14 @@ class RecommendationService:
             if isinstance(value, str) and value.strip()
         }
         familiarity = user.research_familiarity or "new"
+        role = (user.onboarding_role or "curious").casefold()
+        role_multiplier = cls.ROLE_WEIGHTS.get(role, 0.85)
 
         ranked: list[RankedPaper] = []
         for paper in PAPER_CATALOG:
-            paper_topics = {topic.casefold() for topic in paper.topics}
             topic_matches = tuple(
                 topic for topic in paper.topics if topic.casefold() in interests
             )
-
             matched_goals = tuple(
                 goal
                 for goal in goals
@@ -65,39 +61,26 @@ class RecommendationService:
             )
 
             topic_score = min(len(topic_matches), 3) * 3.0
-            goal_score = len(matched_goals) * 2.0
+            goal_score = len(matched_goals) * 2.0 * role_multiplier
             importance_score = paper.importance * 2.0
             difficulty_score = cls._difficulty_fit(paper.difficulty, familiarity)
-
-            score = (
-                topic_score
-                + goal_score
-                + importance_score
-                + difficulty_score
-            )
 
             ranked.append(
                 RankedPaper(
                     paper=paper,
-                    score=score,
+                    score=topic_score + goal_score + importance_score + difficulty_score,
                     matched_interests=topic_matches,
                     matched_goals=matched_goals,
                 )
             )
 
         ranked.sort(key=lambda item: (-item.score, -item.paper.importance, item.paper.id))
-
         return cls._diversify(ranked, limit, interests)
 
     @classmethod
     def _difficulty_fit(cls, difficulty: str, familiarity: str) -> float:
         max_level = cls.FAMILIARITY_MAX_DIFFICULTY.get(familiarity, 0)
-        level = {
-            "Foundational": 0,
-            "Accessible": 1,
-            "Intermediate": 2,
-        }.get(difficulty, 1)
-
+        level = {"Foundational": 0, "Accessible": 1, "Intermediate": 2}.get(difficulty, 1)
         if level <= max_level:
             return 2.0
         if level == max_level + 1:
@@ -110,6 +93,9 @@ class RecommendationService:
         limit: int,
         interests: set[str],
     ) -> list[RankedPaper]:
+        if limit <= 0:
+            return []
+
         picked: list[RankedPaper] = []
         covered: set[str] = set()
 
@@ -120,22 +106,18 @@ class RecommendationService:
                 if topic.casefold() in interests
             }
             adds_new_interest = bool(matching_topics - covered)
-
             if not picked or adds_new_interest:
                 picked.append(candidate)
                 covered.update(matching_topics)
+            if len(picked) == limit:
+                return picked
 
+        seen = {item.paper.id for item in picked}
+        for candidate in ranked:
+            if candidate.paper.id in seen:
+                continue
+            picked.append(candidate)
+            seen.add(candidate.paper.id)
             if len(picked) == limit:
                 break
-
-        if len(picked) < limit:
-            seen = {item.paper.id for item in picked}
-            for candidate in ranked:
-                if candidate.paper.id in seen:
-                    continue
-                picked.append(candidate)
-                seen.add(candidate.paper.id)
-                if len(picked) == limit:
-                    break
-
         return picked
