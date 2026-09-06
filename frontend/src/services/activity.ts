@@ -16,3 +16,16 @@ export async function recordResearchActivity(
     event_type: eventType,
   });
 }
+
+
+export interface ResearchActivity {
+  id: number;
+  paper_id: string;
+  event_type: ResearchActivityType;
+  created_at: string;
+}
+
+export async function getRecentResearchActivity(): Promise<ResearchActivity[]> {
+  const response = await api.get<ResearchActivity[]>("/activity");
+  return response.data;
+}
