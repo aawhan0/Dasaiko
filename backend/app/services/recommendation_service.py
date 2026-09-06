@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from app.data.paper_catalog import PAPER_CATALOG, PaperCatalogEntry
 from app.models.user import User
 from app.models.research_profile import ResearchProfile
+from app.models.research_activity import ResearchActivity
 from app.models.research_profile import ResearchProfile
 
 
@@ -36,7 +37,7 @@ class RecommendationService:
     }
 
     @classmethod
-    def rank_starter_papers(cls, user: User, limit: int = 3, profile: ResearchProfile | None = None) -> list[RankedPaper]:
+    def rank_starter_papers(cls, user: User, limit: int = 3, profile: ResearchProfile | None = None, activities: list[ResearchActivity] | None = None) -> list[RankedPaper]:
         interests = {
             value.strip().casefold()
             for value in (user.onboarding_interests or [])
@@ -49,6 +50,8 @@ class RecommendationService:
         }
         familiarity = user.research_familiarity or "new"
         profile_topics = {str(k).casefold(): float(v) for k, v in (profile.topic_affinity or {}).items()} if profile else {}
+        skipped_ids = {item.paper_id for item in (activities or []) if item.event_type == "paper_skipped"}
+        completed_ids = {item.paper_id for item in (activities or []) if item.event_type == "paper_completed"}
         profile_topics = {str(k).casefold(): float(v) for k, v in (profile.topic_affinity or {}).items()} if profile else {}
         role = (user.onboarding_role or "curious").casefold()
         role_multiplier = cls.ROLE_WEIGHTS.get(role, 0.85)
@@ -66,6 +69,7 @@ class RecommendationService:
 
             behavioral_score = sum(profile_topics.get(topic.casefold(), 0.0) for topic in paper.topics) if profile_topics else 0.0
             topic_score = min(len(topic_matches), 3) * 3.0 + min(behavioral_score, 6.0)
+            history_adjustment = -8.0 if paper.id in skipped_ids else (-2.0 if paper.id in completed_ids else 0.0)
             goal_score = len(matched_goals) * 2.0 * role_multiplier
             importance_score = paper.importance * 2.0
             difficulty_score = cls._difficulty_fit(paper.difficulty, familiarity)
@@ -73,7 +77,7 @@ class RecommendationService:
             ranked.append(
                 RankedPaper(
                     paper=paper,
-                    score=topic_score + goal_score + importance_score + difficulty_score,
+                    score=topic_score + goal_score + importance_score + difficulty_score + history_adjustment,
                     matched_interests=topic_matches,
                     matched_goals=matched_goals,
                 )
