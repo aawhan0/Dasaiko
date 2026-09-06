@@ -333,7 +333,11 @@ export function MessageInput({
 
           try {
             const pendingPaper = sessionStorage.getItem("dasaiko.pendingStarterPaper");
-            if (pendingPaper) {
+            const completionKey = pendingPaper
+              ? `dasaiko.activity.completed.${pendingPaper}`
+              : null;
+            if (pendingPaper && completionKey && sessionStorage.getItem(completionKey) !== "1") {
+              sessionStorage.setItem(completionKey, "1");
               void record(pendingPaper, "paper_completed");
             }
           } catch {
