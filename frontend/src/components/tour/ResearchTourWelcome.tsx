@@ -17,7 +17,7 @@ export function ResearchTourWelcome({
         initial={{ opacity: 0, y: 12, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-md rounded-3xl border border-white/[0.09] bg-[#0a0a0a] p-8 text-center shadow-[0_40px_120px_rgba(0,0,0,0.7)]"
+        className="pointer-events-auto relative w-full max-w-md rounded-3xl border border-white/[0.09] bg-[#0a0a0a] p-8 text-center shadow-[0_40px_120px_rgba(0,0,0,0.7)]"
       >
         <button
           type="button"
