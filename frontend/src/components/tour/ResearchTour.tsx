@@ -120,11 +120,16 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
     setSelectedDocumentId,
     setSelectedEvidence,
     setSelectedPdf,
+    setTourSidebarOpen,
   } = useWorkspaceStore();
   const { preferences } = useResearchPreferences();
   const [error, setError] = useState<string | null>(null);
   const selectionRef = useRef<string | null>(null);
   const recommendation = recommendResearchDocument(documents, preferences.topics);
+  useEffect(() => {
+    setTourSidebarOpen(true);
+    return () => setTourSidebarOpen(false);
+  }, [setTourSidebarOpen]);
   const fallbackPaper = documents.find((item) => item.status === "ready" && item.filePath);
   const tourPaper = recommendation?.document ?? fallbackPaper;
   const tourTargetSelector = tourPaper
