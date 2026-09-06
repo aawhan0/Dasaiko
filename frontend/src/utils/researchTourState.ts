@@ -17,9 +17,9 @@ export function isResearchTourCompleted(): boolean {
   }
 }
 
-export function markResearchTourActive(): void {
+export function markResearchTourActive(step = "preferences"): void {
   try {
-    localStorage.setItem(TOUR_STORAGE_KEYS.active, "true");
+    localStorage.setItem(TOUR_STORAGE_KEYS.active, step);
   } catch {
     // Ignore storage failures.
   }
