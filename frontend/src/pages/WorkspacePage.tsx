@@ -20,6 +20,10 @@ import { listMessages } from "@/services/messages";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 
 import {
+  HelpCircle,
+} from "lucide-react";
+
+import {
   useEffect,
   useState,
 } from "react";
@@ -222,6 +226,46 @@ export function WorkspacePage() {
           setTourOpen(false);
         }}
       />
+
+      {hasCompletedTour && !tourOpen && (
+        <button
+          type="button"
+          onClick={() => setTourOpen(true)}
+          aria-label="Replay research tour"
+          title="Replay research tour"
+          className="
+            fixed
+            right-5
+            top-16
+            z-50
+            flex
+            h-9
+            items-center
+            gap-2
+            rounded-xl
+            border
+            border-white/[0.10]
+            bg-[#0a0a0a]/90
+            px-3
+            text-[10px]
+            font-semibold
+            text-zinc-500
+            shadow-[0_8px_24px_rgba(0,0,0,0.25)]
+            backdrop-blur-md
+            transition-all
+            duration-200
+            hover:border-white/[0.18]
+            hover:bg-white/[0.06]
+            hover:text-zinc-200
+            focus:outline-none
+            focus:ring-2
+            focus:ring-primary/30
+          "
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+          Tour
+        </button>
+      )}
 
       <div
         className="
