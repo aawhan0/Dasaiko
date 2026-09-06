@@ -123,7 +123,7 @@ function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext
         <div className="flex items-center justify-between"><StepLabel step="question" /><SkipButton onSkip={onFinish} /></div>
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.question.title}</h2>
         <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.question.description}</p>
-        <Navigation onBack={onBack} onNext={onNext} nextLabel="Show me a paper" />
+        <Navigation onBack={onBack} onNext={onNext} nextLabel="Open the research view" />
       </TourCard>
     </ResearchTourOverlay>
   );
@@ -184,7 +184,7 @@ function ViewerStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: 
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.viewer.title}</h2>
         <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.viewer.description}</p>
         {!rect && <p className="mt-3 text-[11px] leading-4 text-zinc-600">Opening the paper viewer…</p>}
-        <Navigation onBack={onBack} onNext={onNext} nextLabel="Try it yourself" />
+        <Navigation onBack={onBack} onNext={onNext} nextLabel="Ask this question" />
       </TourCard>
     </ResearchTourOverlay>
   );
@@ -249,7 +249,7 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
     if (open) {
       const resumeStep = activeStep ?? "preferences";
       setStep(resumeStep);
-      setStarted(false);
+      setStarted(activeStep !== null);
     } else {
       setStarted(false);
     }
@@ -286,9 +286,9 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
   return (
     <AnimatePresence>
       {open && (started ? (
-        step === "preferences" ? <PreferencesStep onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
-        step === "question" ? <QuestionStep onBack={() => setStarted(false)} onNext={() => goToStep("paper")} onFinish={() => finish(false)} /> :
-        step === "paper" ? <PaperStep onBack={() => goToStep("question")} onNext={() => goToStep("viewer")} onFinish={() => finish(false)} /> :
+        step === "preferences" ? <PreferencesStep onNext={() => goToStep("paper")} onFinish={() => finish(false)} /> :
+        step === "paper" ? <PaperStep onBack={() => goToStep("preferences")} onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
+        step === "question" ? <QuestionStep onBack={() => goToStep("paper")} onNext={() => goToStep("viewer")} onFinish={() => finish(false)} /> :
         step === "viewer" ? <ViewerStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
         step === "inference" ? <InferenceStep onBack={() => goToStep("viewer")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
         step === "evidence" ? <EvidenceStep onBack={() => goToStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
