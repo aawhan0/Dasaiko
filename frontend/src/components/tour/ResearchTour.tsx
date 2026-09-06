@@ -230,6 +230,7 @@ function QuestionStep({ onBack, onNext, onFinish, onQuestionSubmitted }: { onBac
         !initialMessageIds.current.has(message.id),
     );
   const hasQuestion = Boolean(submittedQuestion);
+  const processedQuestionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!rect) return;
@@ -239,7 +240,8 @@ function QuestionStep({ onBack, onNext, onFinish, onQuestionSubmitted }: { onBac
   }, [rect]);
 
   useEffect(() => {
-    if (!submittedQuestion) return;
+    if (!submittedQuestion || processedQuestionIdRef.current === submittedQuestion.id) return;
+    processedQuestionIdRef.current = submittedQuestion.id;
 
     try {
       localStorage.setItem(TOUR_STORAGE_KEYS.questionMessage, submittedQuestion.id);
