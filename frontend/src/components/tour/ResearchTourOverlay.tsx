@@ -14,11 +14,11 @@ export function ResearchTourOverlay({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-[2px]"
+      className="pointer-events-none fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-6 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
     >
-      {children}
+      <div className="pointer-events-none contents">{children}</div>
     </motion.div>
   );
 }
