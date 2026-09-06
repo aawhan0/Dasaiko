@@ -2,7 +2,6 @@ export const RESEARCH_TOUR_STEPS = [
   "preferences",
   "paper",
   "question",
-  "viewer",
   "inference",
   "evidence",
   "complete",
