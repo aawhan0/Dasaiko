@@ -133,20 +133,19 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   const rect = useTourTarget('[data-tour="first-document"]', true);
   const {
     documents,
-    activeDocumentId,
     setSelectedDocumentId,
     setSelectedEvidence,
     setSelectedPdf,
   } = useWorkspaceStore();
   const { preferences } = useResearchPreferences();
   const [error, setError] = useState<string | null>(null);
+  const selectionRef = useRef<string | null>(null);
   const recommendation = recommendResearchDocument(documents, preferences.topics);
 
-  useEffect(() => {
-    const selected = activeDocumentId
-      ? documents.find((item) => item.id === activeDocumentId)
-      : undefined;
+  const selectPaper = useCallback((documentId: string) => {
+    if (selectionRef.current === documentId) return;
 
+    const selected = documents.find((item) => item.id === documentId);
     if (!selected) return;
 
     if (selected.status !== "ready" || !selected.filePath) {
@@ -154,28 +153,40 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
       return;
     }
 
+    selectionRef.current = documentId;
     setError(null);
     setSelectedDocumentId(Number(selected.id));
     setSelectedEvidence(null);
     setSelectedPdf(selected.filePath);
 
+    const prompt = buildResearchTourPrompt(selected.title);
     try {
-      const prompt = buildResearchTourPrompt(selected.title);
       localStorage.setItem(TOUR_STORAGE_KEYS.prompt, prompt);
-      window.dispatchEvent(new CustomEvent("dasaiko:tour-prompt", { detail: prompt }));
     } catch {
-      // The tour still works if browser storage is unavailable.
+      // The custom event below keeps the tour working if storage is unavailable.
     }
-
+    window.dispatchEvent(new CustomEvent("dasaiko:tour-prompt", { detail: prompt }));
     onNext();
-  }, [activeDocumentId, documents, onNext, setSelectedDocumentId, setSelectedEvidence, setSelectedPdf]);
+  }, [documents, onNext, setSelectedDocumentId, setSelectedEvidence, setSelectedPdf]);
 
   useEffect(() => {
-    document.querySelector<HTMLElement>('[data-tour="first-document"]')?.scrollIntoView({
-      block: "nearest",
-      behavior: "smooth",
-    });
-  }, [documents.length]);
+    if (!rect) return;
+
+    const target = document.querySelector<HTMLElement>('[data-tour="first-document"]');
+    if (!target) return;
+
+    const handleClick = () => {
+      const documentId = target.dataset.tourDocumentId;
+      if (documentId) selectPaper(documentId);
+    };
+
+    target.addEventListener("click", handleClick);
+    target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+
+    return () => {
+      target.removeEventListener("click", handleClick);
+    };
+  }, [rect, selectPaper]);
 
   const hasReadyPaper = documents.some((item) => item.status === "ready" && item.filePath);
 
@@ -187,20 +198,20 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.paper.title}</h2>
         <p className="mt-2 text-sm leading-5 text-zinc-500">
           {hasReadyPaper
-            ? "Pick any ready paper from your library. Dasaiko will use it to prepare the next step."
+            ? "Pick the highlighted paper in your library to continue."
             : "Your library is still loading a paper. Once a ready paper appears, click it to continue."}
         </p>
         {recommendation && preferences.topics.length > 0 && (
           <div className="mt-4 rounded-xl border border-primary/15 bg-primary/[0.04] px-3.5 py-3">
             <p className="text-[9px] font-semibold uppercase tracking-[0.14em] text-primary/70">Suggested starting point</p>
             <p className="mt-1 truncate text-xs font-medium text-zinc-200">{recommendation.document.title}</p>
-            <p className="mt-1 text-[10px] leading-4 text-zinc-600">Choose it if it matches what you want to explore.</p>
+            <p className="mt-1 text-[10px] leading-4 text-zinc-600">Use it if it matches what you want to explore.</p>
           </div>
         )}
         {error && <p role="alert" className="mt-3 text-[11px] leading-4 text-amber-400">{error}</p>}
         <div className="mt-5 flex items-center justify-between">
           <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
-          <span className="text-[10px] font-medium text-zinc-600">{rect ? "Click a paper to continue" : "Opening your library…"}</span>
+          <span className="text-[10px] font-medium text-zinc-600">{rect ? "Click the highlighted paper" : "Opening your library…"}</span>
         </div>
       </TourCard>
     </ResearchTourOverlay>
