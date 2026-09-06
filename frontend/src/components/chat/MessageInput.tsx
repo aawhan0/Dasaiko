@@ -41,6 +41,10 @@ import {
   mapSources,
 } from "@/mappers/chatMapper";
 
+import {
+  TOUR_STORAGE_KEYS,
+} from "@/components/tour/tourConfig";
+
 
 interface MessageInputProps {
   centered?: boolean;
@@ -55,8 +59,8 @@ export function MessageInput({
 
   const [value, setValue] = useState(() => {
     if (typeof window === "undefined") return "";
-    const tourPrompt = window.localStorage.getItem("dasaiko.tourPrompt");
-    if (tourPrompt) window.localStorage.removeItem("dasaiko.tourPrompt");
+    const tourPrompt = window.localStorage.getItem(TOUR_STORAGE_KEYS.prompt);
+    if (tourPrompt) window.localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
     return tourPrompt ?? "";
   });
 
@@ -65,6 +69,18 @@ export function MessageInput({
     useRef<HTMLTextAreaElement | null>(
       null,
     );
+
+  useEffect(() => {
+    if (!value.trim()) return;
+
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(
+        textareaRef.current.value.length,
+        textareaRef.current.value.length,
+      );
+    });
+  }, []);
 
 
   const fileInputRef =
