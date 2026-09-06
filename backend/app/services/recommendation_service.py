@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from app.data.paper_catalog import PAPER_CATALOG, PaperCatalogEntry
 from app.models.user import User
 from app.models.research_profile import ResearchProfile
+from app.models.research_profile import ResearchProfile
 
 
 @dataclass(frozen=True)
@@ -47,6 +48,7 @@ class RecommendationService:
             if isinstance(value, str) and value.strip()
         }
         familiarity = user.research_familiarity or "new"
+        profile_topics = {str(k).casefold(): float(v) for k, v in (profile.topic_affinity or {}).items()} if profile else {}
         profile_topics = {str(k).casefold(): float(v) for k, v in (profile.topic_affinity or {}).items()} if profile else {}
         role = (user.onboarding_role or "curious").casefold()
         role_multiplier = cls.ROLE_WEIGHTS.get(role, 0.85)
