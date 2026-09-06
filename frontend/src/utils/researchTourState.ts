@@ -4,6 +4,9 @@ export function markResearchTourCompleted(): void {
   try {
     localStorage.setItem(TOUR_STORAGE_KEYS.completed, "true");
     localStorage.removeItem(TOUR_STORAGE_KEYS.active);
+    localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
+    localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
+    localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
   } catch {
     // Completion is best-effort; never block the workspace.
   }
