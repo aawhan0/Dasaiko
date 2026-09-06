@@ -70,6 +70,14 @@ export function OnboardingPage() {
   const [selectedGoals, setSelectedGoals] = useState<Goal[]>([]);
   const [selectedPaper, setSelectedPaper] = useState<StarterPaper | null>(null);
   const { onFileInputChange } = useUpload();
+  const handleLocalFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onFileInputChange(event);
+    if (event.target.files?.length) {
+      if (!user) return;
+      localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({ status: "completed", role, interests: selectedInterests, goals: selectedGoals, starterPaper: null, starterQuestion: null, completedAt: new Date().toISOString() }));
+      navigate("/workspace", { replace: true });
+    }
+  };
 
   const totalSteps = 5;
   const progress = ((step + 1) / totalSteps) * 100;
@@ -285,7 +293,7 @@ export function OnboardingPage() {
                   id="onboarding-local-file"
                   type="file"
                   accept="application/pdf"
-                  onChange={onFileInputChange}
+                  onChange={handleLocalFile}
                   className="hidden"
                 />
               </Question>
