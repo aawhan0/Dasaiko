@@ -449,7 +449,7 @@ function ViewerStep({
 
           <button
             type="button"
-            onClick={onFinish}
+            onClick={() => setStep("inference")}
             className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110"
           >
             Try it yourself
@@ -605,7 +605,7 @@ export function ResearchTour({
           ) : step === "paper" ? (
             <PaperStep
               onBack={() => setStep("question")}
-              onNext={() => setStep("inference")}
+              onNext={() => setStep("viewer")}
               onFinish={finish}
             />
           ) : step === "viewer" ? (
