@@ -73,11 +73,15 @@ class RecommendationService:
             goal_score = len(matched_goals) * 2.0 * role_multiplier
             importance_score = paper.importance * 2.0
             difficulty_score = cls._difficulty_fit(paper.difficulty, familiarity)
+            known_topics = set(profile_topics)
+            prerequisite_score = sum(1.0 for prerequisite in paper.prerequisites if prerequisite.casefold() in known_topics)
+            if paper.prerequisites and familiarity == "new" and prerequisite_score == 0:
+                prerequisite_score -= 1.0
 
             ranked.append(
                 RankedPaper(
                     paper=paper,
-                    score=topic_score + goal_score + importance_score + difficulty_score + exploration_score + history_adjustment,
+                    score=topic_score + goal_score + importance_score + difficulty_score + prerequisite_score + exploration_score + history_adjustment,
                     matched_interests=topic_matches,
                     matched_goals=matched_goals,
                 )
