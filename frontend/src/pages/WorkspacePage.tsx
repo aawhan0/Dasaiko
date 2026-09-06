@@ -206,7 +206,7 @@ export function WorkspacePage() {
 
       <ResearchTour
         open={tourOpen}
-        onStart={() => setTourOpen(false)}
+        onStart={() => undefined}
         onSkip={() => {
           completeTour();
           setTourOpen(false);
