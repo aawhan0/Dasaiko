@@ -8,7 +8,7 @@ import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { recommendResearchDocument } from "@/utils/researchRecommendation";
 import { buildResearchTourPrompt } from "@/utils/researchTourPrompt";
 import { RESEARCH_TOPICS, TOUR_STORAGE_KEYS, type ResearchTourStep } from "./tourConfig";
-import { markResearchTourActive, markResearchTourCompleted } from "@/utils/researchTourState";
+import { clearResearchTourState, markResearchTourActive } from "@/utils/researchTourState";
 import { RESEARCH_TOUR_COPY } from "./tourCopy";
 import { ResearchTourOverlay } from "./ResearchTourOverlay";
 import { ResearchTourWelcome } from "./ResearchTourWelcome";
@@ -299,6 +299,7 @@ function InferenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack
 function EvidenceStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
   const rect = useTourTarget('[data-tour="research-evidence"]', true);
   const { activeEvidence } = useWorkspaceStore();
+  const hasEvidence = activeEvidence.length > 0;
   return (
     <ResearchTourOverlay>
       <Spotlight rect={rect} />
@@ -307,7 +308,14 @@ function EvidenceStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext
         <h2 className="mt-3 text-base font-semibold tracking-tight text-white">{RESEARCH_TOUR_COPY.evidence.title}</h2>
         <p className="mt-2 text-sm leading-5 text-zinc-500">{RESEARCH_TOUR_COPY.evidence.description}</p>
         <p className="mt-3 text-[10px] text-zinc-600">{activeEvidence.length} evidence source{activeEvidence.length === 1 ? "" : "s"} retrieved.</p>
-        <Navigation onBack={onBack} onNext={onNext} nextLabel="Finish tour" />
+        {hasEvidence ? (
+          <Navigation onBack={onBack} onNext={onNext} nextLabel="Finish tour" />
+        ) : (
+          <div className="mt-5 flex items-center justify-between">
+            <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200"><ArrowLeft className="h-3.5 w-3.5" />Back</button>
+            <span className="text-[10px] text-zinc-600">Waiting for evidence…</span>
+          </div>
+        )}
       </TourCard>
     </ResearchTourOverlay>
   );
@@ -324,7 +332,7 @@ function CompletionStep({ onFinish }: { onFinish: () => void }) {
 }
 
 export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
-  const { activeStep, startTour } = useResearchTour();
+  const { activeStep, startTour, completeTour } = useResearchTour();
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState<ResearchTourStep>("preferences");
   const [questionMessageId, setQuestionMessageId] = useState<string | null>(() => {
@@ -352,12 +360,15 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
 
   const finish = useCallback((completed = false) => {
     if (completed) {
-      markResearchTourCompleted();
+      completeTour();
+    } else {
+      clearResearchTourState();
     }
     setStarted(false);
     setStep("preferences");
+    setQuestionMessageId(null);
     onSkip();
-  }, [onSkip]);
+  }, [completeTour, onSkip]);
 
   useEffect(() => {
     if (!open) return;
