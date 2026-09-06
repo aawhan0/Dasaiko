@@ -31,17 +31,14 @@ function QuestionStep({
     };
 
     update();
-    const target = document.querySelector('[data-tour="document-list"]');
-    target?.addEventListener("click", onNext);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
 
     return () => {
-      target?.removeEventListener("click", onNext);
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, []);
+  }, [onNext]);
 
   const spotlightStyle = rect
     ? {
@@ -121,11 +118,11 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
 
   useEffect(() => {
     const update = () => {
-      const element = document.querySelector('[data-tour="document-list"]');
+      const element = document.querySelector('[data-tour="first-document"]');
       setRect(element?.getBoundingClientRect() ?? null);
     };
     update();
-    const target = document.querySelector('[data-tour="document-list"]');
+    const target = document.querySelector('[data-tour="first-document"]');
     target?.addEventListener("click", onNext);
     window.addEventListener("resize", update);
     window.addEventListener("scroll", update, true);
@@ -198,7 +195,8 @@ function ViewerStep({ onBack, onFinish }: { onBack: () => void; onFinish: () => 
     </motion.div>
   </ResearchTourOverlay>;
 }
-\nexport function ResearchTour({
+
+export function ResearchTour({
   open,
   onStart,
   onSkip,
@@ -252,5 +250,4 @@ function ViewerStep({ onBack, onFinish }: { onBack: () => void; onFinish: () => 
         ))}
     </AnimatePresence>
   );
-}
 }
