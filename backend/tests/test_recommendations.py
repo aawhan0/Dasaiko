@@ -41,3 +41,11 @@ def test_personalized_reason_mentions_matching_interest():
     assert matching is not None
     reason = RecommendationService.build_reason(matching)
     assert "interest" in reason.lower()
+
+
+def test_research_path_is_ordered_by_difficulty():
+    from app.services.research_path_service import ResearchPathService
+    path = ResearchPathService.build("Deep Learning")
+    assert path
+    levels = {"Foundational": 0, "Accessible": 1, "Intermediate": 2}
+    assert [levels.get(p.difficulty, 1) for p, _ in path] == sorted(levels.get(p.difficulty, 1) for p, _ in path)
