@@ -113,6 +113,10 @@ export const STARTER_PAPERS: StarterPaper[] = [
 
 const FALLBACK_INTERESTS = ["Machine Learning", "Deep Learning", "Generative AI", "Natural Language Processing", "Computer Vision", "Reinforcement Learning"];
 
+export function getStarterBadge(index: number): string {
+  return index === 0 ? "⭐ Best place to start" : index === 1 ? "Great starting point" : "Good next step";
+}
+
 export function recommendStarterPapers(interests: string[], limit = 3): StarterPaper[] {
   const normalized = (interests.length ? interests : FALLBACK_INTERESTS).map((interest) => interest.trim().toLowerCase()).filter(Boolean);
 
