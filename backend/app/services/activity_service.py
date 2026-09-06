@@ -4,6 +4,13 @@ from app.models.research_activity import ResearchActivity
 
 
 class ResearchActivityService:
+    @classmethod
+    def recent_for_user(cls, db: Session, user_id: int, limit: int = 100):
+        return (db.query(ResearchActivity)
+                .filter(ResearchActivity.user_id == user_id)
+                .order_by(ResearchActivity.created_at.desc())
+                .limit(max(1, min(limit, 500))).all())
+
     ALLOWED_EVENTS = {
         "paper_opened",
         "paper_completed",
