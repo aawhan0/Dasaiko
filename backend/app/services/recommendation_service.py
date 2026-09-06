@@ -4,7 +4,6 @@ from app.data.paper_catalog import PAPER_CATALOG, PaperCatalogEntry
 from app.models.user import User
 from app.models.research_profile import ResearchProfile
 from app.models.research_activity import ResearchActivity
-from app.models.research_profile import ResearchProfile
 
 
 @dataclass(frozen=True)
