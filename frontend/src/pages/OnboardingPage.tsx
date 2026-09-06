@@ -275,6 +275,7 @@ export function OnboardingPage() {
                           {paper.authors} · {paper.year}
                         </span>
                         <span className="mt-4 text-xs font-medium leading-5 text-zinc-500">{paper.reason}</span>
+                        {paper.matchedInterests?.length ? <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.08em] text-primary-300/70">Matches: {paper.matchedInterests.join(" · ")}</span> : null}
                         <span className="mt-auto pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">
                           {paper.difficulty}
                         </span>
