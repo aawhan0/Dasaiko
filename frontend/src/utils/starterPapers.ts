@@ -7,6 +7,7 @@ export interface StarterPaper {
   difficulty: "Foundational" | "Accessible" | "Intermediate";
   starterPriority: "best" | "great" | "good";
   reason: string;
+  matchedInterests?: string[];
   starterQuestion: string;
 }
 
@@ -114,7 +115,7 @@ export function recommendStarterPapers(interests: string[], limit = 3): StarterP
         paper.starterPriority === "best" ? 2 : paper.starterPriority === "great" ? 1 : 0;
 
       return {
-        paper,
+        paper: { ...paper, matchedInterests: paper.topics.filter((topic) => normalized.includes(topic.toLowerCase())) },
         score: matches * 10 + priorityBonus,
         index,
       };
