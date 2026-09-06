@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check, GraduationCap, Lightbulb, Microscope, BriefcaseBusiness, BookOpen, Sparkles } from "lucide-react";
+import { recommendStarterPapers, type StarterPaper } from "@/utils/starterPapers";
+import { ArrowLeft, ArrowRight, Check, GraduationCap, Lightbulb, Microscope, BriefcaseBusiness, BookOpen, Sparkles, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
@@ -63,15 +64,17 @@ export function OnboardingPage() {
   const [role, setRole] = useState<Role | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedGoals, setSelectedGoals] = useState<Goal[]>([]);
+  const [selectedPaper, setSelectedPaper] = useState<StarterPaper | null>(null);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const progress = ((step + 1) / totalSteps) * 100;
 
   const canContinue = useMemo(() => {
     if (step === 0) return true;
     if (step === 1) return role !== null;
     if (step === 2) return selectedInterests.length > 0;
-    return selectedGoals.length > 0;
+    if (step === 3) return selectedGoals.length > 0;
+    return selectedPaper !== null;
   }, [role, selectedGoals.length, selectedInterests.length, step]);
 
   function toggleInterest(value: string) {
@@ -90,6 +93,11 @@ export function OnboardingPage() {
     );
   }
 
+  const starterPapers = useMemo(
+    () => recommendStarterPapers(selectedInterests),
+    [selectedInterests],
+  );
+
   function finish() {
     if (!user) return;
     localStorage.setItem(
@@ -99,6 +107,8 @@ export function OnboardingPage() {
         role,
         interests: selectedInterests,
         goals: selectedGoals,
+        starterPaper: selectedPaper?.id ?? null,
+        starterQuestion: selectedPaper?.starterQuestion ?? null,
         completedAt: new Date().toISOString(),
       }),
     );
@@ -108,6 +118,7 @@ export function OnboardingPage() {
   function next() {
     if (!canContinue) return;
     if (step === totalSteps - 1) {
+      if (!selectedPaper) return;
       finish();
       return;
     }
@@ -211,6 +222,58 @@ export function OnboardingPage() {
                     ? "Select at least one area to continue."
                     : `${selectedInterests.length} area${selectedInterests.length === 1 ? "" : "s"} selected`}
                 </p>
+              </Question>
+            )}
+
+            {step === 4 && (
+              <Question
+                title="Pick your first paper."
+                subtitle="Based on your interests, these are great places to start. You can always bring your own paper later."
+              >
+                <div className="grid gap-3 lg:grid-cols-3">
+                  {starterPapers.map((paper, index) => {
+                    const selected = selectedPaper?.id === paper.id;
+                    const badge =
+                      index === 0
+                        ? "⭐ Best place to start"
+                        : index === 1
+                          ? "Great starting point"
+                          : "Good next step";
+
+                    return (
+                      <button
+                        key={paper.id}
+                        type="button"
+                        onClick={() => setSelectedPaper(paper)}
+                        className={`relative flex min-h-[280px] flex-col rounded-2xl border p-5 text-left transition-all duration-200 active:scale-[0.99] ${
+                          selected
+                            ? "border-primary/60 bg-primary/[0.11] shadow-glow-sm"
+                            : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.045]"
+                        }`}
+                      >
+                        <span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.09] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-primary-200">
+                          <Star className="h-3 w-3 fill-current" />
+                          {badge}
+                        </span>
+                        <span className="text-lg font-extrabold leading-6 text-white">{paper.title}</span>
+                        <span className="mt-2 text-xs font-semibold text-zinc-500">
+                          {paper.authors} · {paper.year}
+                        </span>
+                        <span className="mt-4 text-xs font-medium leading-5 text-zinc-500">{paper.reason}</span>
+                        <span className="mt-auto pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">
+                          {paper.difficulty}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPaper(null)}
+                  className="mt-5 text-xs font-bold text-zinc-500 underline decoration-white/10 underline-offset-4 transition hover:text-zinc-300"
+                >
+                  Use a local file instead
+                </button>
               </Question>
             )}
 
