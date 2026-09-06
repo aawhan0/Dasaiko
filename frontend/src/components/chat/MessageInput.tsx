@@ -71,15 +71,35 @@ export function MessageInput({
     );
 
   useEffect(() => {
-    if (!value.trim()) return;
+    const handleTourPrompt = (event: Event) => {
+      const prompt = (event as CustomEvent<string>).detail;
+      if (typeof prompt !== "string" || !prompt.trim()) return;
 
-    requestAnimationFrame(() => {
-      textareaRef.current?.focus();
-      textareaRef.current?.setSelectionRange(
-        textareaRef.current.value.length,
-        textareaRef.current.value.length,
-      );
-    });
+      setValue(prompt);
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.setSelectionRange(
+          prompt.length,
+          prompt.length,
+        );
+      });
+    };
+
+    window.addEventListener("dasaiko:tour-prompt", handleTourPrompt);
+
+    if (value.trim()) {
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.setSelectionRange(
+          textareaRef.current.value.length,
+          textareaRef.current.value.length,
+        );
+      });
+    }
+
+    return () => {
+      window.removeEventListener("dasaiko:tour-prompt", handleTourPrompt);
+    };
   }, []);
 
 
