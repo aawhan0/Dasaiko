@@ -26,16 +26,14 @@ import {
   useState,
 } from "react";
 
-import { onboardingStorageKey } from "@/pages/OnboardingPage";
 
 
 function userStarterData(): { starterPaper?: string; starterQuestion?: string } | null {
   try {
-    const rawUser = localStorage.getItem("dasaiko.auth.user");
-    if (!rawUser) return null;
-    const user = JSON.parse(rawUser);
-    const onboarding = localStorage.getItem(onboardingStorageKey(Number(user.id)));
-    return onboarding ? JSON.parse(onboarding) : null;
+    const paper = sessionStorage.getItem("dasaiko.pendingStarterPaper");
+    const question = sessionStorage.getItem("dasaiko.pendingStarterQuestion");
+    if (!paper && !question) return null;
+    return { starterPaper: paper ?? undefined, starterQuestion: question ?? undefined };
   } catch {
     return null;
   }
