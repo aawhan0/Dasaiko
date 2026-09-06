@@ -212,7 +212,7 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
   );
 }
 
-function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
+function QuestionStep({ onBack, onNext, onFinish, onQuestionSubmitted }: { onBack: () => void; onNext: () => void; onFinish: () => void; onQuestionSubmitted: (messageId: string) => void }) {
   const rect = useTourTarget('[data-tour="research-question"]', true);
   const { messages } = useWorkspaceStore();
   const initialCount = useRef(messages.length);
@@ -237,8 +237,9 @@ function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext
       // The tour can still continue during storage failures.
     }
 
+    onQuestionSubmitted(submittedQuestion.id);
     onNext();
-  }, [hasQuestion, messages, onNext]);
+  }, [hasQuestion, messages, onNext, onQuestionSubmitted]);
 
   return (
     <ResearchTourOverlay>
@@ -257,17 +258,9 @@ function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext
   );
 }
 
-function InferenceStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
+function InferenceStep({ onBack, onNext, onFinish, questionMessageId }: { onBack: () => void; onNext: () => void; onFinish: () => void; questionMessageId: string | null }) {
   const rect = useTourTarget('[data-tour="research-question"]', true);
   const { messages } = useWorkspaceStore();
-  const [questionMessageId] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(TOUR_STORAGE_KEYS.questionMessage);
-    } catch {
-      return null;
-    }
-  });
-
   const questionIndex = questionMessageId
     ? messages.findIndex((message) => message.id === questionMessageId)
     : -1;
@@ -329,6 +322,13 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
   const { activeStep, startTour } = useResearchTour();
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState<ResearchTourStep>("preferences");
+  const [questionMessageId, setQuestionMessageId] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(TOUR_STORAGE_KEYS.questionMessage);
+    } catch {
+      return null;
+    }
+  });
 
   useEffect(() => {
     if (open) {
@@ -373,8 +373,8 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
       {open && (started ? (
         step === "preferences" ? <PreferencesStep onNext={() => goToStep("paper")} onFinish={() => finish(false)} /> :
         step === "paper" ? <PaperStep onBack={() => goToStep("preferences")} onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
-        step === "question" ? <QuestionStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
-        step === "inference" ? <InferenceStep onBack={() => goToStep("question")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
+        step === "question" ? <QuestionStep onBack={() => goToStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} onQuestionSubmitted={setQuestionMessageId} /> :
+        step === "inference" ? <InferenceStep onBack={() => goToStep("question")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} questionMessageId={questionMessageId} /> :
         step === "evidence" ? <EvidenceStep onBack={() => goToStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
         <CompletionStep onFinish={() => finish(true)} />
       ) : (
@@ -383,6 +383,12 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
             markResearchTourActive();
             startTour("preferences");
             setStep("preferences");
+            setQuestionMessageId(null);
+            try {
+              localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
+            } catch {
+              // Ignore storage failures.
+            }
             setStarted(true);
             onStart();
           }}
