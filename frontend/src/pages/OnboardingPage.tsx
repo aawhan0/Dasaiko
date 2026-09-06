@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { recommendStarterPapers, type StarterPaper } from "@/utils/starterPapers";
 import { ArrowLeft, ArrowRight, Check, GraduationCap, Lightbulb, Microscope, BriefcaseBusiness, BookOpen, Sparkles, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useUpload } from "@/hooks/useUpload";
 import { useAuth } from "@/context/AuthContext";
 
 export const ONBOARDING_STORAGE_PREFIX = "dasaiko.onboarding.v1";
@@ -65,6 +66,7 @@ export function OnboardingPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedGoals, setSelectedGoals] = useState<Goal[]>([]);
   const [selectedPaper, setSelectedPaper] = useState<StarterPaper | null>(null);
+  const { onFileInputChange } = useUpload();
 
   const totalSteps = 5;
   const progress = ((step + 1) / totalSteps) * 100;
@@ -269,11 +271,18 @@ export function OnboardingPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedPaper(null)}
+                  onClick={() => document.getElementById("onboarding-local-file")?.click()}
                   className="mt-5 text-xs font-bold text-zinc-500 underline decoration-white/10 underline-offset-4 transition hover:text-zinc-300"
                 >
                   Use a local file instead
                 </button>
+                <input
+                  id="onboarding-local-file"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={onFileInputChange}
+                  className="hidden"
+                />
               </Question>
             )}
 
