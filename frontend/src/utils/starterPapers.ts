@@ -105,7 +105,7 @@ export const STARTER_PAPERS: StarterPaper[] = [
 export function recommendStarterPapers(interests: string[], limit = 3): StarterPaper[] {
   const normalized = interests.map((interest) => interest.trim().toLowerCase()).filter(Boolean);
 
-  return STARTER_PAPERS
+  const ranked = STARTER_PAPERS
     .map((paper, index) => {
       const matches = paper.topics.filter((topic) =>
         normalized.some((interest) => interest === topic.toLowerCase()),
@@ -120,7 +120,17 @@ export function recommendStarterPapers(interests: string[], limit = 3): StarterP
         index,
       };
     })
-    .sort((a, b) => b.score - a.score || a.index - b.index)
-    .slice(0, limit)
-    .map(({ paper }) => paper);
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const picked: StarterPaper[] = [];
+  const usedTopics = new Set<string>();
+  for (const candidate of ranked) {
+    const addsNewTopic = candidate.paper.topics.some((topic) => normalized.includes(topic.toLowerCase()) && !usedTopics.has(topic));
+    if (addsNewTopic || picked.length < 1) {
+      picked.push(candidate.paper);
+      candidate.paper.topics.forEach((topic) => usedTopics.add(topic));
+    }
+    if (picked.length === limit) break;
+  }
+  return picked.length === limit ? picked : ranked.slice(0, limit).map(({ paper }) => paper);
 }
