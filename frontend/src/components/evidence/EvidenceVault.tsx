@@ -79,6 +79,7 @@ export function EvidenceVault({
       variants={fadeIn}
       initial="hidden"
       animate="visible"
+      data-tour="research-evidence"
       className="
         flex
         h-full
