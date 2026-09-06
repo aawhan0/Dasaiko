@@ -138,6 +138,9 @@ interface WorkspaceState {
 
   sidebarOpen:
     boolean;
+
+  tourSidebarOpen:
+    boolean;
 }
 
 
@@ -212,6 +215,10 @@ interface WorkspaceActions {
   closeSidebar: () => void;
 
   toggleSidebar: () => void;
+
+  setTourSidebarOpen: (
+    value: boolean,
+  ) => void;
 
   addDocument: (
     doc: Document,
@@ -401,6 +408,11 @@ export function WorkspaceProvider({
   const [
     sidebarOpen,
     setSidebarOpen,
+  ] = useState(false);
+
+  const [
+    tourSidebarOpen,
+    setTourSidebarOpenState,
   ] = useState(false);
 
 
@@ -988,6 +1000,17 @@ export function WorkspaceProvider({
     );
 
 
+  const setTourSidebarOpen =
+    useCallback(
+      (
+        value: boolean,
+      ) => {
+        setTourSidebarOpenState(value);
+      },
+      [],
+    );
+
+
   /* =========================================================
      ADD DOCUMENT
   ========================================================= */
@@ -1152,6 +1175,10 @@ export function WorkspaceProvider({
           false,
         );
 
+        setTourSidebarOpenState(
+          false,
+        );
+
 
         /*
          * DO NOT clear:
@@ -1200,6 +1227,8 @@ export function WorkspaceProvider({
 
         sidebarOpen,
 
+        tourSidebarOpen,
+
         setActiveConversation,
 
         setActiveDocument,
@@ -1233,6 +1262,8 @@ export function WorkspaceProvider({
         closeSidebar,
 
         toggleSidebar,
+
+        setTourSidebarOpen,
 
         addDocument,
 
