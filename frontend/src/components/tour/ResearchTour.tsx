@@ -249,12 +249,12 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
     setStarted(false);
     setStep("preferences");
     onSkip();
-  }, [onSkip]);
+  }, [onSkip, onStepChange]);
 
   useEffect(() => {
     if (!open) {
       setStarted(false);
-      setStep("preferences");
+      setStep(initialStep);
       return;
     }
 
@@ -267,17 +267,17 @@ export function ResearchTour({ open, onStart, onSkip }: ResearchTourProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [finish, open]);
+  }, [finish, initialStep, open]);
 
   return (
     <AnimatePresence>
       {open && (started ? (
-        step === "preferences" ? <PreferencesStep onNext={() => setStep("question")} onFinish={() => finish(false)} /> :
-        step === "question" ? <QuestionStep onBack={() => setStarted(false)} onNext={() => setStep("paper")} onFinish={() => finish(false)} /> :
-        step === "paper" ? <PaperStep onBack={() => setStep("question")} onNext={() => setStep("viewer")} onFinish={() => finish(false)} /> :
-        step === "viewer" ? <ViewerStep onBack={() => setStep("paper")} onNext={() => setStep("inference")} onFinish={() => finish(false)} /> :
-        step === "inference" ? <InferenceStep onBack={() => setStep("viewer")} onNext={() => setStep("evidence")} onFinish={() => finish(false)} /> :
-        step === "evidence" ? <EvidenceStep onBack={() => setStep("inference")} onNext={() => setStep("complete")} onFinish={() => finish(false)} /> :
+        step === "preferences" ? <PreferencesStep onNext={() => goToStep("question")} onFinish={() => finish(false)} /> :
+        step === "question" ? <QuestionStep onBack={() => setStarted(false)} onNext={() => goToStep("paper")} onFinish={() => finish(false)} /> :
+        step === "paper" ? <PaperStep onBack={() => goToStep("question")} onNext={() => goToStep("viewer")} onFinish={() => finish(false)} /> :
+        step === "viewer" ? <ViewerStep onBack={() => setStep("paper")} onNext={() => goToStep("inference")} onFinish={() => finish(false)} /> :
+        step === "inference" ? <InferenceStep onBack={() => setStep("viewer")} onNext={() => goToStep("evidence")} onFinish={() => finish(false)} /> :
+        step === "evidence" ? <EvidenceStep onBack={() => setStep("inference")} onNext={() => goToStep("complete")} onFinish={() => finish(false)} /> :
         <CompletionStep onFinish={() => finish(true)} />
       ) : (
         <ResearchTourWelcome onStart={() => { markResearchTourActive(); setStarted(true); setStep("preferences"); onStart(); }} onSkip={() => finish(false)} />
