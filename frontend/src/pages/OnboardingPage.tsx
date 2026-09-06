@@ -1,5 +1,7 @@
-import { useMemo, useState, type ChangeEvent, type ReactNode } from "react";
-import { getStarterBadge, recommendStarterPapers, type StarterPaper } from "@/utils/starterPapers";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { getStarterBadge, type StarterPaper } from "@/utils/starterPapers";
+import { getStarterRecommendations, type StarterPaperRecommendation } from "@/services/recommendations";
+import { updateResearchProfile } from "@/services/auth";
 import { ArrowLeft, ArrowRight, Check, GraduationCap, Lightbulb, Microscope, BookOpen, Sparkles, Star, Compass, FlaskConical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useUpload } from "@/hooks/useUpload";
@@ -61,12 +63,15 @@ export function OnboardingPage() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedGoals, setSelectedGoals] = useState<Goal[]>([]);
   const [researchFamiliarity, setResearchFamiliarity] = useState<ResearchFamiliarity | null>(null);
-  const [selectedPaper, setSelectedPaper] = useState<StarterPaper | null>(null);
+  const [selectedPaper, setSelectedPaper] = useState<StarterPaperRecommendation | null>(null);
+  const [starterPapers, setStarterPapers] = useState<StarterPaperRecommendation[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+  const [recommendationError, setRecommendationError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const { onFileInputChange } = useUpload();
 
   const totalSteps = 6;
   const progress = ((step + 1) / totalSteps) * 100;
-  const starterPapers = useMemo(() => recommendStarterPapers(selectedInterests), [selectedInterests]);
 
   const canContinue = useMemo(() => {
     if (step === 0) return true;
@@ -74,43 +79,110 @@ export function OnboardingPage() {
     if (step === 2) return selectedInterests.length > 0;
     if (step === 3) return researchFamiliarity !== null;
     if (step === 4) return selectedGoals.length > 0;
-    return selectedPaper !== null;
-  }, [role, researchFamiliarity, selectedGoals.length, selectedInterests.length, selectedPaper, step]);
+    return selectedPaper !== null && !isSaving;
+  }, [role, researchFamiliarity, selectedGoals.length, selectedInterests.length, selectedPaper, step, isSaving]);
+
+  useEffect(() => {
+    if (step !== 5 || !role || !researchFamiliarity || selectedInterests.length === 0 || selectedGoals.length === 0 || starterPapers.length > 0) return;
+
+    let active = true;
+    setIsLoadingRecommendations(true);
+    setRecommendationError(null);
+
+    updateResearchProfile({
+      role,
+      interests: selectedInterests,
+      goals: selectedGoals,
+      research_familiarity: researchFamiliarity,
+      onboarding_completed: false,
+    })
+      .then(() => getStarterRecommendations())
+      .then((recommendations) => {
+        if (active) {
+          setStarterPapers(recommendations);
+          setSelectedPaper(null);
+        }
+      })
+      .catch(() => {
+        if (active) setRecommendationError("We couldn't load personalized recommendations. Please try again.");
+      })
+      .finally(() => {
+        if (active) setIsLoadingRecommendations(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [step, role, researchFamiliarity, selectedInterests, selectedGoals, starterPapers.length]);
 
   function toggleInterest(value: string) {
     setSelectedInterests((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+    setStarterPapers([]);
+    setSelectedPaper(null);
   }
 
   function toggleGoal(value: Goal) {
     setSelectedGoals((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
+    setStarterPapers([]);
+    setSelectedPaper(null);
   }
 
-  function finish() {
-    if (!user || !selectedPaper) return;
-    sessionStorage.setItem("dasaiko.pendingStarterPaper", selectedPaper.id);
-    sessionStorage.setItem("dasaiko.pendingStarterQuestion", selectedPaper.starterQuestion);
-    localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({
-      status: "completed", role, interests: selectedInterests, goals: selectedGoals, researchFamiliarity,
-      starterPaper: selectedPaper.id, starterQuestion: selectedPaper.starterQuestion, completedAt: new Date().toISOString(),
-    }));
-    navigate("/workspace", { replace: true });
+  async function finish() {
+    if (!user || !selectedPaper || !role || !researchFamiliarity) return;
+    setIsSaving(true);
+
+    try {
+      await updateResearchProfile({
+        role,
+        interests: selectedInterests,
+        goals: selectedGoals,
+        research_familiarity: researchFamiliarity,
+        onboarding_completed: true,
+      });
+
+      sessionStorage.setItem("dasaiko.pendingStarterPaper", selectedPaper.paper_id);
+      sessionStorage.setItem("dasaiko.pendingStarterQuestion", selectedPaper.starter_question);
+      localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({
+        status: "completed",
+        role,
+        interests: selectedInterests,
+        goals: selectedGoals,
+        researchFamiliarity,
+        starterPaper: selectedPaper.paper_id,
+        starterQuestion: selectedPaper.starter_question,
+        completedAt: new Date().toISOString(),
+      }));
+
+      navigate("/workspace", { replace: true });
+    } catch {
+      setRecommendationError("We couldn't save your research profile. Please try again.");
+      setIsSaving(false);
+    }
   }
 
   function handleLocalFile(event: ChangeEvent<HTMLInputElement>) {
+    if (!event.target.files?.length || !user || !role || !researchFamiliarity) return;
     onFileInputChange(event);
-    if (!event.target.files?.length || !user) return;
-    localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({
-      status: "completed", role, interests: selectedInterests, goals: selectedGoals, researchFamiliarity,
-      starterPaper: null, starterQuestion: null, completedAt: new Date().toISOString(),
-    }));
-    sessionStorage.removeItem("dasaiko.pendingStarterPaper");
-    sessionStorage.removeItem("dasaiko.pendingStarterQuestion");
-    navigate("/workspace", { replace: true });
+    void updateResearchProfile({
+      role,
+      interests: selectedInterests,
+      goals: selectedGoals,
+      research_familiarity: researchFamiliarity,
+      onboarding_completed: true,
+    }).then(() => {
+      localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({
+        status: "completed", role, interests: selectedInterests, goals: selectedGoals, researchFamiliarity,
+        starterPaper: null, starterQuestion: null, completedAt: new Date().toISOString(),
+      }));
+      sessionStorage.removeItem("dasaiko.pendingStarterPaper");
+      sessionStorage.removeItem("dasaiko.pendingStarterQuestion");
+      navigate("/workspace", { replace: true });
+    });
   }
 
   function next() {
     if (!canContinue) return;
-    if (step === totalSteps - 1) { finish(); return; }
+    if (step === totalSteps - 1) { void finish(); return; }
     setStep((current) => current + 1);
   }
 
@@ -132,14 +204,19 @@ export function OnboardingPage() {
             {step === 2 && <Question title="What are you interested in?" subtitle="Pick the AI/ML areas you want to explore. Choose as many as you like."><div className="flex flex-wrap gap-2">{interests.map((interest) => { const selected = selectedInterests.includes(interest); return <button key={interest} type="button" onClick={() => toggleInterest(interest)} className={`rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 active:scale-[0.98] ${selected ? "border-primary/60 bg-primary/[0.14] text-white shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] text-zinc-400 hover:border-white/[0.16] hover:bg-white/[0.045] hover:text-zinc-200"}`}>{selected && <Check className="mr-2 inline h-3.5 w-3.5 text-primary-300" />}{interest}</button>; })}</div><p className="mt-5 text-xs font-medium text-zinc-600">{selectedInterests.length === 0 ? "Select at least one area to continue." : `${selectedInterests.length} area${selectedInterests.length === 1 ? "" : "s"} selected`}</p></Question>}
             {step === 3 && <Question title="How familiar are you with research papers?" subtitle="No right or wrong answer — this helps us choose the right starting point for you."><div className="grid gap-3">{researchFamiliarityOptions.map((item) => { const Icon = item.icon; return <ChoiceCard key={item.id} selected={researchFamiliarity === item.id} onClick={() => setResearchFamiliarity(item.id)} icon={<Icon className="h-5 w-5" />} title={item.title} description={item.description} />; })}</div></Question>}
             {step === 4 && <Question title="What do you want to do with Dasaiko?" subtitle="Choose what would make Dasaiko useful to you."><div className="grid gap-3">{goals.map((goal) => { const selected = selectedGoals.includes(goal.id); const Icon = goal.icon; return <button key={goal.id} type="button" onClick={() => toggleGoal(goal.id)} className={`flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/50 bg-primary/[0.10] text-white shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] text-zinc-300 hover:border-white/[0.15] hover:bg-white/[0.045]"}`}><span className="flex items-center gap-3 text-sm font-semibold"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-primary/15 text-primary-200" : "bg-white/[0.04] text-zinc-500"}`}><Icon className="h-4 w-4" /></span>{goal.label}</span><span className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${selected ? "border-primary bg-primary text-white" : "border-white/[0.14] text-transparent"}`}><Check className="h-3.5 w-3.5" /></span></button>; })}</div></Question>}
-            {step === 5 && <Question title="Pick your first paper." subtitle="Based on your interests, these are great places to start. You can always bring your own paper later."><div className="grid gap-3 lg:grid-cols-3">{starterPapers.map((paper, index) => { const selected = selectedPaper?.id === paper.id; return <button key={paper.id} type="button" onClick={() => setSelectedPaper(paper)} aria-pressed={selected} aria-label={`Start with ${paper.title}`} className={`relative flex min-h-[240px] flex-col rounded-2xl border p-5 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/60 bg-primary/[0.11] shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.045]"}`}><span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.09] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-primary-200"><Star className="h-3 w-3 fill-current" />{getStarterBadge(index)}</span><span className="text-lg font-extrabold leading-6 text-white">{paper.title}</span><span className="mt-2 text-xs font-semibold text-zinc-500">{paper.authors} · {paper.year}</span><span className="mt-4 text-xs font-medium leading-5 text-zinc-500">{paper.reason}</span>{paper.matchedInterests?.length ? <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.08em] text-primary-300/70">Matches: {paper.matchedInterests.join(" · ")}</span> : null}<span className="mt-auto pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">{paper.difficulty}</span></button>; })}</div><button type="button" onClick={() => document.getElementById("onboarding-local-file")?.click()} className="mt-5 text-xs font-bold text-zinc-500 underline decoration-white/10 underline-offset-4 transition hover:text-zinc-300">Use a local file instead</button><input id="onboarding-local-file" type="file" accept="application/pdf" onChange={handleLocalFile} className="hidden" /></Question>}
+            {step === 5 && <Question title="Pick your first paper." subtitle="These recommendations use your interests, goals, and research familiarity."><div className="grid gap-3 lg:grid-cols-3">{isLoadingRecommendations ? <div className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-8 text-center text-sm text-zinc-500">Personalizing your starting papers…</div> : recommendationError ? <div className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-8 text-center text-sm text-zinc-500">{recommendationError}</div> : starterPapers.map((paper, index) => { const selected = selectedPaper?.paper_id === paper.paper_id; return <button key={paper.paper_id} type="button" onClick={() => setSelectedPaper(paper)} aria-pressed={selected} aria-label={`Start with ${paper.title}`} className={`relative flex min-h-[240px] flex-col rounded-2xl border p-5 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/60 bg-primary/[0.11] shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.045]"}`}><span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.09] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-primary-200"><Star className="h-3 w-3 fill-current" />{getStarterBadge(index)}</span><span className="text-lg font-extrabold leading-6 text-white">{paper.title}</span><span className="mt-2 text-xs font-semibold text-zinc-500">{paper.authors} · {paper.year}</span><span className="mt-4 text-xs font-medium leading-5 text-zinc-500">{paper.reason}</span>{paper.matched_interests.length ? <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.08em] text-primary-300/70">Matches: {paper.matched_interests.join(" · ")}</span> : null}<span className="mt-auto pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">{paper.difficulty}</span></button>})}</div><button type="button" onClick={() => document.getElementById("onboarding-local-file")?.click()} className="mt-5 text-xs font-bold text-zinc-500 underline decoration-white/10 underline-offset-4 transition hover:text-zinc-300">Use a local file instead</button><input id="onboarding-local-file" type="file" accept="application/pdf" onChange={handleLocalFile} className="hidden" /></Question>}
           </div>
         </section>
-        <footer className={`mx-auto flex w-full max-w-3xl items-center justify-between border-t border-white/[0.06] pt-5 ${step === 0 ? "invisible" : ""}`}><button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-600 transition hover:bg-white/[0.04] hover:text-zinc-300 disabled:invisible"><ArrowLeft className="h-4 w-4" />Back</button><div className="hidden text-center sm:block"><p className="text-[10px] font-semibold text-zinc-700">Your choices shape your starting experience.</p></div><button type="button" onClick={next} disabled={!canContinue} className="group flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-extrabold text-black transition-all duration-200 hover:scale-[1.01] hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:scale-100">{step === totalSteps - 1 ? "Start researching" : "Continue"}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></button></footer>
+        <footer className={`mx-auto flex w-full max-w-3xl items-center justify-between border-t border-white/[0.06] pt-5 ${step === 0 ? "invisible" : ""}`}><button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0 || isSaving} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-600 transition hover:bg-white/[0.04] hover:text-zinc-300 disabled:invisible"><ArrowLeft className="h-4 w-4" />Back</button><div className="hidden text-center sm:block"><p className="text-[10px] font-semibold text-zinc-700">Your choices shape your starting experience.</p></div><button type="button" onClick={next} disabled={!canContinue} className="group flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-extrabold text-black transition-all duration-200 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "Saving…" : step === totalSteps - 1 ? "Start researching" : "Continue"}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></button></footer>
       </div>
     </main>
   );
 }
 
-function Question({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) { return <div><div className="mb-8"><h1 className="font-heading text-3xl font-extrabold tracking-[-0.045em] text-white sm:text-5xl">{title}</h1><p className="mt-3 text-sm font-medium leading-6 text-zinc-500">{subtitle}</p></div>{children}</div>; }
-function ChoiceCard({ selected, onClick, icon, title, description }: { selected: boolean; onClick: () => void; icon: ReactNode; title: string; description: string }) { return <button type="button" onClick={onClick} className={`group flex items-center gap-4 rounded-2xl border px-5 py-4 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/55 bg-primary/[0.10] shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.045]"}`}><span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border transition ${selected ? "border-primary/30 bg-primary/15 text-primary-300" : "border-white/[0.08] bg-white/[0.035] text-zinc-500 group-hover:text-zinc-300"}`}>{icon}</span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-white">{title}</span><span className="mt-1 block text-xs font-medium leading-5 text-zinc-500">{description}</span></span><span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${selected ? "border-primary bg-primary text-white" : "border-white/[0.12] text-transparent"}`}><Check className="h-3.5 w-3.5" /></span></button>; }
+function Question({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
+  return <div><div className="mb-6"><h2 className="font-heading text-2xl font-extrabold tracking-[-0.04em] text-white sm:text-3xl">{title}</h2><p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-zinc-500">{subtitle}</p></div>{children}</div>;
+}
+
+function ChoiceCard({ selected, onClick, icon, title, description }: { selected: boolean; onClick: () => void; icon: ReactNode; title: string; description: string }) {
+  return <button type="button" onClick={onClick} className={`flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/50 bg-primary/[0.10] text-white shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] text-zinc-300 hover:border-white/[0.15] hover:bg-white/[0.045]"}`}><span className="flex items-center gap-3"><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-primary/15 text-primary-200" : "bg-white/[0.04] text-zinc-500"}`}>{icon}</span><span><span className="block text-sm font-semibold">{title}</span><span className="mt-1 block text-xs font-medium text-zinc-500">{description}</span></span></span><span className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${selected ? "border-primary bg-primary text-white" : "border-white/[0.14] text-transparent"}`}><Check className="h-3.5 w-3.5" /></span></button>;
+}
