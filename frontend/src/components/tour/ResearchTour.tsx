@@ -195,7 +195,8 @@ function PaperStep({
     }
 
     const handleClick = () => {
-      const firstDocument = documents[0];
+      const documentId = target.dataset.tourDocumentId;
+      const firstDocument = documents.find((document) => document.id === documentId) ?? documents[0];
 
       if (!firstDocument?.filePath) {
         setError(
