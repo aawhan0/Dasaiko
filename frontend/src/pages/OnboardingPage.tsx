@@ -248,12 +248,7 @@ export function OnboardingPage() {
                 <div className="grid gap-3 lg:grid-cols-3">
                   {starterPapers.map((paper, index) => {
                     const selected = selectedPaper?.id === paper.id;
-                    const badge =
-                      index === 0
-                        ? "⭐ Best place to start"
-                        : index === 1
-                          ? "Great starting point"
-                          : "Good next step";
+                    const badge = index === 0 ? "Best place to start" : index === 1 ? "Great starting point" : "Good next step";
 
                     return (
                       <button
@@ -268,7 +263,7 @@ export function OnboardingPage() {
                       >
                         <span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.09] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-primary-200">
                           <Star className="h-3 w-3 fill-current" />
-                          {badge}
+                          {index === 0 ? "⭐ " : ""}{badge}
                         </span>
                         <span className="text-lg font-extrabold leading-6 text-white">{paper.title}</span>
                         <span className="mt-2 text-xs font-semibold text-zinc-500">
