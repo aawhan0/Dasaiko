@@ -5,6 +5,7 @@ from app.core.dependencies import get_current_user
 from app.db.dependencies import get_db
 from app.models.user import User
 from app.models.research_profile import ResearchProfile
+from app.models.research_activity import ResearchActivity
 from app.schemas.recommendations import (
     StarterPaperRecommendation,
     StarterRecommendationsResponse,
@@ -27,11 +28,13 @@ def get_starter_recommendations(
     db: Session = Depends(get_db),
 ):
     profile = db.query(ResearchProfile).filter(ResearchProfile.user_id == current_user.id).first()
+    activities = db.query(ResearchActivity).filter(ResearchActivity.user_id == current_user.id).all()
 
     ranked = RecommendationService.rank_starter_papers(
         current_user,
         limit=3,
         profile=profile,
+        activities=activities,
     )
 
     return StarterRecommendationsResponse(
