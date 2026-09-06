@@ -17,6 +17,7 @@ from app.api.diagnostics import router as diagnostics_router
 from app.api.profile import router as profile_router
 from app.api.recommendations import router as recommendations_router
 from app.api.activity import router as activity_router
+from app.api.research import router as research_router
 
 
 app = FastAPI(
@@ -81,6 +82,7 @@ app.include_router(diagnostics_router)
 app.include_router(profile_router)
 app.include_router(recommendations_router)
 app.include_router(activity_router)
+app.include_router(research_router)
 
 
 @app.get("/")
