@@ -205,8 +205,12 @@ export function WorkspacePage() {
     );
 
 
+  const researchPathStage = getResearchPathStage(Boolean(activeDocumentId || selectedPdf), hasQuestion, hasAssistantResponse);
+
   return (
     <AppShell>
+
+      <ResearchPath stage={researchPathStage} />
 
       <ResearchTour
         open={tourOpen}
