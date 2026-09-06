@@ -13,7 +13,10 @@ export function onboardingStorageKey(userId: number) {
 
 export function hasCompletedOnboarding(userId: number | undefined) {
   if (!userId) return false;
-  return localStorage.getItem(onboardingStorageKey(userId)) === "completed";
+  const raw = localStorage.getItem(onboardingStorageKey(userId));
+  if (!raw) return false;
+  if (raw === "completed") return true;
+  try { return JSON.parse(raw)?.status === "completed"; } catch { return false; }
 }
 
 type Role = "student" | "educator" | "researcher" | "curious" | "professional";
