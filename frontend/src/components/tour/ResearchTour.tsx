@@ -21,8 +21,6 @@ interface ResearchTourProps {
 
 function useTourTarget(selector: string, enabled: boolean) {
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const frameRef = useRef<number | null>(null);
-
   const update = useCallback(() => {
     if (!enabled) {
       setRect(null);
