@@ -105,6 +105,8 @@ export function OnboardingPage() {
 
   function finish() {
     if (!user) return;
+    sessionStorage.setItem("dasaiko.pendingStarterPaper", selectedPaper.id);
+    sessionStorage.setItem("dasaiko.pendingStarterQuestion", selectedPaper.starterQuestion);
     localStorage.setItem(
       onboardingStorageKey(user.id),
       JSON.stringify({
