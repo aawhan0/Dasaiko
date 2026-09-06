@@ -8,6 +8,7 @@ from app.schemas.auth import (
     ResearchProfileResponse,
     ResearchProfileUpdateRequest,
 )
+from app.services.research_profile_service import ResearchProfileService
 
 
 router = APIRouter(
@@ -48,7 +49,13 @@ def update_profile(
     current_user.research_familiarity = request.research_familiarity
 
     db.add(current_user)
-    db.commit()
+    db.flush()
+
+    ResearchProfileService.sync_from_onboarding(
+        db=db,
+        user=current_user,
+    )
+
     db.refresh(current_user)
 
     return ResearchProfileResponse(
