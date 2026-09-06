@@ -55,6 +55,16 @@ class ResearchProfileService:
         return profile
 
     @staticmethod
+    def _confidence_by_topic(activities, catalog_by_id):
+        confidence = defaultdict(float)
+        for activity in activities:
+            paper = catalog_by_id.get(activity.paper_id)
+            if paper is None: continue
+            delta = {"paper_opened": 0.2, "paper_revisited": 0.35, "paper_completed": 0.6, "paper_saved": 0.15, "paper_skipped": -0.2}.get(activity.event_type, 0.0)
+            for topic in paper.topics: confidence[topic] += delta
+        return {topic: round(max(0.0, min(1.0, value / 3.0)), 3) for topic, value in confidence.items()}
+
+    @staticmethod
     def _aggregate_goals(user, activities, catalog_by_id):
         scores = defaultdict(float)
         for goal in user.onboarding_goals or []:
@@ -106,5 +116,6 @@ class ResearchProfileService:
                 topic_affinity[topic] += weight
 
         profile.topic_affinity = dict(topic_affinity)
+        profile.difficulty_affinity = cls._confidence_by_topic(activities, catalog_by_id)
         db.flush()
         return profile
