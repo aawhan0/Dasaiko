@@ -57,7 +57,7 @@ const goals = [
 
 export function OnboardingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, saveResearchProfile } = useAuth();
   const [step, setStep] = useState(0);
   const [role, setRole] = useState<Role | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
@@ -132,7 +132,7 @@ export function OnboardingPage() {
     setIsSaving(true);
 
     try {
-      await updateResearchProfile({
+      await saveResearchProfile({
         role,
         interests: selectedInterests,
         goals: selectedGoals,
@@ -163,7 +163,7 @@ export function OnboardingPage() {
   function handleLocalFile(event: ChangeEvent<HTMLInputElement>) {
     if (!event.target.files?.length || !user || !role || !researchFamiliarity) return;
     onFileInputChange(event);
-    void updateResearchProfile({
+    void saveResearchProfile({
       role,
       interests: selectedInterests,
       goals: selectedGoals,
