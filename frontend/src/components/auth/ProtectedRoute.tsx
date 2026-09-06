@@ -1,9 +1,13 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { hasCompletedOnboarding } from "@/pages/OnboardingPage";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const {
+    isAuthenticated,
+    isLoading,
+    user,
+    profile,
+  } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -21,7 +25,9 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  const onboardingComplete = hasCompletedOnboarding(user?.id);
+  const onboardingComplete =
+    Boolean(user?.onboarding_completed) ||
+    Boolean(profile?.onboarding_completed);
 
   if (!onboardingComplete && location.pathname !== "/onboarding") {
     return <Navigate to="/onboarding" replace />;
