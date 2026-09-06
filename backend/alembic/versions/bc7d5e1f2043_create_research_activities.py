@@ -11,7 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 revision: str = "bc7d5e1f2043"
 down_revision: Union[str, Sequence[str], None] = "a31b7c9e5f21"
 branch_labels: Union[str, Sequence[str], None] = None
@@ -26,37 +25,13 @@ def upgrade() -> None:
         sa.Column("paper_id", sa.String(length=255), nullable=False),
         sa.Column("event_type", sa.String(length=50), nullable=False),
         sa.Column("created_at", sa.DateTime(), nullable=False),
-        sa.ForeignKeyConstraint(
-            ["user_id"],
-            ["users.id"],
-            ondelete="CASCADE",
-        ),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        "ix_research_activities_user_id",
-        "research_activities",
-        ["user_id"],
-        unique=False,
-    )
-    op.create_index(
-        "ix_research_activities_paper_id",
-        "research_activities",
-        ["paper_id"],
-        unique=False,
-    )
-    op.create_index(
-        "ix_research_activities_event_type",
-        "research_activities",
-        ["event_type"],
-        unique=False,
-    )
-    op.create_index(
-        "ix_research_activities_created_at",
-        "research_activities",
-        ["created_at"],
-        unique=False,
-    )
+    op.create_index("ix_research_activities_user_id", "research_activities", ["user_id"], unique=False)
+    op.create_index("ix_research_activities_paper_id", "research_activities", ["paper_id"], unique=False)
+    op.create_index("ix_research_activities_event_type", "research_activities", ["event_type"], unique=False)
+    op.create_index("ix_research_activities_created_at", "research_activities", ["created_at"], unique=False)
 
 
 def downgrade() -> None:
