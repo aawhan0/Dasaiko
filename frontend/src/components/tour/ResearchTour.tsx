@@ -14,7 +14,7 @@ interface ResearchTourProps {
   onSkip: () => void;
 }
 
-type TourStep = "preferences" | "question" | "paper" | "viewer" | "inference" | "evidence";
+type TourStep = "preferences" | "question" | "paper" | "viewer" | "inference" | "evidence" | "complete";
 
 function useTourTarget(selector: string, enabled: boolean) {
   const [rect, setRect] = useState<DOMRect | null>(null);
@@ -512,9 +512,11 @@ function InferenceStep({
 
 function EvidenceStep({
   onBack,
+  onNext,
   onFinish,
 }: {
   onBack: () => void;
+  onNext: () => void;
   onFinish: () => void;
 }) {
   const rect = useTourTarget('[data-tour="research-evidence"]', true);
@@ -539,8 +541,31 @@ function EvidenceStep({
           <button type="button" onClick={onBack} className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-medium text-zinc-500 transition hover:bg-white/[0.04] hover:text-zinc-200">
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </button>
-          <button type="button" onClick={onFinish} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110">
+          <button type="button" onClick={onNext} className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110">
             Finish tour <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </TourCard>
+    </ResearchTourOverlay>
+  );
+}
+
+function CompletionStep({ onFinish }: { onFinish: () => void }) {
+  return (
+    <ResearchTourOverlay>
+      <TourCard>
+        <div className="text-center">
+          <StepLabel>7 of 7</StepLabel>
+          <h2 className="mt-3 text-base font-semibold tracking-tight text-white">You’re ready to research.</h2>
+          <p className="mt-2 text-sm leading-5 text-zinc-500">
+            You’ve seen the core loop: choose a source, ask a question, and trace the answer back to evidence.
+          </p>
+          <button
+            type="button"
+            onClick={onFinish}
+            className="mt-6 w-full rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+          >
+            Start researching
           </button>
         </div>
       </TourCard>
@@ -620,11 +645,14 @@ export function ResearchTour({
               onNext={() => setStep("evidence")}
               onFinish={finish}
             />
-          ) : (
+          ) : step === "evidence" ? (
             <EvidenceStep
               onBack={() => setStep("inference")}
+              onNext={() => setStep("complete")}
               onFinish={finish}
             />
+          ) : (
+            <CompletionStep onFinish={finish} />
           )
         ) : (
           <ResearchTourWelcome
