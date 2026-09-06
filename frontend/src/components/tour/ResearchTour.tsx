@@ -220,8 +220,16 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
 function QuestionStep({ onBack, onNext, onFinish, onQuestionSubmitted }: { onBack: () => void; onNext: () => void; onFinish: () => void; onQuestionSubmitted: (messageId: string) => void }) {
   const rect = useTourTarget('[data-tour="research-question"]', true);
   const { messages } = useWorkspaceStore();
-  const initialCount = useRef(messages.length);
-  const hasQuestion = messages.length > initialCount.current && messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));
+  const initialMessageIds = useRef(new Set(messages.map((message) => message.id)));
+  const submittedQuestion = [...messages]
+    .reverse()
+    .find(
+      (message) =>
+        message.role === "user" &&
+        Boolean(message.content?.trim()) &&
+        !initialMessageIds.current.has(message.id),
+    );
+  const hasQuestion = Boolean(submittedQuestion);
 
   useEffect(() => {
     if (!rect) return;
@@ -231,9 +239,6 @@ function QuestionStep({ onBack, onNext, onFinish, onQuestionSubmitted }: { onBac
   }, [rect]);
 
   useEffect(() => {
-    if (!hasQuestion) return;
-
-    const submittedQuestion = [...messages].reverse().find((message) => message.role === "user" && Boolean(message.content?.trim()));
     if (!submittedQuestion) return;
 
     try {
