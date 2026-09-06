@@ -205,8 +205,7 @@ export function KnowledgeLibrary() {
               (doc, index) => (
                 <div
                   key={doc.id}
-                  data-tour={index === 0 ? "first-document" : undefined}
-                  data-tour-document-id={index === 0 ? doc.id : undefined}
+                  data-tour-document-id={doc.id}
                 >
                   <DocumentCard
                     key={doc.id}
