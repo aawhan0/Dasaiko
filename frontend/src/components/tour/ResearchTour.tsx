@@ -393,6 +393,8 @@ function ViewerStep({
   onFinish: () => void;
 }) {
   const rect = useTourTarget('[data-tour="paper-viewer"]', true);
+  const activeDocumentId = useWorkspaceStore((state) => state.activeDocumentId);
+  const documents = useWorkspaceStore((state) => state.documents);
 
   return (
     <ResearchTourOverlay>
