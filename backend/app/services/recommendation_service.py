@@ -29,6 +29,17 @@ class RecommendationService:
         "comfortable": 2,
     }
 
+    INTEREST_ALIASES = {
+        "transformers": {"transformer", "attention"},
+        "transformer": {"transformer", "attention"},
+        "nlp": {"natural language processing"},
+        "computer vision": {"computer vision"},
+        "genai": {"generative ai"},
+        "generative ai": {"generative ai"},
+        "ml": {"machine learning"},
+        "deep learning": {"deep learning"},
+    }
+
     GOAL_TAGS = {
         "understand-papers": {"foundation", "pretraining", "attention"},
         "discover-papers": {"foundation", "scaling", "retrieval"},
@@ -57,8 +68,22 @@ class RecommendationService:
 
         ranked: list[RankedPaper] = []
         for paper in PAPER_CATALOG:
+            expanded_interests = set(interests)
+            for interest in interests:
+                expanded_interests.update(
+                    cls.INTEREST_ALIASES.get(interest, set())
+                )
+
             topic_matches = tuple(
-                topic for topic in paper.topics if topic.casefold() in interests
+                interest
+                for interest in interests
+                if (
+                    interest in {topic.casefold() for topic in paper.topics}
+                    or bool(cls.INTEREST_ALIASES.get(interest, set()).intersection(
+                        {topic.casefold() for topic in paper.topics}
+                        | {tag.casefold() for tag in paper.tags}
+                    ))
+                )
             )
             matched_goals = tuple(
                 goal
@@ -114,9 +139,17 @@ class RecommendationService:
 
         for candidate in ranked:
             matching_topics = {
-                topic.casefold()
-                for topic in candidate.paper.topics
-                if topic.casefold() in interests
+                interest
+                for interest in interests
+                if (
+                    interest in {topic.casefold() for topic in candidate.paper.topics}
+                    or bool(
+                        RecommendationService.INTEREST_ALIASES.get(interest, set()).intersection(
+                            {topic.casefold() for topic in candidate.paper.topics}
+                            | {tag.casefold() for tag in candidate.paper.tags}
+                        )
+                    )
+                )
             }
             adds_new_interest = bool(matching_topics - covered)
             if not picked or adds_new_interest:
