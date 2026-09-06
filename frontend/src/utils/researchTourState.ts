@@ -6,7 +6,6 @@ export function markResearchTourCompleted(): void {
     localStorage.removeItem(TOUR_STORAGE_KEYS.active);
     localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
     localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
-    localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
   } catch {
     // Completion is best-effort; never block the workspace.
   }
@@ -32,6 +31,7 @@ export function clearResearchTourState(): void {
   try {
     localStorage.removeItem(TOUR_STORAGE_KEYS.active);
     localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
+    localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
   } catch {
     // Ignore storage failures.
   }
