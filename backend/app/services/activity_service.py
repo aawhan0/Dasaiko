@@ -21,13 +21,17 @@ class ResearchActivityService:
         paper_id: str,
         event_type: str,
     ) -> ResearchActivity:
+        normalized_paper_id = paper_id.strip()
         event = event_type.strip().casefold()
+
+        if not normalized_paper_id:
+            raise ValueError("Paper ID cannot be empty")
         if event not in cls.ALLOWED_EVENTS:
             raise ValueError(f"Unsupported research activity: {event_type}")
 
         activity = ResearchActivity(
             user_id=user_id,
-            paper_id=paper_id.strip(),
+            paper_id=normalized_paper_id,
             event_type=event,
         )
         db.add(activity)
