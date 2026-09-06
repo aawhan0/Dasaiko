@@ -387,9 +387,11 @@ function PaperStep({
 
 function ViewerStep({
   onBack,
+  onNext,
   onFinish,
 }: {
   onBack: () => void;
+  onNext: () => void;
   onFinish: () => void;
 }) {
   const rect = useTourTarget('[data-tour="paper-viewer"]', true);
@@ -449,7 +451,7 @@ function ViewerStep({
 
           <button
             type="button"
-            onClick={() => setStep("inference")}
+            onClick={onNext}
             className="flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-[11px] font-semibold text-white transition hover:brightness-110"
           >
             Try it yourself
@@ -637,6 +639,7 @@ export function ResearchTour({
           ) : step === "viewer" ? (
             <ViewerStep
               onBack={() => setStep("paper")}
+              onNext={() => setStep("inference")}
               onFinish={finish}
             />
           ) : step === "inference" ? (
