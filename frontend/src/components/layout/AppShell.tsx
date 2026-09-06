@@ -36,6 +36,7 @@ export function AppShell({
     messages,
 
     sidebarOpen,
+    tourSidebarOpen,
 
     openSidebar,
     closeSidebar,
@@ -180,8 +181,7 @@ export function AppShell({
           initial={false}
         >
 
-          {hasStartedResearch &&
-            sidebarOpen && (
+          {((hasStartedResearch && sidebarOpen) || tourSidebarOpen) && (
 
               <motion.div
                 key="workspace-sidebar"
