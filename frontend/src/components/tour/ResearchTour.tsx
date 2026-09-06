@@ -131,7 +131,13 @@ function QuestionStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext
 
 function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: () => void; onFinish: () => void }) {
   const rect = useTourTarget('[data-tour="first-document"]', true);
-  const { documents, setActiveDocument, setSelectedEvidence, setSelectedPdf } = useWorkspaceStore();
+  const {
+    documents,
+    setActiveDocument,
+    setSelectedDocumentId,
+    setSelectedEvidence,
+    setSelectedPdf,
+  } = useWorkspaceStore();
   const { preferences } = useResearchPreferences();
   const [error, setError] = useState<string | null>(null);
   const recommendation = recommendResearchDocument(documents, preferences.topics);
@@ -145,6 +151,7 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
       return;
     }
     setActiveDocument(selected.id);
+    setSelectedDocumentId(Number(selected.id));
     setSelectedEvidence(null);
     setSelectedPdf(selected.filePath);
     try {
@@ -153,7 +160,7 @@ function PaperStep({ onBack, onNext, onFinish }: { onBack: () => void; onNext: (
       // The tour still works if browser storage is unavailable.
     }
     onNext();
-  }, [documents, onNext, recommendation, setActiveDocument, setSelectedEvidence, setSelectedPdf]);
+  }, [documents, onNext, recommendation, setActiveDocument, setSelectedDocumentId, setSelectedEvidence, setSelectedPdf]);
 
   useEffect(() => {
     document.querySelector<HTMLElement>('[data-tour="first-document"]')?.scrollIntoView({ block: "nearest", behavior: "smooth" });
