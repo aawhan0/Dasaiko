@@ -84,9 +84,9 @@ class ResearchProfileService:
         profile.papers_saved = sum(
             1 for item in activities if item.event_type == "paper_saved"
         )
-        profile.goal_affinity = dict(cls._aggregate_goals(user, activities, catalog_by_id))
 
         catalog_by_id = {paper.id: paper for paper in PAPER_CATALOG}
+        profile.goal_affinity = dict(cls._aggregate_goals(user, activities, catalog_by_id))
         topic_affinity: dict[str, float] = defaultdict(float)
 
         for interest in user.onboarding_interests or []:
