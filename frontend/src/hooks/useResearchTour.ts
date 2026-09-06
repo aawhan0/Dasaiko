@@ -21,6 +21,8 @@ export function useResearchTour() {
   const completeTour = useCallback(() => {
     localStorage.setItem(TOUR_STORAGE_KEYS.completed, "true");
     localStorage.removeItem(TOUR_STORAGE_KEYS.active);
+    localStorage.removeItem(TOUR_STORAGE_KEYS.prompt);
+    localStorage.removeItem(TOUR_STORAGE_KEYS.questionMessage);
     setHasCompletedTour(true);
     setActiveStep(null);
   }, []);
