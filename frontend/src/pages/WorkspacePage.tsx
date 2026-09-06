@@ -34,6 +34,8 @@ export function WorkspacePage() {
     setMessages,
 
     messages,
+    activeDocumentId,
+    selectedPdf,
   } = useWorkspaceStore();
 
 
