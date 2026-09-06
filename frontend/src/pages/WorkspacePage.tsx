@@ -9,8 +9,6 @@ import { PDFBottomSheet } from "@/components/pdf/PDFBottomSheet";
 import { ResearchWorkbench } from "@/components/chat/ResearchWorkbench";
 import { EvidenceVault } from "@/components/evidence/EvidenceVault";
 import { ResearchTour } from "@/components/tour/ResearchTour";
-import { ResearchPath } from "@/components/research/ResearchPath";
-import { getResearchPathStage } from "@/utils/researchPath";
 import { useResearchTour } from "@/hooks/useResearchTour";
 
 import { listDocuments } from "@/services/documents";
@@ -38,8 +36,6 @@ export function WorkspacePage() {
     setMessages,
 
     messages,
-    activeDocumentId,
-    selectedPdf,
   } = useWorkspaceStore();
 
 
@@ -199,8 +195,6 @@ export function WorkspacePage() {
      DETERMINE WHEN EVIDENCE PANEL SHOULD EXIST
   ====================================================== */
 
-  const hasQuestion = messages.some((message) => message.role === "user" && Boolean(message.content?.trim()));
-
   const hasAssistantResponse =
     messages.some(
       (message) =>
@@ -211,12 +205,8 @@ export function WorkspacePage() {
     );
 
 
-  const researchPathStage = getResearchPathStage(Boolean(activeDocumentId || selectedPdf), hasQuestion, hasAssistantResponse);
-
   return (
     <AppShell>
-
-      <ResearchPath stage={researchPathStage} />
 
       <ResearchTour
         open={tourOpen}
