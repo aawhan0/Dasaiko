@@ -309,6 +309,12 @@ def upload_starter_document(
     is configured, preventing fake demo documents from entering
     retrieval.
     """
+    if not paper_id.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A starter paper id is required.",
+        )
+
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail=(
