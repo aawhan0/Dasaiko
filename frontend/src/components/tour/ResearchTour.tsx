@@ -176,8 +176,13 @@ function ViewerStep({ onBack, onFinish }: { onBack: () => void; onFinish: () => 
       setRect(element?.getBoundingClientRect() ?? null);
     };
     update();
+    const observer = new MutationObserver(update);
+    observer.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
   }, []);
   const spotlightStyle = rect ? { left: rect.left - 8, top: rect.top - 8, width: rect.width + 16, height: rect.height + 16 } : undefined;
   return <ResearchTourOverlay>
