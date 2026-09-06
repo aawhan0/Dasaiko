@@ -1,11 +1,24 @@
 import api from "./api";
 
+export interface ResearchProfile {
+  onboarding_completed: boolean;
+  role: string | null;
+  interests: string[];
+  goals: string[];
+  research_familiarity: string | null;
+}
+
 export interface AuthUser {
   id: number;
   username: string;
   email: string;
   is_active: boolean;
   email_verified: boolean;
+  onboarding_completed: boolean;
+  onboarding_role: string | null;
+  onboarding_interests: string[] | null;
+  onboarding_goals: string[] | null;
+  research_familiarity: string | null;
 }
 
 export interface LoginResponse {
@@ -41,31 +54,24 @@ export interface PasswordResetConfirmResponse {
   message: string;
 }
 
+export interface UpdateResearchProfileRequest {
+  role: string;
+  interests: string[];
+  goals: string[];
+  research_familiarity: string;
+  onboarding_completed: boolean;
+}
+
 export const PENDING_VERIFICATION_EMAIL_KEY =
   "dasaiko.pendingVerificationEmail";
 
 export const PASSWORD_RESET_EMAIL_KEY =
   "dasaiko.passwordResetEmail";
 
-/**
- * Base URL for the FastAPI backend.
- *
- * Local:
- *   VITE_API_BASE_URL=http://127.0.0.1:8000
- *
- * Production:
- *   VITE_API_BASE_URL=https://dasaiko-api.onrender.com
- */
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   "http://127.0.0.1:8000";
 
-/**
- * Start Google OAuth authentication.
- *
- * The browser is redirected to the FastAPI backend,
- * which then redirects the user to Google.
- */
 export function loginWithGoogle(): void {
   window.location.href =
     `${API_BASE_URL}/auth/google`;
@@ -170,6 +176,25 @@ export async function resetPassword(
 export async function getCurrentUser(): Promise<AuthUser> {
   const response =
     await api.get<AuthUser>("/auth/me");
+
+  return response.data;
+}
+
+export async function getResearchProfile(): Promise<ResearchProfile> {
+  const response =
+    await api.get<ResearchProfile>("/profile/me");
+
+  return response.data;
+}
+
+export async function updateResearchProfile(
+  profile: UpdateResearchProfileRequest,
+): Promise<ResearchProfile> {
+  const response =
+    await api.put<ResearchProfile>(
+      "/profile/me",
+      profile,
+    );
 
   return response.data;
 }
