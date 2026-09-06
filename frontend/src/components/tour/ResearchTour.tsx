@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useResearchPreferences } from "@/hooks/useResearchPreferences";
+import { useResearchTour } from "@/hooks/useResearchTour";
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { recommendResearchDocument } from "@/utils/researchRecommendation";
 import { buildResearchTourPrompt } from "@/utils/researchTourPrompt";
