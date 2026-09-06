@@ -290,3 +290,28 @@ def upload_document(
             created_at=document.created_at,
         ),
     )
+
+@router.post(
+    "/starter/{paper_id}",
+    response_model=APIResponse[UploadedDocumentResponse],
+)
+def upload_starter_document(
+    paper_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Create a starter-paper document through the same ingestion
+    service used by normal PDF uploads.
+
+    The catalog currently supplies metadata only; the endpoint
+    deliberately rejects unknown papers until a bundled PDF asset
+    is configured, preventing fake demo documents from entering
+    retrieval.
+    """
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail=(
+            f"Starter paper '{paper_id}' is not configured with a bundled PDF yet."
+        ),
+    )
