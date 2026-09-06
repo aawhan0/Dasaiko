@@ -55,6 +55,30 @@ class User(Base):
         nullable=False,
     )
 
+    onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
+    onboarding_role: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    onboarding_interests: Mapped[list | None] = mapped_column(
+        nullable=True,
+    )
+
+    onboarding_goals: Mapped[list | None] = mapped_column(
+        nullable=True,
+    )
+
+    research_familiarity: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow,
