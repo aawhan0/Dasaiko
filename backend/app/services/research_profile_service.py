@@ -1,23 +1,28 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 from sqlalchemy.orm import Session
 
+from app.models.research_activity import ResearchActivity
 from app.models.research_profile import ResearchProfile
 from app.models.user import User
 
 
 class ResearchProfileService:
-    @staticmethod
-    def sync_from_onboarding(
-        db: Session,
-        user: User,
-    ) -> ResearchProfile:
+    EVENT_WEIGHTS = {
+        "paper_opened": 1.0,
+        "paper_revisited": 1.5,
+        "paper_completed": 2.0,
+        "paper_saved": 2.5,
+        "paper_skipped": -1.0,
+    }
+
+    @classmethod
+    def sync_from_onboarding(cls, db: Session, user: User) -> ResearchProfile:
         profile = (
             db.query(ResearchProfile)
             .filter(ResearchProfile.user_id == user.id)
             .first()
         )
-
         if profile is None:
             profile = ResearchProfile(user_id=user.id)
             db.add(profile)
@@ -43,7 +48,35 @@ class ResearchProfileService:
         profile.goal_affinity = dict(goal_affinity)
         profile.difficulty_affinity = difficulty_affinity
         profile.exploration_weight = 0.2
+        db.flush()
+        return profile
 
-        db.commit()
-        db.refresh(profile)
+    @classmethod
+    def update_from_activity(cls, db: Session, user: User) -> ResearchProfile:
+        profile = cls.sync_from_onboarding(db, user)
+        activities = (
+            db.query(ResearchActivity)
+            .filter(ResearchActivity.user_id == user.id)
+            .all()
+        )
+
+        profile.papers_opened = sum(
+            1 for item in activities if item.event_type == "paper_opened"
+        )
+        profile.papers_completed = sum(
+            1 for item in activities if item.event_type == "paper_completed"
+        )
+        profile.papers_saved = sum(
+            1 for item in activities if item.event_type == "paper_saved"
+        )
+
+        counts = Counter()
+        for item in activities:
+            counts[item.paper_id] += cls.EVENT_WEIGHTS.get(item.event_type, 0.0)
+
+        profile.topic_affinity = {
+            **(profile.topic_affinity or {}),
+            **{f"paper:{paper_id}": weight for paper_id, weight in counts.items()},
+        }
+        db.flush()
         return profile
