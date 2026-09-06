@@ -1,36 +1,31 @@
 export const RESEARCH_TOUR_COPY = {
   preferences: {
-    eyebrow: "1 of 7",
+    eyebrow: "1 of 6",
     title: "What are you researching?",
     description: "Pick a few areas. We’ll use them to make the first paper feel relevant.",
   },
-  question: {
-    eyebrow: "2 of 7",
-    title: "Start with a paper.",
-    description: "Pick the source that feels most relevant to your interests. We’ll keep your research question tied to it.",
-  },
   paper: {
-    eyebrow: "3 of 7",
-    title: "Now ask the paper.",
-    description: "We’ll prepare a useful starting question. Edit it if you want, then ask it against the paper you just opened.",
+    eyebrow: "2 of 6",
+    title: "Start with a paper.",
+    description: "Pick the highlighted paper that best matches your interests. We’ll keep your first question tied to it.",
   },
-  viewer: {
-    eyebrow: "4 of 7",
-    title: "Keep the paper in context.",
-    description: "The source stays beside your research conversation, so you can move between the paper, question, and answer without losing context.",
+  question: {
+    eyebrow: "3 of 6",
+    title: "Ask your first question.",
+    description: "We prepared a useful starting question from the paper. Edit it if you want, then send it.",
   },
   inference: {
-    eyebrow: "5 of 7",
-    title: "Trace the answer back.",
-    description: "Your answer is grounded in the selected research. Follow the evidence trail instead of treating the model as the source of truth.",
+    eyebrow: "4 of 6",
+    title: "See the grounded answer.",
+    description: "Dasaiko answers from the research context instead of asking you to trust a standalone model response.",
   },
   evidence: {
-    eyebrow: "6 of 7",
-    title: "Inspect the evidence.",
-    description: "These sources are the trail behind the answer. Open one to jump back into the relevant part of the paper.",
+    eyebrow: "5 of 6",
+    title: "Trace it back to evidence.",
+    description: "Inspect the sources behind the answer and jump back into the relevant part of the paper.",
   },
   complete: {
-    eyebrow: "7 of 7",
+    eyebrow: "6 of 6",
     title: "You’re ready to research.",
     description: "Choose a source, ask a question, and trace the answer back to evidence.",
   },
