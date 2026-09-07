@@ -49,6 +49,12 @@ export function PDFViewer({
   const [numPages, setNumPages] =
     useState(0);
 
+  const [pdfError, setPdfError] =
+    useState<string | null>(null);
+
+  const [pageError, setPageError] =
+    useState<string | null>(null);
+
   const [pageNumber, setPageNumber] =
     useState(initialPage);
 
@@ -87,6 +93,8 @@ export function PDFViewer({
     positioningRunRef.current += 1;
 
     setIsPositioning(true);
+    setPdfError(null);
+    setPageError(null);
     setPageNumber(initialPage);
     setRenderedPage(null);
     hasAutoScrolledRef.current = false;
@@ -685,10 +693,38 @@ export function PDFViewer({
                 <Page
                   pageNumber={pageNumber}
                   width={pageRenderWidth}
-                  onRenderSuccess={
-                    handlePageRenderSuccess
-                  }
+                  onRenderSuccess={() => {
+                    setPageError(null);
+                    handlePageRenderSuccess();
+                  }}
+                  onRenderError={(error) => {
+                    const message =
+                      error instanceof Error
+                        ? error.message
+                        : String(error);
+
+                    setPageError(message);
+                    setIsPositioning(false);
+
+                    console.error(
+                      "PDF PAGE ERROR:",
+                      error,
+                    );
+                  }}
                 />
+
+                {pageError && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/95 p-6 text-center">
+                    <div className="max-w-md">
+                      <p className="text-sm font-semibold text-zinc-700">
+                        This page could not be rendered.
+                      </p>
+                      <p className="mt-2 text-[11px] leading-5 text-zinc-500">
+                        {pageError}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* =================================================
                     EVIDENCE HIGHLIGHTS
