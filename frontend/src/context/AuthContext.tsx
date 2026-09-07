@@ -23,6 +23,27 @@ import {
   useWorkspaceStore,
 } from "@/store/useWorkspaceStore";
 
+const ONBOARDING_STORAGE_PREFIX = "dasaiko.onboarding.v1";
+const SELECTED_DOCUMENT_STORAGE_KEY =
+  "dasaiko.selectedDocumentByConversation";
+
+function onboardingStorageKey(userId: number) {
+  return `${ONBOARDING_STORAGE_PREFIX}.${userId}`;
+}
+
+function hasLocalOnboardingCompletion(userId: number | undefined): boolean {
+  if (!userId) return false;
+
+  try {
+    const raw = localStorage.getItem(onboardingStorageKey(userId));
+    if (!raw) return false;
+    if (raw === "completed") return true;
+    return JSON.parse(raw)?.status === "completed";
+  } catch {
+    return false;
+  }
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   profile: ResearchProfile | null;
@@ -51,9 +72,6 @@ const AuthContext =
   createContext<AuthContextValue | null>(
     null,
   );
-
-const SELECTED_DOCUMENT_STORAGE_KEY =
-  "dasaiko.selectedDocumentByConversation";
 
 export function AuthProvider({
   children,
@@ -102,8 +120,27 @@ export function AuthProvider({
           }
         : currentUser,
     );
+
+    if (savedProfile.onboarding_completed && user) {
+      try {
+        localStorage.setItem(
+          onboardingStorageKey(user.id),
+          JSON.stringify({
+            status: "completed",
+            role: savedProfile.role,
+            interests: savedProfile.interests,
+            goals: savedProfile.goals,
+            researchFamiliarity: savedProfile.research_familiarity,
+            completedAt: new Date().toISOString(),
+          }),
+        );
+      } catch {
+        // Local persistence is a convenience; server state remains authoritative.
+      }
+    }
+
     return savedProfile;
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     let mounted = true;
@@ -120,11 +157,22 @@ export function AuthProvider({
         const currentUser = await getCurrentUser();
         if (!mounted) return;
 
-        setUser(currentUser);
+        const locallyCompleted = hasLocalOnboardingCompletion(currentUser.id);
+        const restoredUser = locallyCompleted && !currentUser.onboarding_completed
+          ? { ...currentUser, onboarding_completed: true }
+          : currentUser;
+
+        setUser(restoredUser);
 
         try {
           const currentProfile = await getResearchProfile();
-          if (mounted) setProfile(currentProfile);
+          if (mounted) {
+            setProfile(
+              locallyCompleted && !currentProfile.onboarding_completed
+                ? { ...currentProfile, onboarding_completed: true }
+                : currentProfile,
+            );
+          }
         } catch {
           if (mounted) setProfile(null);
         }
