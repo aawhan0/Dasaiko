@@ -127,8 +127,8 @@ export function OnboardingPage() {
     setSelectedPaper(null);
   }
 
-  async function finish() {
-    if (!user || !selectedPaper || !role || !researchFamiliarity) return;
+  async function finish(paper: StarterPaperRecommendation | null = selectedPaper) {
+    if (!user || !paper || !role || !researchFamiliarity) return;
     setIsSaving(true);
 
     try {
@@ -140,16 +140,16 @@ export function OnboardingPage() {
         onboarding_completed: true,
       });
 
-      sessionStorage.setItem("dasaiko.pendingStarterPaper", selectedPaper.paper_id);
-      sessionStorage.setItem("dasaiko.pendingStarterQuestion", selectedPaper.starter_question);
+      sessionStorage.setItem("dasaiko.pendingStarterPaper", paper.paper_id);
+      sessionStorage.setItem("dasaiko.pendingStarterQuestion", paper.starter_question);
       localStorage.setItem(onboardingStorageKey(user.id), JSON.stringify({
         status: "completed",
         role,
         interests: selectedInterests,
         goals: selectedGoals,
         researchFamiliarity,
-        starterPaper: selectedPaper.paper_id,
-        starterQuestion: selectedPaper.starter_question,
+        starterPaper: paper.paper_id,
+        starterQuestion: paper.starter_question,
         completedAt: new Date().toISOString(),
       }));
 
@@ -186,6 +186,21 @@ export function OnboardingPage() {
     setStep((current) => current + 1);
   }
 
+  function selectRole(value: Role) {
+    setRole(value);
+    setStep(2);
+  }
+
+  function selectResearchFamiliarity(value: ResearchFamiliarity) {
+    setResearchFamiliarity(value);
+    setStep(4);
+  }
+
+  function selectPaper(paper: StarterPaperRecommendation) {
+    setSelectedPaper(paper);
+    void finish(paper);
+  }
+
   return (
     <main className="relative h-screen overflow-hidden bg-base text-white">
       <div className="pointer-events-none absolute left-[18%] top-[18%] h-[560px] w-[560px] rounded-full bg-primary/[0.07] blur-[180px]" />
@@ -200,14 +215,14 @@ export function OnboardingPage() {
         <section className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 items-center justify-center py-5 sm:py-7">
           <div className="w-full">
             {step === 0 && <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/[0.08] bg-white/[0.025] px-6 py-7 text-center shadow-2xl shadow-black/20 backdrop-blur-sm sm:px-10 sm:py-8"><div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/[0.09] shadow-glow"><Sparkles className="h-5 w-5 text-primary-300" /></div><p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-primary-300">Your research journey starts here</p><h1 className="font-heading text-3xl font-extrabold tracking-[-0.05em] text-white sm:text-4xl">Let's make Dasaiko yours.</h1><p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-zinc-500">A few quick choices will shape your first AI/ML research experience around what you actually want to learn.</p><button type="button" onClick={next} className="group mx-auto mt-6 flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3 text-xs font-extrabold text-black transition-all duration-200 hover:scale-[1.01] hover:bg-zinc-100">Let's begin<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></button></div>}
-            {step === 1 && <Question title="What brings you to Dasaiko?" subtitle="Choose what best describes you."><div className="grid gap-3">{roles.map((item) => { const Icon = item.icon; return <ChoiceCard key={item.id} selected={role === item.id} onClick={() => setRole(item.id)} icon={<Icon className="h-5 w-5" />} title={item.title} description={item.description} />; })}</div></Question>}
+            {step === 1 && <Question title="What brings you to Dasaiko?" subtitle="Choose what best describes you."><div className="grid gap-3">{roles.map((item) => { const Icon = item.icon; return <ChoiceCard key={item.id} selected={role === item.id} onClick={() => selectRole(item.id)} icon={<Icon className="h-5 w-5" />} title={item.title} description={item.description} />; })}</div></Question>}
             {step === 2 && <Question title="What are you interested in?" subtitle="Pick the AI/ML areas you want to explore. Choose as many as you like."><div className="flex flex-wrap gap-2">{interests.map((interest) => { const selected = selectedInterests.includes(interest); return <button key={interest} type="button" onClick={() => toggleInterest(interest)} className={`rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 active:scale-[0.98] ${selected ? "border-primary/60 bg-primary/[0.14] text-white shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] text-zinc-400 hover:border-white/[0.16] hover:bg-white/[0.045] hover:text-zinc-200"}`}>{selected && <Check className="mr-2 inline h-3.5 w-3.5 text-primary-300" />}{interest}</button>; })}</div><p className="mt-5 text-xs font-medium text-zinc-600">{selectedInterests.length === 0 ? "Select at least one area to continue." : `${selectedInterests.length} area${selectedInterests.length === 1 ? "" : "s"} selected`}</p></Question>}
-            {step === 3 && <Question title="How familiar are you with research papers?" subtitle="No right or wrong answer — this helps us choose the right starting point for you."><div className="grid gap-3">{researchFamiliarityOptions.map((item) => { const Icon = item.icon; return <ChoiceCard key={item.id} selected={researchFamiliarity === item.id} onClick={() => setResearchFamiliarity(item.id)} icon={<Icon className="h-5 w-5" />} title={item.title} description={item.description} />; })}</div></Question>}
+            {step === 3 && <Question title="How familiar are you with research papers?" subtitle="No right or wrong answer — this helps us choose the right starting point for you."><div className="grid gap-3">{researchFamiliarityOptions.map((item) => { const Icon = item.icon; return <ChoiceCard key={item.id} selected={researchFamiliarity === item.id} onClick={() => selectResearchFamiliarity(item.id)} icon={<Icon className="h-5 w-5" />} title={item.title} description={item.description} />; })}</div></Question>}
             {step === 4 && <Question title="What do you want to do with Dasaiko?" subtitle="Choose what would make Dasaiko useful to you."><div className="grid gap-3">{goals.map((goal) => { const selected = selectedGoals.includes(goal.id); const Icon = goal.icon; return <button key={goal.id} type="button" onClick={() => toggleGoal(goal.id)} className={`flex items-center justify-between rounded-2xl border px-5 py-4 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/50 bg-primary/[0.10] text-white shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] text-zinc-300 hover:border-white/[0.15] hover:bg-white/[0.045]"}`}><span className="flex items-center gap-3 text-sm font-semibold"><span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-primary/15 text-primary-200" : "bg-white/[0.04] text-zinc-500"}`}><Icon className="h-4 w-4" /></span>{goal.label}</span><span className={`flex h-6 w-6 items-center justify-center rounded-full border transition ${selected ? "border-primary bg-primary text-white" : "border-white/[0.14] text-transparent"}`}><Check className="h-3.5 w-3.5" /></span></button>; })}</div></Question>}
-            {step === 5 && <Question title="Pick your first paper." subtitle="These recommendations use your interests, goals, and research familiarity."><div className="grid gap-3 lg:grid-cols-3">{isLoadingRecommendations ? <div className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-8 text-center text-sm text-zinc-500">Personalizing your starting papers…</div> : recommendationError ? <div className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-8 text-center text-sm text-zinc-500">{recommendationError}</div> : starterPapers.map((paper, index) => { const selected = selectedPaper?.paper_id === paper.paper_id; return <button key={paper.paper_id} type="button" onClick={() => setSelectedPaper(paper)} aria-pressed={selected} aria-label={`Start with ${paper.title}`} className={`relative flex min-h-[240px] flex-col rounded-2xl border p-5 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/60 bg-primary/[0.11] shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.045]"}`}><span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.09] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-primary-200"><Star className="h-3 w-3 fill-current" />{getStarterBadge(index)}</span><span className="text-lg font-extrabold leading-6 text-white">{paper.title}</span><span className="mt-2 text-xs font-semibold text-zinc-500">{paper.authors} · {paper.year}</span><span className="mt-4 text-xs font-medium leading-5 text-zinc-500">{paper.reason}</span>{paper.matched_interests.length ? <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.08em] text-primary-300/70">Matches: {paper.matched_interests.join(" · ")}</span> : null}<span className="mt-auto pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">{paper.difficulty}</span></button>})}</div><button type="button" onClick={() => document.getElementById("onboarding-local-file")?.click()} className="mt-5 text-xs font-bold text-zinc-500 underline decoration-white/10 underline-offset-4 transition hover:text-zinc-300">Use a local file instead</button><input id="onboarding-local-file" type="file" accept="application/pdf" onChange={handleLocalFile} className="hidden" /></Question>}
+            {step === 5 && <Question title="Pick your first paper." subtitle="These recommendations use your interests, goals, and research familiarity."><div className="grid gap-3 lg:grid-cols-3">{isLoadingRecommendations ? <div className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-8 text-center text-sm text-zinc-500">Personalizing your starting papers…</div> : recommendationError ? <div className="lg:col-span-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-8 text-center text-sm text-zinc-500">{recommendationError}</div> : starterPapers.map((paper, index) => { const selected = selectedPaper?.paper_id === paper.paper_id; return <button key={paper.paper_id} type="button" onClick={() => selectPaper(paper)} aria-pressed={selected} aria-label={`Start with ${paper.title}`} className={`relative flex min-h-[240px] flex-col rounded-2xl border p-5 text-left transition-all duration-200 active:scale-[0.99] ${selected ? "border-primary/60 bg-primary/[0.11] shadow-glow-sm" : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.16] hover:bg-white/[0.045]"}`}><span className="mb-5 inline-flex w-fit items-center gap-1.5 rounded-full border border-primary/20 bg-primary/[0.09] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-primary-200"><Star className="h-3 w-3 fill-current" />{getStarterBadge(index)}</span><span className="text-lg font-extrabold leading-6 text-white">{paper.title}</span><span className="mt-2 text-xs font-semibold text-zinc-500">{paper.authors} · {paper.year}</span><span className="mt-4 text-xs font-medium leading-5 text-zinc-500">{paper.reason}</span>{paper.matched_interests.length ? <span className="mt-3 text-[10px] font-bold uppercase tracking-[0.08em] text-primary-300/70">Matches: {paper.matched_interests.join(" · ")}</span> : null}<span className="mt-auto pt-5 text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-600">{paper.difficulty}</span></button>})}</div><button type="button" onClick={() => document.getElementById("onboarding-local-file")?.click()} className="mt-5 text-xs font-bold text-zinc-500 underline decoration-white/10 underline-offset-4 transition hover:text-zinc-300">Use a local file instead</button><input id="onboarding-local-file" type="file" accept="application/pdf" onChange={handleLocalFile} className="hidden" /></Question>}
           </div>
         </section>
-        <footer className={`mx-auto flex w-full max-w-3xl items-center justify-between border-t border-white/[0.06] pt-5 ${step === 0 ? "invisible" : ""}`}><button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0 || isSaving} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-600 transition hover:bg-white/[0.04] hover:text-zinc-300 disabled:invisible"><ArrowLeft className="h-4 w-4" />Back</button><div className="hidden text-center sm:block"><p className="text-[10px] font-semibold text-zinc-700">Your choices shape your starting experience.</p></div><button type="button" onClick={next} disabled={!canContinue} className="group flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-extrabold text-black transition-all duration-200 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "Saving…" : step === totalSteps - 1 ? "Start researching" : "Continue"}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></button></footer>
+        <footer className={`mx-auto flex w-full max-w-3xl items-center justify-between border-t border-white/[0.06] pt-5 ${step === 0 ? "invisible" : ""}`}><button type="button" onClick={() => setStep((current) => Math.max(0, current - 1))} disabled={step === 0 || isSaving} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-600 transition hover:bg-white/[0.04] hover:text-zinc-300 disabled:invisible"><ArrowLeft className="h-4 w-4" />Back</button><div className="hidden text-center sm:block"><p className="text-[10px] font-semibold text-zinc-700">Your choices shape your starting experience.</p></div>{(step === 2 || step === 4) && <button type="button" onClick={next} disabled={!canContinue} className="group flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-extrabold text-black transition-all duration-200 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40">{isSaving ? "Saving…" : "Continue"}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></button>}</footer>
       </div>
     </main>
   );
