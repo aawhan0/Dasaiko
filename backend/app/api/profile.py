@@ -59,6 +59,9 @@ def update_profile(
         user=current_user,
     )
 
+    # Persist onboarding completion so a fresh browser session
+    # does not incorrectly send the user back to onboarding.
+    db.commit()
     db.refresh(current_user)
 
     return ResearchProfileResponse(
