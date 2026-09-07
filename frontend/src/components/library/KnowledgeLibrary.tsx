@@ -86,6 +86,8 @@ export function KnowledgeLibrary() {
 
   const handleDocumentClick = (document: Document) => {
     setActiveDocument(document.id);
+    setSelectedEvidence(null);
+    setSelectedPdf(document.filePath);
     recordPaperVisit(String(document.id));
   };
 
