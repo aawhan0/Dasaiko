@@ -339,6 +339,8 @@ export function MessageInput({
             if (pendingPaper && completionKey && sessionStorage.getItem(completionKey) !== "1") {
               sessionStorage.setItem(completionKey, "1");
               void record(pendingPaper, "paper_completed");
+              sessionStorage.removeItem("dasaiko.pendingStarterPaper");
+              sessionStorage.removeItem("dasaiko.pendingStarterQuestion");
             }
           } catch {
             // Activity tracking must never block a completed response.
