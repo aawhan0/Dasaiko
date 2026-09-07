@@ -125,7 +125,16 @@ export function WorkspacePage() {
            Restore latest conversation
         ------------------------------------------------ */
 
+        /*
+         * A starter-paper handoff represents a fresh research
+         * session coming directly from onboarding. Keep the
+         * workspace clean instead of reopening an older chat.
+         * Existing conversations remain in the sidebar/history.
+         */
+        const hasPendingStarter = Boolean(raw?.starterPaper);
+
         if (
+          !hasPendingStarter &&
           loadedConversations.length > 0
         ) {
 
