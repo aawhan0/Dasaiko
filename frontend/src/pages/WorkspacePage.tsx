@@ -70,13 +70,10 @@ export function WorkspacePage() {
      * sample-document ingestion is intentionally handled by the
      * document pipeline rather than pretending a local PDF exists.
      */
+    // Read the one-time onboarding handoff without writing it back.
+    // Keeping the handoff immutable here prevents a later workspace mount
+    // from turning an old onboarding session into a fresh session again.
     const raw = userStarterData();
-    if (raw?.starterPaper) {
-      sessionStorage.setItem("dasaiko.pendingStarterPaper", raw.starterPaper);
-      if (raw.starterQuestion) {
-        sessionStorage.setItem("dasaiko.pendingStarterQuestion", raw.starterQuestion);
-      }
-    }
 
     let cancelled = false;
 
