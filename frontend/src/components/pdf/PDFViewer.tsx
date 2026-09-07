@@ -195,7 +195,13 @@ export function PDFViewer({
 
   const isEvidencePage =
     pageNumber === initialPage &&
-    bboxes.length > 0;
+    bboxes.length > 0 &&
+    pageWidth !== null &&
+    pageWidth !== undefined &&
+    pageHeight !== null &&
+    pageHeight !== undefined &&
+    pageWidth > 0 &&
+    pageHeight > 0;
 
   const pageRenderWidth =
     availableWidth
