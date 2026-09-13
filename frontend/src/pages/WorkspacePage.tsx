@@ -1,26 +1,15 @@
-import {
-  AnimatePresence,
-  motion,
-} from "framer-motion";
-
+import { AnimatePresence, motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { PDFBottomSheet } from "@/components/pdf/PDFBottomSheet";
-
 import { ResearchWorkbench } from "@/components/chat/ResearchWorkbench";
 import { EvidenceVault } from "@/components/evidence/EvidenceVault";
-
 import { listDocuments } from "@/services/documents";
 import { listConversations } from "@/services/conversations";
 import { listMessages } from "@/services/messages";
-
 import { useWorkspaceStore } from "@/store/useWorkspaceStore";
 import { useResearchActivity } from "@/hooks/useResearchActivity";
 import { STARTER_PAPERS } from "@/utils/starterPapers";
-
-import {
-  useEffect,
-  useState,
-} from "react";
+import { useEffect, useState } from "react";
 
 function userStarterData(): { starterPaper?: string; starterQuestion?: string } | null {
   try {
@@ -43,9 +32,7 @@ export function WorkspacePage() {
     setSelectedPdf,
     messages,
   } = useWorkspaceStore();
-
   const { record } = useResearchActivity();
-
   const [evidenceOpen, setEvidenceOpen] = useState(true);
 
   useEffect(() => {
@@ -62,12 +49,9 @@ export function WorkspacePage() {
         if (cancelled) return;
         setConversations(loadedConversations);
 
-        const hasPendingStarter = Boolean(raw?.starterPaper);
-
-        if (!hasPendingStarter && loadedConversations.length > 0) {
+        if (!raw?.starterPaper && loadedConversations.length > 0) {
           const latestConversation = loadedConversations[0];
           setActiveConversation(latestConversation.id);
-
           const loadedMessages = await listMessages(latestConversation.id);
           if (cancelled) return;
           setMessages(loadedMessages);
@@ -77,52 +61,32 @@ export function WorkspacePage() {
         }
 
         if (raw?.starterPaper) {
-          const starter = STARTER_PAPERS.find(
-            (paper) => paper.id === raw.starterPaper,
-          );
-
+          const starter = STARTER_PAPERS.find((paper) => paper.id === raw.starterPaper);
           const matchingDocument = docs.find((document) => {
-            const values = [
-              document.id,
-              document.title,
-              document.name,
-              document.filename,
-              document.fileName,
-              document.path,
-            ];
+            const values = [document.id, document.title, document.name, document.fileName, document.filePath];
             return values.some(
               (value) =>
                 typeof value === "string" &&
                 (value === raw.starterPaper ||
                   value.includes(raw.starterPaper as string) ||
-                  (starter?.title && value.includes(starter.title))),
+                  Boolean(starter?.title && value.includes(starter.title))),
             );
           });
 
           if (matchingDocument) {
             const documentId = Number(matchingDocument.id);
             setSelectedDocumentId(Number.isFinite(documentId) ? documentId : null);
-
-            const pdfPath =
-              matchingDocument.path ??
-              matchingDocument.url ??
-              matchingDocument.fileUrl ??
-              matchingDocument.pdfUrl ??
-              null;
-            if (pdfPath) setSelectedPdf(pdfPath);
+            setSelectedPdf(matchingDocument.filePath ?? null);
           }
 
           try {
             if (raw.starterQuestion) {
-              sessionStorage.setItem(
-                "dasaiko.pendingComposerQuestion",
-                raw.starterQuestion,
-              );
+              sessionStorage.setItem("dasaiko.pendingComposerQuestion", raw.starterQuestion);
             }
             sessionStorage.removeItem("dasaiko.pendingStarterPaper");
             sessionStorage.removeItem("dasaiko.pendingStarterQuestion");
           } catch {
-            // Session storage is optional and must not block workspace loading.
+            // Session storage must never block workspace loading.
           }
         }
       } catch (error) {
@@ -140,11 +104,7 @@ export function WorkspacePage() {
 
   useEffect(() => {
     const pendingPaper = sessionStorage.getItem("dasaiko.pendingStarterPaper");
-    if (!pendingPaper) return;
-
-    const isCanonicalStarter = STARTER_PAPERS.some((paper) => paper.id === pendingPaper);
-    if (!isCanonicalStarter) return;
-
+    if (!pendingPaper || !STARTER_PAPERS.some((paper) => paper.id === pendingPaper)) return;
     const activityKey = `dasaiko.activity.opened.${pendingPaper}`;
     try {
       const hasOpenedBefore = localStorage.getItem(activityKey) === "1";
@@ -176,7 +136,7 @@ export function WorkspacePage() {
               initial={{ width: 0, opacity: 0, x: 80 }}
               animate={{ width: 400, opacity: 1, x: 0 }}
               exit={{ width: 0, opacity: 0, x: 80 }}
-              transition={{ duration: 0.30, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               className="relative h-full shrink-0 overflow-hidden"
             >
               <div className="h-full w-[400px]">
