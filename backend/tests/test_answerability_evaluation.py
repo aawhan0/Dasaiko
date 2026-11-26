@@ -59,6 +59,16 @@ class AnswerabilityEvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate|Missing"):
             evaluate_predictions(self.cases, predictions)
 
+    def test_citations_on_cases_without_supporting_evidence_are_false_positives(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "cited_source_ids": ["a1_s1"], "covered_required_fact_indices": [0]},
+            {"case_id": "u1", "predicted_action": "abstain", "cited_source_ids": ["u1_s1"]},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        report = evaluate_predictions(self.cases, predictions)
+        self.assertEqual(report["counts"]["evidence_false_positives"], 1)
+        self.assertAlmostEqual(report["metrics"]["evidence_source_precision"], 0.5)
+
     def test_invalid_confidence_is_rejected(self):
         predictions = [
             {"case_id": "a1", "predicted_action": "answer", "confidence": 1.5},
