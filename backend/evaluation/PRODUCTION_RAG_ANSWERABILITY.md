@@ -67,7 +67,11 @@ The runner writes two files:
 
 Runtime-retrieved sources are added only to `context.sources`; they are NOT added to `ground_truth.supporting_evidence`. Retrieval is not proof that an answer claim is supported.
 
-The action heuristic labels an answer as `abstain` only when the production insufficient-information sentence appears; otherwise it labels it `answer`. It does not identify partial answers, clarification or escalation. Treat this action output as a coarse operational signal, not a semantic judgment.
+The runner records two distinct action signals:
+- `answer_generation_action`: an action explicitly present in the generated answer, if it follows the supported format. Otherwise it is `unclassified`.
+- `predicted_action`: a separate model call classifies the question, retrieved evidence and generated answer as `answer`, `partial_answer`, `abstain`, `clarify` or `escalate`.
+
+The separate classifier is an additional model call, not evidence that the answer-generation call itself followed the action format. Treat classifier output as a model prediction, not an independent semantic judgment. Review it against annotated ground truth.
 
 ## 4. Evaluate
 

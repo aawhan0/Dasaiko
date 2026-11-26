@@ -1,0 +1,347 @@
+[
+  {
+    "id": "prod_01",
+    "scenario_type": "answerable",
+    "difficulty": "easy",
+    "question": "What is the Transformer architecture based on?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:14",
+          "title": "Abstract",
+          "content": "The dominant sequence transduction models are based on complex recurrent or\nconvolutional neural networks that include an encoder and a decoder. The best\nperforming models also connect the encoder and decoder through an attention\nmechanism. We propose a new simple network architecture, the Transformer,\nbased solely on attention mechanisms, dispensing with recurrence and convolutions\nentirely. Experiments on two machine translation tasks show these models to\nbe superior in quality while being more parallelizable and requiring signiﬁcantly\nless time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-\nto-German translation task, improving over the existing best results, including\nensembles, by over 2 BLEU. On the WMT 2014 English-to-French translation task,\nour model establishes a new single-model state-of-the-art BLEU score of 41.0 after\ntraining for 3.5 days on eight GPUs, a small fraction of the training costs of the\nbest models from the literature."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The Transformer is based solely on attention mechanisms and dispenses with recurrence and convolutions.",
+      "required_facts": [
+        "The Transformer uses attention mechanisms.",
+        "It dispenses with recurrence and convolutions."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:14",
+          "quote": "based solely on attention mechanisms, dispensing with recurrence and convolutions"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The abstract directly states the architecture's basis."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_02",
+    "scenario_type": "answerable",
+    "difficulty": "easy",
+    "question": "How is the output of an attention function computed?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:38",
+          "title": "Background",
+          "content": "An attention function can be described as mapping a query and a set of key-value pairs to an output,\nwhere the query, keys, values, and output are all vectors. The output is computed as a weighted sum\nof the values, where the weight assigned to each value is computed by a compatibility function of the\nquery with the corresponding key."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The output is a weighted sum of the values, with weights determined by the compatibility between the query and each corresponding key.",
+      "required_facts": [
+        "The output is a weighted sum of values.",
+        "Weights are computed using query-key compatibility."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:38",
+          "quote": "where the query, keys, values, and output are all vectors. The output is computed as a weighted sum"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The passage directly defines the attention output."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_03",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Why does scaled dot-product attention divide query-key dot products by the square root of the key dimension?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:51",
+          "title": "Scaled Dot-Product Attention",
+          "content": "While for small values of dk the two mechanisms perform similarly, additive attention outperforms\ndot product attention without scaling for larger values of dk [3]. We suspect that for large values of\ndk, the dot products grow large in magnitude, pushing the softmax function into regions where it has\nextremely small gradients 4. To counteract this effect, we scale the dot products by\n1\n√dk ."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Large key dimensions can produce large dot products, pushing softmax into regions with extremely small gradients. Scaling by 1/√dk counteracts this effect.",
+      "required_facts": [
+        "Large key dimensions can produce large dot products.",
+        "Large dot products can push softmax into regions with extremely small gradients.",
+        "Scaling by 1/√dk counteracts this effect."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:51",
+          "quote": "dk, the dot products grow large in magnitude, pushing the softmax function into regions where it has"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The passage explicitly explains the motivation for scaling."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_04",
+    "scenario_type": "answerable",
+    "difficulty": "easy",
+    "question": "How many attention heads are used in the Transformer base model?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:67",
+          "title": "Model Architecture",
+          "content": "In this work we employ h = 8 parallel attention layers, or heads. For each of these we use\ndk = dv = dmodel/h = 64. Due to the reduced dimension of each head, the total computational cost\nis similar to that of single-head attention with full dimensionality."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The base model uses 8 parallel attention heads.",
+      "required_facts": [
+        "The base model uses 8 attention heads."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:67",
+          "quote": "we employ h = 8 parallel attention layers, or heads"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The passage explicitly specifies the number of heads."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_05",
+    "scenario_type": "answerable",
+    "difficulty": "hard",
+    "question": "Explain the three types of attention used in the Transformer, including their query, key and value sources, and explain how decoder masking works.",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:70",
+          "title": "Applications of Attention",
+          "content": "• In \"encoder-decoder attention\" layers, the queries come from the previous decoder layer,\nand the memory keys and values come from the output of the encoder. This allows every\nposition in the decoder to attend over all positions in the input sequence. This mimics the\ntypical encoder-decoder attention mechanisms in sequence-to-sequence models such as\n[31, 2, 8].\n• The encoder contains self-attention layers. In a self-attention layer all of the keys, values\nand queries come from the same place, in this case, the output of the previous layer in the\nencoder. Each position in the encoder can attend to all positions in the previous layer of the\nencoder.\n• Similarly, self-attention layers in the decoder allow each position in the decoder to attend to\nall positions in the decoder up to and including that position. We need to prevent leftward\ninformation ﬂow in the decoder to preserve the auto-regressive property. We implement this"
+        },
+        {
+          "source_id": "chunk:71",
+          "title": "Decoder Masking",
+          "content": "all positions in the decoder up to and including that position. We need to prevent leftward\ninformation ﬂow in the decoder to preserve the auto-regressive property. We implement this\ninside of scaled dot-product attention by masking out (setting to −∞) all values in the input\nof the softmax which correspond to illegal connections. See Figure 2."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The Transformer uses encoder self-attention, decoder self-attention, and encoder-decoder attention. Encoder self-attention takes queries, keys and values from the previous encoder layer. Decoder self-attention takes them from the previous decoder layer and is restricted to positions up to and including the current position. Encoder-decoder attention takes queries from the previous decoder layer and keys and values from encoder output. Illegal decoder connections are masked by setting their corresponding softmax inputs to negative infinity.",
+      "required_facts": [
+        "Encoder self-attention uses queries, keys and values from the previous encoder layer.",
+        "Decoder self-attention uses queries, keys and values from the previous decoder layer.",
+        "Decoder self-attention allows each position to attend only up to and including itself.",
+        "Encoder-decoder attention uses queries from the previous decoder layer and keys and values from encoder output.",
+        "Illegal decoder connections are masked by setting corresponding softmax inputs to negative infinity."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:70",
+          "quote": "The encoder contains self-attention layers."
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The static context contains chunks 70 and 71. Together they describe all three attention applications, their query/key/value sources, the decoder's causal restriction, and the masking implementation. The complete answer is supported by the supplied evidence."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_06",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What was the inference latency in milliseconds per token on an NVIDIA A100 GPU?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:104",
+          "title": "Training Costs",
+          "content": "We trained our models on one machine with 8 NVIDIA P100 GPUs. For our base models using\nthe hyperparameters described throughout the paper, each training step took about 0.4 seconds. We\ntrained the base models for a total of 100,000 steps or 12 hours. For our big models,(described on the\nbottom line of table 3), step time was 1.0 seconds. The big models were trained for 300,000 steps\n(3.5 days)."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The supplied passage discusses training hardware and duration, not A100 inference latency."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_07",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What was the production API request throughput in requests per second?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:14",
+          "title": "Abstract",
+          "content": "The dominant sequence transduction models are based on complex recurrent or\nconvolutional neural networks that include an encoder and a decoder. The best\nperforming models also connect the encoder and decoder through an attention\nmechanism. We propose a new simple network architecture, the Transformer,\nbased solely on attention mechanisms, dispensing with recurrence and convolutions\nentirely. Experiments on two machine translation tasks show these models to\nbe superior in quality while being more parallelizable and requiring signiﬁcantly\nless time to train. Our model achieves 28.4 BLEU on the WMT 2014 English-\nto-German translation task, improving over the existing best results, including\nensembles, by over 2 BLEU. On the WMT 2014 English-to-French translation task,\nour model establishes a new single-model state-of-the-art BLEU score of 41.0 after\ntraining for 3.5 days on eight GPUs, a small fraction of the training costs of the\nbest models from the literature."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The paper excerpt provides no production API throughput measurement."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_08",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "Which cloud provider and Kubernetes deployment configuration did the authors use in production?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:129",
+          "title": "Machine Translation Results",
+          "content": "On the WMT 2014 English-to-German translation task, the big transformer model (Transformer (big)\nin Table 2) outperforms the best previously reported models (including ensembles) by more than 2.0\nBLEU, establishing a new state-of-the-art BLEU score of 28.4. The conﬁguration of this model is\nlisted in the bottom line of Table 3. Training took 3.5 days on 8 P100 GPUs. Even our base model\nsurpasses all previously published models and ensembles, at a fraction of the training cost of any of\nthe competitive models."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The provided passage reports a translation result and contains no cloud or Kubernetes deployment details."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_09",
+    "scenario_type": "hard_negative",
+    "difficulty": "hard",
+    "question": "Did the paper find that single-head attention performed better than the best multi-head configuration?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:135",
+          "title": "Attention Head Ablation",
+          "content": "In Table 3 rows (A), we vary the number of attention heads and the attention key and value dimensions,\nkeeping the amount of computation constant, as described in Section 3.2.2. While single-head\nattention is 0.9 BLEU worse than the best setting, quality also drops off with too many heads."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "No. Single-head attention was 0.9 BLEU worse than the best configuration.",
+      "required_facts": [
+        "Single-head attention was 0.9 BLEU worse than the best setting.",
+        "The answer to the question is no."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:135",
+          "quote": "attention is 0.9 BLEU worse than the best setting, quality also drops off with too many heads."
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The question reverses the comparison stated in the passage."
+    },
+    "user_id": 1
+  },
+  {
+    "id": "prod_10",
+    "scenario_type": "hard_negative",
+    "difficulty": "hard",
+    "question": "Does the paper establish that self-attention is computationally faster than recurrent layers for every possible sequence length?",
+    "context": {
+      "document": {
+        "title": "Attention Is All You Need"
+      },
+      "sources": [
+        {
+          "source_id": "chunk:82",
+          "title": "Computational Complexity",
+          "content": "Layer Type\nComplexity per Layer\nSequential\nMaximum Path Length\nOperations\nSelf-Attention\nO(n2 · d)\nO(1)\nO(1)\nRecurrent\nO(n · d2)\nO(n)\nO(n)\nConvolutional\nO(k · n · d2)\nO(1)\nO(logk(n))\nSelf-Attention (restricted)\nO(r · n · d)\nO(1)\nO(n/r)"
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "No. The paper does not establish universal superiority; the comparison depends on sequence length and representation dimensionality.",
+      "required_facts": [
+        "Self-attention complexity per layer is O(n? ? d).",
+        "Recurrent-layer complexity per layer is O(n ? d?).",
+        "The comparison depends on sequence length n and representation dimension d."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "chunk:82",
+          "quote": "Self-Attention\nO(n2 · d)\nO(1)\nO(1)\nRecurrent\nO(n · d2)\nO(n)\nO(n)"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The complexity expressions do not establish that self-attention is faster for every sequence length."
+    },
+    "user_id": 1
+  }
+]

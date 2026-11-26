@@ -77,41 +77,133 @@ def prepare_evidence(
 
 
 def classify_action(answer: str) -> str:
-    """Operational heuristic only; does not judge semantic correctness."""
-    normalized = " ".join(answer.lower().split())
-    abstention = " ".join(ABSTENTION_TEXT.lower().split())
-    return "abstain" if abstention in normalized else "answer"
+    """Extract and validate the model's explicit evaluation action."""
+    pattern = (
+        r"<ACTION>\s*(answer|partial_answer|abstain|clarify|escalate)\s*</ACTION>"
+        r"|(?:\*\*)?\s*ACTION\s*:?\s*(?:\*\*)?\s*"
+        r"(?:\*\*)?(answer|partial_answer|abstain|clarify|escalate)(?:\*\*)?\s*$"
+    )
+    matches = re.findall(
+        pattern,
+        answer,
+        flags=re.IGNORECASE | re.MULTILINE,
+    )
+    matches = [next(group for group in match if group).lower() for match in matches]
 
+    if len(matches) == 1:
+        return matches[0]
+
+    return "unclassified"
 
 def run_case(case: dict[str, Any], db, client: Groq) -> tuple[dict, list[dict]]:
     query = case["question"]
     user_id = int(case["user_id"])
     document_id = case.get("document_id")
     results = SearchService.search(
-        db=db, query=query, user_id=user_id, limit=5, document_id=document_id
+        db=db, query=query, user_id=user_id, limit=8, document_id=document_id
     )
     prepared = prepare_evidence(results, document_id, query)
-    prompt = PromptService.build_prompt(
+    base_prompt = PromptService.build_prompt(
         conversation_history="",
         context=prepared["context"],
         query=query,
     )
+    answer_prompt = base_prompt + """
+
+ANSWER REQUIREMENTS:
+- Answer using only the retrieved evidence.
+- Cite every substantive factual claim using the supplied [SOURCE_n] identifiers.
+- Use only source identifiers present in the retrieved context.
+- If evidence is insufficient, clearly state what cannot be established.
+- Do not invent facts or citations.
+"""
     response = client.chat.completions.create(
         model=settings.groq_model,
         messages=[
-            {"role": "system", "content": "You are Dasaiko, an AI research assistant."},
-            {"role": "user", "content": prompt},
+            {
+                "role": "system",
+                "content": "You are Dasaiko, an evidence-grounded AI research assistant.",
+            },
+            {"role": "user", "content": answer_prompt},
         ],
         temperature=0.2,
+        max_tokens=2048,
     )
-    answer = response.choices[0].message.content or ""
-    answer = ChatService._validate_source_citations(answer, len(prepared["evidence"]))
+
+    print("ANSWER FINISH REASON:", response.choices[0].finish_reason)
+    print("ANSWER USAGE:", response.usage)
+
+    raw_answer = response.choices[0].message.content or ""
+    print("RAW ANSWER END:", repr(raw_answer[-250:]))
+
+    answer = ChatService._validate_source_citations(
+        raw_answer,
+        len(prepared["evidence"]),
+    )
+
+    classifier_prompt = f"""Classify the response using ONLY the question, retrieved evidence, and generated answer below.
+
+QUESTION:
+{query}
+
+RETRIEVED EVIDENCE:
+{prepared["context"]}
+
+GENERATED ANSWER:
+{answer}
+
+Choose exactly one label:
+- answer: Every requested part is adequately supported by the retrieved evidence and answered.
+- partial_answer: At least one requested part is supported, but another requested part is unsupported or unanswered.
+- abstain: No requested part can be usefully answered from the evidence.
+- clarify: The question is materially ambiguous and needs clarification.
+- escalate: The evidence is materially conflicting or stale.
+
+Return ONLY the label. No explanation, punctuation, markdown, or additional text.
+"""
+
+    classifier_response = client.chat.completions.create(
+        model=settings.groq_model,
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a strict answerability classifier. Output exactly one permitted label.",
+            },
+            {"role": "user", "content": classifier_prompt},
+        ],
+        temperature=0,
+        max_tokens=256,
+    )
+
+    classifier_raw = (
+        classifier_response.choices[0].message.content or ""
+    ).strip()
+
+    print("CLASSIFIER FINISH REASON:", classifier_response.choices[0].finish_reason)
+    print("CLASSIFIER RAW RESPONSE:", repr(classifier_raw))
+
+    allowed_actions = {
+        "answer",
+        "partial_answer",
+        "abstain",
+        "clarify",
+        "escalate",
+    }
+    predicted_action = classifier_raw.strip().lower()
+    if predicted_action not in allowed_actions:
+        predicted_action = "unclassified"
+    action_classification = (
+        "separate_classifier"
+        if predicted_action != "unclassified"
+        else "unclassified_classifier"
+    )
+    answer_generation_action = classify_action(raw_answer)
 
     source_by_prompt_id = {
         item["prompt_source_id"]: item["source_id"]
         for item in prepared["evidence"]
     }
-    cited_prompt_ids = set(re.findall(r"\[SOURCE_(\d+)\]", answer))
+    cited_prompt_ids = set(re.findall(r"\[\s*SOURCE_(\d+)\s*\]", answer))
     cited_source_ids = [
         source_by_prompt_id[f"SOURCE_{index}"]
         for index in sorted(cited_prompt_ids, key=int)
@@ -119,7 +211,10 @@ def run_case(case: dict[str, Any], db, client: Groq) -> tuple[dict, list[dict]]:
     ]
     prediction = {
         "case_id": case["id"],
-        "predicted_action": classify_action(answer),
+        "predicted_action": predicted_action,
+        "action_classification": action_classification,
+        "answer_generation_action": answer_generation_action,
+        "classifier_raw_response": classifier_raw,
         "cited_source_ids": cited_source_ids,
         "answer": answer,
         "retrieved_evidence": prepared["evidence"],
@@ -151,12 +246,49 @@ def main() -> int:
         if "question" not in case:
             raise ValueError(f"Case {case['id']} is missing question.")
 
-    client = Groq(api_key=settings.groq_api_key)
+    client = Groq(
+        api_key=settings.groq_api_key,
+        max_retries=3,
+        timeout=120.0,
+    )
     db = SessionLocal()
     augmented_cases = json.loads(json.dumps(cases))
     predictions = []
+    completed_ids = set()
+
+    if args.predictions.exists():
+        predictions = json.loads(args.predictions.read_text(encoding="utf-8"))
+        if not isinstance(predictions, list):
+            raise ValueError("Existing predictions file must contain a JSON array.")
+
+        dataset_ids = {case["id"] for case in cases}
+        prediction_ids = [item.get("case_id") for item in predictions]
+
+        if len(prediction_ids) != len(set(prediction_ids)):
+            raise ValueError("Existing predictions contain duplicate case IDs.")
+        if not set(prediction_ids).issubset(dataset_ids):
+            raise ValueError("Existing predictions belong to a different dataset.")
+
+        completed_ids = set(prediction_ids)
+
+    if args.evaluation_dataset.exists() and completed_ids:
+        saved_cases = json.loads(
+            args.evaluation_dataset.read_text(encoding="utf-8")
+        )
+        saved_by_id = {case["id"]: case for case in saved_cases}
+
+        for case in augmented_cases:
+            saved = saved_by_id.get(case["id"])
+            if saved and case["id"] in completed_ids:
+                case["context"]["sources"] = saved["context"]["sources"]
+
+    print(f"Resuming: {len(completed_ids)}/{len(cases)} cases already completed.")
+
     try:
         for index, case in enumerate(cases):
+            if case["id"] in completed_ids:
+                continue
+
             prediction, retrieved = run_case(case, db, client)
             predictions.append(prediction)
 
@@ -174,19 +306,22 @@ def main() -> int:
                         "provenance": "runtime_retrieval",
                     })
                     registered.add(item["source_id"])
+
+            # Checkpoint after each successfully completed case.
+            args.predictions.parent.mkdir(parents=True, exist_ok=True)
+            args.evaluation_dataset.parent.mkdir(parents=True, exist_ok=True)
+            args.predictions.write_text(
+                json.dumps(predictions, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            args.evaluation_dataset.write_text(
+                json.dumps(augmented_cases, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            print(f"Checkpoint saved: {len(predictions)}/{len(cases)} cases.")
+
     finally:
         db.close()
-
-    args.predictions.parent.mkdir(parents=True, exist_ok=True)
-    args.evaluation_dataset.parent.mkdir(parents=True, exist_ok=True)
-    args.predictions.write_text(
-        json.dumps(predictions, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    args.evaluation_dataset.write_text(
-        json.dumps(augmented_cases, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
     print(f"Generated {len(predictions)} predictions at {args.predictions}.")
     print(f"Registered runtime-retrieved sources in {args.evaluation_dataset}.")
     print("Retrieved sources are not gold supporting evidence; annotate answer and claim quality independently.")

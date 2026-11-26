@@ -56,7 +56,7 @@ class ChatService:
         }
 
         pattern = re.compile(
-            r"\[SOURCE_(\d+)\]"
+            r"\[\s*SOURCE_(\d+)\s*\]"
         )
 
         def replace_match(match):
