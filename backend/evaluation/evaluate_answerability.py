@@ -133,6 +133,72 @@ def _calibration(confidence_pairs: list[tuple[float, bool]], bins: int = 10) -> 
     }
 
 
+def _risk_coverage(
+    answer_attempts: list[tuple[float, bool]],
+    total_cases: int,
+    max_answer_risk: float | None = None,
+) -> dict[str, Any]:
+    """Build an empirical confidence-threshold curve for answer attempts."""
+    if max_answer_risk is not None and not 0 <= max_answer_risk <= 1:
+        raise ValueError("max_answer_risk must be in [0, 1].")
+
+    if not answer_attempts:
+        return {
+            "sample_count": 0,
+            "confidence_coverage": 0.0,
+            "curve": [],
+            "area_under_risk_coverage_curve": None,
+            "target_risk": max_answer_risk,
+            "suggested_threshold": None,
+            "suggested_coverage": None,
+            "suggested_empirical_risk": None,
+        }
+
+    thresholds = sorted({score for score, _ in answer_attempts}, reverse=True)
+    curve: list[dict[str, float | int]] = []
+    for threshold in thresholds:
+        accepted = [(score, correct) for score, correct in answer_attempts if score >= threshold]
+        errors = sum(not correct for _, correct in accepted)
+        curve.append({
+            "threshold": threshold,
+            "accepted_answers": len(accepted),
+            "coverage": len(accepted) / total_cases if total_cases else 0.0,
+            "risk": errors / len(accepted),
+        })
+
+    # Thresholds are descending, so coverage increases from left to right.
+    previous_coverage = 0.0
+    previous_risk = 0.0
+    aurc = 0.0
+    for point in curve:
+        coverage = float(point["coverage"])
+        risk = float(point["risk"])
+        aurc += (coverage - previous_coverage) * (risk + previous_risk) / 2
+        previous_coverage, previous_risk = coverage, risk
+
+    eligible = [
+        point for point in curve
+        if max_answer_risk is not None and float(point["risk"]) <= max_answer_risk
+    ]
+    suggested = max(eligible, key=lambda point: float(point["coverage"])) if eligible else None
+
+    return {
+        "sample_count": len(answer_attempts),
+        "confidence_coverage": len(answer_attempts) / total_cases if total_cases else 0.0,
+        "curve": curve,
+        "area_under_risk_coverage_curve": aurc,
+        "target_risk": max_answer_risk,
+        "suggested_threshold": suggested["threshold"] if suggested else None,
+        "suggested_coverage": suggested["coverage"] if suggested else None,
+        "suggested_empirical_risk": suggested["risk"] if suggested else None,
+        "interpretation": (
+            "Empirical threshold selection on this evaluation sample only. "
+            "Choose thresholds on a development set and verify once on a separate holdout; "
+            "do not treat the suggested threshold as a production guarantee."
+        ),
+    }
+
+
 def evaluate_predictions(
     cases: list[dict[str, Any]],
     predictions: list[dict[str, Any]],
