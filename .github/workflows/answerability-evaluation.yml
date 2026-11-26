@@ -1,0 +1,30 @@
+name: Answerability Evaluation Tests
+
+on:
+  pull_request:
+    paths:
+      - "backend/evaluation/**"
+      - "backend/tests/test_answerability*.py"
+      - ".github/workflows/answerability-evaluation.yml"
+  push:
+    branches:
+      - main
+      - "feat/answerability-evaluation-dataset"
+    paths:
+      - "backend/evaluation/**"
+      - "backend/tests/test_answerability*.py"
+      - ".github/workflows/answerability-evaluation.yml"
+
+jobs:
+  answerability-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run answerability tests
+        working-directory: backend
+        run: python -m unittest discover -s tests -p "test_answerability*.py" -v
