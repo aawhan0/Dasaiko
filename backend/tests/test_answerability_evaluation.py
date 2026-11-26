@@ -102,6 +102,80 @@ class AnswerabilityEvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "max_answer_risk"):
             evaluate_predictions(self.cases, predictions, max_answer_risk=1.1)
 
+    def test_claim_level_support_and_citation_attribution_metrics(self):
+        predictions = [
+            {
+                "case_id": "a1",
+                "predicted_action": "answer",
+                "claim_assessments": [
+                    {
+                        "text": "The policy is 30 days.",
+                        "support_status": "supported",
+                        "cited_source_ids": ["a1_s1"],
+                        "supporting_source_ids": ["a1_s1"],
+                    },
+                    {
+                        "text": "The policy applies worldwide.",
+                        "support_status": "insufficient_evidence",
+                        "cited_source_ids": [],
+                        "supporting_source_ids": [],
+                    },
+                ],
+            },
+            {
+                "case_id": "u1",
+                "predicted_action": "abstain",
+                "claim_assessments": [
+                    {
+                        "text": "The service is available on Sundays.",
+                        "support_status": "unsupported",
+                        "cited_source_ids": ["u1_s1"],
+                        "supporting_source_ids": [],
+                    }
+                ],
+            },
+            {
+                "case_id": "c1",
+                "predicted_action": "escalate",
+                "claim_assessments": [
+                    {
+                        "text": "The policy is 30 days.",
+                        "support_status": "contradicted",
+                        "cited_source_ids": ["c1_s1"],
+                        "supporting_source_ids": [],
+                    }
+                ],
+            },
+        ]
+        metrics = evaluate_predictions(self.cases, predictions)["metrics"]
+        self.assertEqual(metrics["claim_support_rate"], 0.25)
+        self.assertEqual(metrics["unsupported_claim_rate"], 0.25)
+        self.assertEqual(metrics["contradicted_claim_rate"], 0.25)
+        self.assertEqual(metrics["insufficient_evidence_claim_rate"], 0.25)
+        self.assertAlmostEqual(metrics["claim_evidence_attribution_precision"], 0.5)
+        self.assertEqual(metrics["claim_evidence_attribution_recall"], 1.0)
+        self.assertAlmostEqual(metrics["claim_evidence_attribution_f1"], 2 / 3)
+
+    def test_claim_assessment_rejects_unknown_source_and_invalid_status(self):
+        predictions = [
+            {
+                "case_id": "a1",
+                "predicted_action": "answer",
+                "claim_assessments": [
+                    {
+                        "text": "A claim",
+                        "support_status": "maybe",
+                        "cited_source_ids": ["not-a-source"],
+                        "supporting_source_ids": [],
+                    }
+                ],
+            },
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        with self.assertRaisesRegex(ValueError, "support_status|unknown source"):
+            evaluate_predictions(self.cases, predictions)
+
     def test_invalid_confidence_is_rejected(self):
         predictions = [
             {"case_id": "a1", "predicted_action": "answer", "confidence": 1.5},
