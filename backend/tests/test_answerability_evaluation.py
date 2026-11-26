@@ -1,0 +1,82 @@
+import unittest
+
+from evaluation.evaluate_answerability import evaluate_predictions
+
+
+def make_case(case_id, scenario, answerability, action, required_facts=None, sources=None, evidence=None):
+    return {
+        "id": case_id,
+        "scenario_type": scenario,
+        "difficulty": "easy",
+        "question": "What is the policy?",
+        "context": {
+            "business": {"name": "Test Business", "website": "https://example.test"},
+            "sources": sources or [{"source_id": f"{case_id}_s1", "title": "Policy", "url": "https://example.test/policy", "content": "The policy is 30 days."}],
+        },
+        "ground_truth": {
+            "answerability": answerability,
+            "expected_action": action,
+            "expected_answer": "30 days." if action in {"answer", "partial_answer"} else None,
+            "required_facts": required_facts or [],
+            "supporting_evidence": evidence or [],
+            "distracting_evidence": [],
+            "rationale": "Test fixture.",
+        },
+    }
+
+
+class AnswerabilityEvaluationTests(unittest.TestCase):
+    def setUp(self):
+        self.cases = [
+            make_case("a1", "answerable", "answerable", "answer", ["30 days"], evidence=[{"source_id": "a1_s1", "quote": "The policy is 30 days."}]),
+            make_case("u1", "unanswerable", "unanswerable", "abstain"),
+            make_case("c1", "conflicting", "conflicting", "escalate", sources=[
+                {"source_id": "c1_s1", "title": "Old", "url": "https://example.test/old", "content": "30 days"},
+                {"source_id": "c1_s2", "title": "New", "url": "https://example.test/new", "content": "60 days"},
+            ]),
+        ]
+
+    def test_metrics_for_correct_and_unsafe_actions(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "predicted_answerability": "answerable", "confidence": 0.9, "cited_source_ids": ["a1_s1"], "covered_required_fact_indices": [0]},
+            {"case_id": "u1", "predicted_action": "answer", "predicted_answerability": "unanswerable", "confidence": 0.8},
+            {"case_id": "c1", "predicted_action": "escalate", "predicted_answerability": "conflicting", "confidence": 0.95},
+        ]
+        report = evaluate_predictions(self.cases, predictions)
+        metrics = report["metrics"]
+        self.assertAlmostEqual(metrics["action_accuracy"], 2 / 3)
+        self.assertEqual(metrics["false_answer_rate_on_non_answer_cases"], 0.5)
+        self.assertEqual(metrics["correct_non_answer_action_rate"], 0.5)
+        self.assertAlmostEqual(metrics["required_fact_coverage"], 1.0)
+        self.assertAlmostEqual(metrics["evidence_source_precision"], 1.0)
+        self.assertAlmostEqual(metrics["evidence_source_recall"], 1.0)
+
+    def test_missing_and_duplicate_predictions_are_rejected(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer"},
+            {"case_id": "a1", "predicted_action": "answer"},
+        ]
+        with self.assertRaisesRegex(ValueError, "duplicate|Missing"):
+            evaluate_predictions(self.cases, predictions)
+
+    def test_invalid_confidence_is_rejected(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "confidence": 1.5},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        with self.assertRaisesRegex(ValueError, "confidence"):
+            evaluate_predictions(self.cases, predictions)
+
+    def test_calibration_is_omitted_when_no_confidence_is_supplied(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer"},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        report = evaluate_predictions(self.cases, predictions)
+        self.assertIsNone(report["metrics"]["confidence_calibration"]["brier_score"])
+
+
+if __name__ == "__main__":
+    unittest.main()
