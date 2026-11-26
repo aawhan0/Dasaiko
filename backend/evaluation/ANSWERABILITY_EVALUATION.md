@@ -74,6 +74,25 @@ Predictions are a JSON array. Every case must appear exactly once:
 | Unsupported / contradicted / insufficient-evidence claim rates | Count in each respective status / all assessed claims. These are separate failure categories. |
 | Claim evidence attribution precision / recall / F1 | Per-claim overlap between cited source IDs and independently annotated supporting source IDs. |
 
+## Reproducible benchmark comparisons
+
+The evaluator writes a JSON report for each prediction file. To compare two saved runs, first evaluate each run against the same dataset version, then aggregate the resulting reports:
+
+```bash
+python -m evaluation.evaluate_answerability --predictions artifacts/baseline_predictions.json --output artifacts/baseline_report.json
+python -m evaluation.evaluate_answerability --predictions artifacts/candidate_predictions.json --output artifacts/candidate_report.json
+python -m evaluation.build_answerability_report \
+  --run baseline=artifacts/baseline_report.json \
+  --run candidate=artifacts/candidate_report.json \
+  --baseline baseline \
+  --output artifacts/benchmark_comparison.json \
+  --markdown-output artifacts/benchmark_comparison.md
+```
+
+The comparison contains run-level metrics, per-scenario action accuracy, raw counts and candidate-minus-baseline deltas. Missing metrics stay null/absent rather than being coerced to zero. Error-rate deltas need reverse interpretation: a negative false-answer or unsupported-claim delta is generally preferable, while a positive action-accuracy delta is generally preferable.
+
+Keep the dataset, prediction-generation settings and annotation protocol fixed when comparing runs. The report builder does not generate predictions, run the target RAG system, enforce a universal pass/fail threshold or claim statistical significance. For a defensible regression comparison, preserve the exact dataset and prediction artifacts alongside the reports.
+
 ## Robustness checks
 
 The test suite includes deterministic adversarial and metamorphic checks around the evaluator contract:
