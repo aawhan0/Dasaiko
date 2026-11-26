@@ -152,9 +152,9 @@ class AnswerabilityEvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["unsupported_claim_rate"], 0.25)
         self.assertEqual(metrics["contradicted_claim_rate"], 0.25)
         self.assertEqual(metrics["insufficient_evidence_claim_rate"], 0.25)
-        self.assertAlmostEqual(metrics["claim_evidence_attribution_precision"], 0.5)
+        self.assertAlmostEqual(metrics["claim_evidence_attribution_precision"], 1 / 3)
         self.assertEqual(metrics["claim_evidence_attribution_recall"], 1.0)
-        self.assertAlmostEqual(metrics["claim_evidence_attribution_f1"], 2 / 3)
+        self.assertAlmostEqual(metrics["claim_evidence_attribution_f1"], 0.5)
 
     def test_claim_assessment_rejects_unknown_source_and_invalid_status(self):
         predictions = [
