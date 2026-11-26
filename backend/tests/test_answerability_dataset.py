@@ -72,6 +72,29 @@ class AnswerabilityDatasetTests(unittest.TestCase):
         errors = validate_cases(cases)
         self.assertTrue(any("source_id values must be unique" in error for error in errors))
 
+    def test_unhashable_source_ids_are_reported_without_crashing(self):
+        cases = [{
+            "id": "malformed_source_id",
+            "scenario_type": "answerable",
+            "difficulty": "easy",
+            "question": "Q?",
+            "context": {
+                "sources": [
+                    {"source_id": ["not", "hashable"], "content": "The answer is yes."},
+                    {"source_id": {"nested": "value"}, "content": "Another excerpt."},
+                ]
+            },
+            "ground_truth": {
+                "answerability": "answerable",
+                "expected_action": "answer",
+                "expected_answer": "Yes",
+                "required_facts": ["Yes"],
+                "supporting_evidence": [],
+            },
+        }]
+        errors = validate_cases(cases)
+        self.assertTrue(any("non-empty string source_id" in error for error in errors))
+
     def test_non_verbatim_evidence_is_rejected(self):
         cases = [{
             "id": "bad_quote",
