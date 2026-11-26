@@ -27,7 +27,15 @@ Predictions are a JSON array. Every case must appear exactly once:
     "predicted_answerability": "answerable",
     "confidence": 0.91,
     "cited_source_ids": ["ans_01_s1"],
-    "covered_required_fact_indices": [0]
+    "covered_required_fact_indices": [0],
+    "claim_assessments": [
+      {
+        "text": "The cancellation window is 30 days.",
+        "support_status": "supported",
+        "cited_source_ids": ["ans_01_s1"],
+        "supporting_source_ids": ["ans_01_s1"]
+      }
+    ]
   }
 ]
 ```
@@ -37,6 +45,12 @@ Predictions are a JSON array. Every case must appear exactly once:
 - `confidence`: optional number from 0 to 1 representing confidence in the predicted action being correct. It is not a reranker score.
 - `cited_source_ids`: source IDs actually cited by the generated answer or response.
 - `covered_required_fact_indices`: zero-based indices of required facts that an independent evaluator has judged as supported in the answer. This is an annotation input, not an automatic text-matching heuristic. For cases without required facts, use an empty list.
+- `claim_assessments`: optional list of atomic factual claims extracted from the generated response and independently assessed against that case's source excerpts. Each item has:
+  - `text`: the claim as expressed in the response.
+  - `support_status`: `supported`, `unsupported`, `contradicted`, or `insufficient_evidence`.
+  - `cited_source_ids`: source IDs cited for this specific claim in the response.
+  - `supporting_source_ids`: source IDs independently judged to support the complete claim. This must be empty unless the status is `supported`.
+  Assess the full claim, including qualifiers, quantities, dates and conditions. Do not mark a claim supported merely because a source is topically related.
 
 ## Metrics and definitions
 
@@ -56,12 +70,17 @@ Predictions are a JSON array. Every case must appear exactly once:
 | Answer risk–coverage curve | For each observed confidence threshold, retain answer/partial-answer attempts at or above it. Coverage = retained attempts / all dataset cases; risk = incorrect expected actions / retained attempts. |
 | Area under risk–coverage curve (AURC) | Trapezoidal area under the empirical risk-versus-coverage curve, starting at zero coverage. Lower is better for comparable evaluation sets. |
 | Suggested threshold | Optional highest-coverage observed confidence threshold whose empirical answer risk is at or below `--max-answer-risk`. No threshold is suggested if none meets the cap. |
+| Claim support rate | Independently assessed supported claims / all assessed claims. |
+| Unsupported / contradicted / insufficient-evidence claim rates | Count in each respective status / all assessed claims. These are separate failure categories. |
+| Claim evidence attribution precision / recall / F1 | Per-claim overlap between cited source IDs and independently annotated supporting source IDs. |
 
 ## Interpretation and limits
 
 - A low false-answer rate is desirable, but it can be achieved by refusing everything. Always read it alongside answer coverage and action accuracy.
 - Required-fact coverage depends on an independent semantic assessment of answer text. The evaluator deliberately does not use brittle substring matching as a proxy for factual support.
 - Evidence-source overlap measures provenance at source level. A citation on a case with no annotated supporting source is counted as a false positive. It does not prove that each cited passage entails each answer claim.
+- Claim-level metrics are calculated only when `claim_assessments` are supplied. They depend on independent claim extraction and semantic annotation; this evaluator does not extract claims or determine entailment automatically.
+- Claim evidence attribution is measured per claim. A source can be relevant to the topic but still fail to support the complete claim; annotators should account for qualifiers, scope and contradictions.
 - Confidence calibration concerns confidence in the selected action, not probability that every answer claim is true.
 - Risk–coverage uses only answer/partial-answer attempts with supplied confidence. Missing-confidence attempts are excluded from the curve and its AURC, but remain in aggregate metrics. Coverage is measured against the full dataset size.
 - `--max-answer-risk` is an optional empirical target, not a default policy. The suggested threshold is selected on the supplied sample and can overfit; choose it on a development split and verify it once on a separate holdout before considering deployment.
