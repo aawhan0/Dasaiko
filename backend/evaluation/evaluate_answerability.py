@@ -18,6 +18,7 @@ ANSWERABILITY_LABELS = {
     "conflicting", "stale", "ambiguous",
 }
 ANSWER_ACTIONS = {"answer", "partial_answer"}
+CLAIM_SUPPORT_STATUSES = {"supported", "unsupported", "contradicted", "insufficient_evidence"}
 NON_ANSWER_ACTIONS = {"abstain", "escalate", "clarify"}
 
 
@@ -86,6 +87,42 @@ def _validate_predictions(
             )
         elif len(covered) != len(set(covered)):
             errors.append(f"{prefix}: covered_required_fact_indices must be unique.")
+
+        claims = prediction.get("claim_assessments", [])
+        if not isinstance(claims, list):
+            errors.append(f"{prefix}: claim_assessments must be a list.")
+            continue
+        source_ids = {
+            source["source_id"]
+            for source in case_by_id[case_id]["context"]["sources"]
+        }
+        for claim_index, claim in enumerate(claims):
+            claim_prefix = f"{prefix}.claim_assessments[{claim_index}]"
+            if not isinstance(claim, dict):
+                errors.append(f"{claim_prefix}: must be an object.")
+                continue
+            if not isinstance(claim.get("text"), str) or not claim["text"].strip():
+                errors.append(f"{claim_prefix}: text must be a non-empty string.")
+            status = claim.get("support_status")
+            if status not in CLAIM_SUPPORT_STATUSES:
+                errors.append(
+                    f"{claim_prefix}: support_status must be one of {sorted(CLAIM_SUPPORT_STATUSES)}."
+                )
+            for field in ("cited_source_ids", "supporting_source_ids"):
+                values = claim.get(field, [])
+                if not isinstance(values, list) or any(not isinstance(item, str) for item in values):
+                    errors.append(f"{claim_prefix}: {field} must be a list of strings.")
+                    continue
+                if len(values) != len(set(values)):
+                    errors.append(f"{claim_prefix}: {field} must contain unique IDs.")
+                unknown = set(values) - source_ids
+                if unknown:
+                    errors.append(f"{claim_prefix}: {field} contains unknown source IDs {sorted(unknown)}.")
+            supporting = claim.get("supporting_source_ids", [])
+            if status != "supported" and supporting:
+                errors.append(
+                    f"{claim_prefix}: supporting_source_ids must be empty unless support_status is 'supported'."
+                )
 
     missing = set(case_by_id) - seen
     if missing:
@@ -227,6 +264,11 @@ def evaluate_predictions(
     evidence_tp = 0
     evidence_fp = 0
     evidence_fn = 0
+    claim_status_counts: Counter = Counter()
+    claim_evidence_tp = 0
+    claim_evidence_fp = 0
+    claim_evidence_fn = 0
+    claim_count = 0
     confidence_pairs: list[tuple[float, bool]] = []
     answer_confidence_pairs: list[tuple[float, bool]] = []
     action_confusion: dict[str, Counter] = defaultdict(Counter)
@@ -280,6 +322,15 @@ def evaluate_predictions(
         evidence_fp += len(predicted_sources - gold_sources)
         evidence_fn += len(gold_sources - predicted_sources)
 
+        for claim in prediction.get("claim_assessments", []):
+            claim_count += 1
+            claim_status_counts[claim["support_status"]] += 1
+            cited_claim_sources = set(claim.get("cited_source_ids", []))
+            supported_claim_sources = set(claim.get("supporting_source_ids", []))
+            claim_evidence_tp += len(cited_claim_sources & supported_claim_sources)
+            claim_evidence_fp += len(cited_claim_sources - supported_claim_sources)
+            claim_evidence_fn += len(supported_claim_sources - cited_claim_sources)
+
         confidence = prediction.get("confidence")
         if confidence is not None:
             confidence_pairs.append((float(confidence), action_is_correct))
@@ -306,6 +357,22 @@ def evaluate_predictions(
             "answer_risk_coverage": _risk_coverage(
                 answer_confidence_pairs, total, max_answer_risk=max_answer_risk
             ),
+            "claim_support_rate": _ratio(claim_status_counts["supported"], claim_count),
+            "unsupported_claim_rate": _ratio(claim_status_counts["unsupported"], claim_count),
+            "contradicted_claim_rate": _ratio(claim_status_counts["contradicted"], claim_count),
+            "insufficient_evidence_claim_rate": _ratio(
+                claim_status_counts["insufficient_evidence"], claim_count
+            ),
+            "claim_evidence_attribution_precision": _ratio(
+                claim_evidence_tp, claim_evidence_tp + claim_evidence_fp
+            ),
+            "claim_evidence_attribution_recall": _ratio(
+                claim_evidence_tp, claim_evidence_tp + claim_evidence_fn
+            ),
+            "claim_evidence_attribution_f1": _ratio(
+                2 * claim_evidence_tp,
+                2 * claim_evidence_tp + claim_evidence_fp + claim_evidence_fn,
+            ),
         },
         "counts": {
             "action_correct": action_correct,
@@ -315,6 +382,11 @@ def evaluate_predictions(
             "false_answers": false_answer,
             "correct_non_answer_actions": correct_non_answer_action,
             "answer_attempts": answer_attempts,
+            "claim_count": claim_count,
+            "claim_status_counts": dict(sorted(claim_status_counts.items())),
+            "claim_evidence_true_positives": claim_evidence_tp,
+            "claim_evidence_false_positives": claim_evidence_fp,
+            "claim_evidence_false_negatives": claim_evidence_fn,
             "required_facts_covered": fact_covered,
             "required_facts_evaluated": fact_total,
             "evidence_true_positives": evidence_tp,
@@ -342,6 +414,8 @@ def evaluate_predictions(
             "evidence_source_metrics": "Source-ID overlap against annotated supporting_evidence; this is a provenance proxy, not claim-level entailment verification.",
             "confidence_calibration": "Confidence is evaluated against exact expected_action correctness, not answer truth probability. Brier score and equal-width-bin ECE are reported only for supplied confidence values.",
             "answer_risk_coverage": "Confidence-threshold curve over answer/partial_answer attempts with supplied confidence. Coverage is accepted answer attempts divided by all cases; risk is the fraction of accepted attempts with an incorrect expected action. Missing-confidence attempts are excluded from this curve.",
+            "claim_support_metrics": "Based only on claim_assessments supplied by an independent semantic evaluator. support_status must reflect whether the complete claim is supported, unsupported, contradicted, or not established by the provided sources; this script does not infer entailment from text.",
+            "claim_evidence_attribution_metrics": "Per-claim overlap between cited_source_ids and independently annotated supporting_source_ids. It measures citation attribution, not semantic entailment by itself.",
         },
     }
 
