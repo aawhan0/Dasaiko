@@ -148,6 +148,7 @@ def evaluate_predictions(
     prediction_by_id = {item["case_id"]: item for item in predictions}
     total = len(cases)
     action_correct = 0
+    answer_attempts_correct = 0
     label_evaluated = 0
     label_correct = 0
     non_answer_total = 0
@@ -195,6 +196,7 @@ def evaluate_predictions(
 
         if predicted_action in ANSWER_ACTIONS:
             answer_attempts += 1
+            answer_attempts_correct += int(action_is_correct)
 
         required_facts = truth.get("required_facts", [])
         if required_facts and predicted_action in ANSWER_ACTIONS:
@@ -203,11 +205,10 @@ def evaluate_predictions(
             fact_covered += len(covered_indices)
 
         gold_sources = {item["source_id"] for item in truth.get("supporting_evidence", [])}
-        if gold_sources:
-            predicted_sources = set(prediction.get("cited_source_ids", []))
-            evidence_tp += len(gold_sources & predicted_sources)
-            evidence_fp += len(predicted_sources - gold_sources)
-            evidence_fn += len(gold_sources - predicted_sources)
+        predicted_sources = set(prediction.get("cited_source_ids", []))
+        evidence_tp += len(gold_sources & predicted_sources)
+        evidence_fp += len(predicted_sources - gold_sources)
+        evidence_fn += len(gold_sources - predicted_sources)
 
         confidence = prediction.get("confidence")
         if confidence is not None:
@@ -223,6 +224,7 @@ def evaluate_predictions(
             "false_answer_rate_on_non_answer_cases": _ratio(false_answer, non_answer_total),
             "correct_non_answer_action_rate": _ratio(correct_non_answer_action, non_answer_total),
             "answer_coverage": answer_attempts / total if total else 0.0,
+            "selective_action_accuracy": _ratio(answer_attempts_correct, answer_attempts),
             "required_fact_coverage": _ratio(fact_covered, fact_total),
             "evidence_source_precision": _ratio(evidence_tp, evidence_tp + evidence_fp),
             "evidence_source_recall": _ratio(evidence_tp, evidence_tp + evidence_fn),
@@ -262,6 +264,7 @@ def evaluate_predictions(
             "false_answer_rate_on_non_answer_cases": "Fraction of unanswerable/conflicting/stale/ambiguous cases where the system attempted an answer instead of taking the labelled non-answer action.",
             "correct_non_answer_action_rate": "Exact expected-action match among cases labelled abstain, escalate, or clarify.",
             "answer_coverage": "Fraction of all cases where the system attempted an answer (answer or partial_answer).",
+            "selective_action_accuracy": "Exact expected-action accuracy restricted to cases where the system attempted an answer; it must be read with answer coverage.",
             "required_fact_coverage": "Coverage of required facts, based on externally supplied covered_required_fact_indices; this evaluator does not judge answer text semantically.",
             "evidence_source_metrics": "Source-ID overlap against annotated supporting_evidence; this is a provenance proxy, not claim-level entailment verification.",
             "confidence_calibration": "Confidence is evaluated against exact expected_action correctness, not answer truth probability. Brier score and equal-width-bin ECE are reported only for supplied confidence values.",
