@@ -42,7 +42,7 @@ def export_corpus(user_id: int, output: Path) -> dict:
                 })
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(
-            json.dumps(rows, ensure_ascii=False, indent=2) + "\\n",
+            json.dumps(rows, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
         )
         return {"document_count": len(documents), "chunk_count": len(rows)}
