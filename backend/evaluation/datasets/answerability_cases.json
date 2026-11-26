@@ -525,21 +525,21 @@
           "source_id": "ans_15_s1",
           "title": "Seasonal promotion",
           "url": "https://example.test/ans_15_s1",
-          "content": "The Spring Refresh promotion ends on 30 June 2026 at 11:59 PM local time."
+          "content": "The Spring Refresh promotion ends on 30 June 2027 at 11:59 PM local time."
         }
       ]
     },
     "ground_truth": {
       "answerability": "answerable",
       "expected_action": "answer",
-      "expected_answer": "The Spring Refresh promotion ends on 30 June 2026 at 11:59 PM local time.",
+      "expected_answer": "The Spring Refresh promotion ends on 30 June 2027 at 11:59 PM local time.",
       "required_facts": [
-        "Promotion end is 30 June 2026 at 11:59 PM local time."
+        "Promotion end is 30 June 2027 at 11:59 PM local time."
       ],
       "supporting_evidence": [
         {
           "source_id": "ans_15_s1",
-          "quote": "ends on 30 June 2026 at 11:59 PM local time"
+          "quote": "ends on 30 June 2027 at 11:59 PM local time"
         }
       ],
       "distracting_evidence": [],
