@@ -137,7 +137,7 @@ def evaluate_predictions(
     cases: list[dict[str, Any]],
     predictions: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    dataset_errors = validate_cases(cases)
+    dataset_errors = validate_cases(cases, enforce_distribution=False)
     if dataset_errors:
         raise ValueError("Invalid answerability dataset: " + "; ".join(dataset_errors))
 
