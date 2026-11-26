@@ -51,17 +51,17 @@ def prepare_evidence(results: list[dict], document_id: int | None) -> list[dict]
             "prompt_source_id": f"SOURCE_{index}",
         })
         context_parts.append(
-            f"[SOURCE_{index}]\\n"
-            f"Document: {chunk.document.title}\\n"
-            f"Document ID: {chunk.document_id}\\n"
-            f"Chunk ID: {chunk.id}\\n"
-            f"Page: {item['page_number']}\\n"
-            f"Chunk Index: {chunk.chunk_index}\\n"
-            f"----------------------------------------\\n"
-            f"{chunk.content}\\n"
+            f"[SOURCE_{index}]\n"
+            f"Document: {chunk.document.title}\n"
+            f"Document ID: {chunk.document_id}\n"
+            f"Chunk ID: {chunk.id}\n"
+            f"Page: {item['page_number']}\n"
+            f"Chunk Index: {chunk.chunk_index}\n"
+            f"----------------------------------------\n"
+            f"{chunk.content}\n"
             f"[/SOURCE_{index}]"
         )
-    return [{"evidence": evidence, "context": "\\n".join(context_parts)}]
+    return [{"evidence": evidence, "context": "\n".join(context_parts)}]
 
 
 def classify_action(answer: str) -> str:
@@ -102,7 +102,7 @@ def run_case(case: dict[str, Any], db, client: Groq) -> dict[str, Any]:
         item["prompt_source_id"]: item["source_id"]
         for item in prepared["evidence"]
     }
-    cited_prompt_ids = set(re.findall(r"\\[SOURCE_(\\d+)\\]", answer))
+    cited_prompt_ids = set(re.findall(r"\[SOURCE_(\d+)\]", answer))
     cited_source_ids = [
         source_by_prompt_id[f"SOURCE_{index}"]
         for index in sorted(cited_prompt_ids, key=int)
@@ -143,7 +143,7 @@ def main() -> int:
 
     args.predictions.parent.mkdir(parents=True, exist_ok=True)
     args.predictions.write_text(
-        json.dumps(predictions, ensure_ascii=False, indent=2) + "\\n",
+        json.dumps(predictions, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     print(f"Generated {len(predictions)} predictions at {args.predictions}.")
