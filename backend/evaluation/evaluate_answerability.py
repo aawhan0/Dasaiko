@@ -67,6 +67,8 @@ def _validate_predictions(
         if not isinstance(cited, list) or any(not isinstance(item, str) for item in cited):
             errors.append(f"{prefix}: cited_source_ids must be a list of strings.")
         else:
+            if len(cited) != len(set(cited)):
+                errors.append(f"{prefix}: cited_source_ids must contain unique IDs.")
             source_ids = {
                 source["source_id"]
                 for source in case_by_id[case_id]["context"]["sources"]
