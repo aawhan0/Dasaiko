@@ -176,6 +176,65 @@ class AnswerabilityEvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "support_status|unknown source"):
             evaluate_predictions(self.cases, predictions)
 
+    def test_question_paraphrase_does_not_change_ground_truth_scoring(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer"},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        original = evaluate_predictions(self.cases, predictions)
+        paraphrased_cases = [dict(case) for case in self.cases]
+        paraphrased_cases[0] = {
+            **paraphrased_cases[0],
+            "question": "Could you tell me the length of the policy period?",
+        }
+        paraphrased = evaluate_predictions(paraphrased_cases, predictions)
+        self.assertEqual(
+            original["metrics"]["action_accuracy"],
+            paraphrased["metrics"]["action_accuracy"],
+        )
+
+    def test_duplicate_citations_are_rejected(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "cited_source_ids": ["a1_s1", "a1_s1"]},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        with self.assertRaisesRegex(ValueError, "unique"):
+            evaluate_predictions(self.cases, predictions)
+
+    def test_distractor_citation_is_not_counted_as_support(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "cited_source_ids": ["a1_s1"]},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate", "cited_source_ids": ["c1_s1"]},
+        ]
+        report = evaluate_predictions(self.cases, predictions)
+        self.assertEqual(report["counts"]["evidence_false_positives"], 1)
+        self.assertAlmostEqual(report["metrics"]["evidence_source_precision"], 0.5)
+
+    def test_unsupported_qualifier_is_recorded_as_unsupported_claim(self):
+        predictions = [
+            {
+                "case_id": "a1",
+                "predicted_action": "answer",
+                "claim_assessments": [
+                    {
+                        "text": "The policy is 30 days and applies worldwide.",
+                        "support_status": "unsupported",
+                        "cited_source_ids": ["a1_s1"],
+                        "supporting_source_ids": [],
+                    }
+                ],
+            },
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        report = evaluate_predictions(self.cases, predictions)
+        self.assertEqual(report["metrics"]["unsupported_claim_rate"], 1.0)
+        self.assertEqual(report["metrics"]["claim_support_rate"], 0.0)
+        self.assertEqual(report["counts"]["claim_status_counts"], {"unsupported": 1})
+
     def test_invalid_confidence_is_rejected(self):
         predictions = [
             {"case_id": "a1", "predicted_action": "answer", "confidence": 1.5},
