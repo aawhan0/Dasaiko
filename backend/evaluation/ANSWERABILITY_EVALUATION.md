@@ -8,6 +8,9 @@ From the `backend` directory, provide one prediction record for every dataset ca
 
 ```bash
 python -m evaluation.evaluate_answerability --predictions evaluation/datasets/answerability_predictions.json
+
+# Optional: report the highest-coverage observed threshold meeting a 5% empirical answer-risk cap
+python -m evaluation.evaluate_answerability --predictions evaluation/datasets/answerability_predictions.json --max-answer-risk 0.05
 ```
 
 The evaluator writes `evaluation/results/answerability_evaluation.json`. The prediction file is intentionally not populated with fabricated model outputs.
@@ -50,6 +53,9 @@ Predictions are a JSON array. Every case must appear exactly once:
 | Evidence-source precision / recall / F1 | Set overlap between cited source IDs and annotated supporting source IDs, on cases with supporting evidence. |
 | Brier score | Mean squared error between action confidence and binary exact-action correctness. Lower is better. |
 | Expected calibration error | Weighted absolute gap between mean confidence and action accuracy in ten equal-width confidence bins. Lower is better. |
+| Answer risk–coverage curve | For each observed confidence threshold, retain answer/partial-answer attempts at or above it. Coverage = retained attempts / all dataset cases; risk = incorrect expected actions / retained attempts. |
+| Area under risk–coverage curve (AURC) | Trapezoidal area under the empirical risk-versus-coverage curve, starting at zero coverage. Lower is better for comparable evaluation sets. |
+| Suggested threshold | Optional highest-coverage observed confidence threshold whose empirical answer risk is at or below `--max-answer-risk`. No threshold is suggested if none meets the cap. |
 
 ## Interpretation and limits
 
@@ -57,5 +63,8 @@ Predictions are a JSON array. Every case must appear exactly once:
 - Required-fact coverage depends on an independent semantic assessment of answer text. The evaluator deliberately does not use brittle substring matching as a proxy for factual support.
 - Evidence-source overlap measures provenance at source level. A citation on a case with no annotated supporting source is counted as a false positive. It does not prove that each cited passage entails each answer claim.
 - Confidence calibration concerns confidence in the selected action, not probability that every answer claim is true.
+- Risk–coverage uses only answer/partial-answer attempts with supplied confidence. Missing-confidence attempts are excluded from the curve and its AURC, but remain in aggregate metrics. Coverage is measured against the full dataset size.
+- `--max-answer-risk` is an optional empirical target, not a default policy. The suggested threshold is selected on the supplied sample and can overfit; choose it on a development split and verify it once on a separate holdout before considering deployment.
+- A low-risk threshold may sharply reduce answer coverage. Review the full curve rather than optimizing risk alone.
 - No prediction file or performance score is shipped by default. Run the target agent and obtain independent fact-coverage annotations before reporting quality metrics.
 - This synthetic 60-case seed set is a development benchmark, not a production reliability guarantee.
