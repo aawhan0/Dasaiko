@@ -45,6 +45,7 @@ Predictions are a JSON array. Every case must appear exactly once:
 | False answer rate on non-answer cases | Non-answer cases predicted as `answer` or `partial_answer` / all cases whose expected action is `abstain`, `escalate`, or `clarify`. |
 | Correct non-answer action rate | Exact expected-action matches among those same non-answer cases. |
 | Answer coverage | Cases predicted as `answer` or `partial_answer` / all cases. |
+| Selective action accuracy | Exact expected-action matches among answer attempts / all answer attempts. Read alongside answer coverage to expose systems that answer only easy cases. |
 | Required-fact coverage | Covered required facts / required facts evaluated on answer attempts. |
 | Evidence-source precision / recall / F1 | Set overlap between cited source IDs and annotated supporting source IDs, on cases with supporting evidence. |
 | Brier score | Mean squared error between action confidence and binary exact-action correctness. Lower is better. |
@@ -54,7 +55,7 @@ Predictions are a JSON array. Every case must appear exactly once:
 
 - A low false-answer rate is desirable, but it can be achieved by refusing everything. Always read it alongside answer coverage and action accuracy.
 - Required-fact coverage depends on an independent semantic assessment of answer text. The evaluator deliberately does not use brittle substring matching as a proxy for factual support.
-- Evidence-source overlap measures provenance at source level. It does not prove that each cited passage entails each answer claim.
+- Evidence-source overlap measures provenance at source level. A citation on a case with no annotated supporting source is counted as a false positive. It does not prove that each cited passage entails each answer claim.
 - Confidence calibration concerns confidence in the selected action, not probability that every answer claim is true.
 - No prediction file or performance score is shipped by default. Run the target agent and obtain independent fact-coverage annotations before reporting quality metrics.
 - This synthetic 60-case seed set is a development benchmark, not a production reliability guarantee.
