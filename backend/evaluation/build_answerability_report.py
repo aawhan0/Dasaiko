@@ -35,6 +35,8 @@ METRICS = (
     "claim_evidence_attribution_precision",
     "claim_evidence_attribution_recall",
     "claim_evidence_attribution_f1",
+    "confidence_calibration",
+    "answer_risk_coverage",
 )
 
 
@@ -88,6 +90,7 @@ def build_comparison(
                 for scenario, values in sorted(report.get("by_scenario", {}).items())
             },
             "counts": report.get("counts", {}),
+            "action_confusion_matrix": report.get("action_confusion_matrix", {}),
         }
 
     comparisons: dict[str, Any] = {}
