@@ -41,7 +41,7 @@ ACTION_BY_SCENARIO = {
 }
 
 
-def validate_cases(cases: list[dict]) -> list[str]:
+def validate_cases(cases: list[dict], enforce_distribution: bool = True) -> list[str]:
     errors: list[str] = []
     if not isinstance(cases, list):
         return ["Dataset root must be a JSON array."]
@@ -89,11 +89,12 @@ def validate_cases(cases: list[dict]) -> list[str]:
         if scenario in {"unanswerable", "conflicting", "stale_evidence", "ambiguous"} and truth.get("expected_answer") is not None:
             errors.append(f"{prefix}: non-answer case must not contain a definitive expected_answer.")
 
-    if len(cases) != sum(SCENARIO_COUNTS.values()):
-        errors.append(f"Expected {sum(SCENARIO_COUNTS.values())} cases; found {len(cases)}.")
-    for scenario, expected in SCENARIO_COUNTS.items():
-        if counts[scenario] != expected:
-            errors.append(f"Expected {expected} {scenario} cases; found {counts[scenario]}.")
+    if enforce_distribution:
+        if len(cases) != sum(SCENARIO_COUNTS.values()):
+            errors.append(f"Expected {sum(SCENARIO_COUNTS.values())} cases; found {len(cases)}.")
+        for scenario, expected in SCENARIO_COUNTS.items():
+            if counts[scenario] != expected:
+                errors.append(f"Expected {expected} {scenario} cases; found {counts[scenario]}.")
     return errors
 
 
