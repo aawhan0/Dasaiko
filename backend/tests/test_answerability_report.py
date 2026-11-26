@@ -54,6 +54,17 @@ class AnswerabilityReportTests(unittest.TestCase):
         self.assertNotIn("claim_support_rate", result["runs"]["candidate"]["metrics"])
         self.assertNotIn("claim_support_rate", result["comparisons"]["candidate"]["metric_deltas"])
 
+    def test_nested_calibration_risk_and_confusion_diagnostics_are_preserved(self):
+        report = make_report(0.8, 0.2, 0.9)
+        report["metrics"]["confidence_calibration"] = {"brier_score": 0.1}
+        report["metrics"]["answer_risk_coverage"] = {"area_under_risk_coverage_curve": 0.05}
+        report["action_confusion_matrix"] = {"answer": {"answer": 8, "abstain": 2}}
+        result = build_comparison([("run", report)])
+        run = result["runs"]["run"]
+        self.assertEqual(run["metrics"]["confidence_calibration"]["brier_score"], 0.1)
+        self.assertEqual(run["metrics"]["answer_risk_coverage"]["area_under_risk_coverage_curve"], 0.05)
+        self.assertEqual(run["action_confusion_matrix"]["answer"]["abstain"], 2)
+
     def test_duplicate_run_names_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "unique"):
             build_comparison(
