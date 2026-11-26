@@ -1,63 +1,90 @@
 # Production RAG answerability evaluation
 
-This evaluation runs against the user's actual uploaded research corpus and Dasaiko's existing hybrid retrieval, reranking, prompt and Groq generation components. It is separate from the fictional Harbor & Pine seed benchmark.
+This workflow evaluates Dasaiko's research-paper RAG against an explicitly annotated corpus. It is separate from the fictional Harbor & Pine seed benchmark.
 
 ## 1. Export the corpus
 
-From the `backend/` directory, with the same `.env` and database used by Dasaiko:
+From `backend/`, using the same environment and database as Dasaiko:
 
 ```bash
 python -m evaluation.export_rag_answerability_corpus --user-id YOUR_USER_ID --output artifacts/rag_corpus.json
 ```
 
-The export contains document/chunk text and provenance. Treat it as private research material; do not commit it or share it without checking document permissions.
+The export contains uploaded document text and provenance. Treat it as private research material; do not commit or share it without checking document permissions.
 
-## 2. Build an annotated benchmark
+## 2. Create an annotated dataset
 
-Create a JSON array of cases. Each case needs a stable ID, user ID, query, optional document ID (to evaluate within a selected paper), and independently annotated ground truth:
+Create a JSON array. The schema is the same schema enforced by `validate_answerability_dataset.py`. In particular, each case needs `scenario_type`, `difficulty`, `question`, `context.sources`, and `ground_truth`. The `context.sources` list must contain the source excerpts used by the annotator to establish the gold label. Use source IDs from the corpus export.
 
 ```json
 [
   {
     "id": "paper_001",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
     "user_id": 1,
     "document_id": 12,
-    "query": "What objective does the paper optimize?",
-    "scenario_type": "answerable",
+    "question": "What objective does the paper optimize?",
+    "context": {
+      "sources": [
+        {
+          "source_id": "chunk:345",
+          "content": "Verbatim text copied from the exported chunk."
+        }
+      ]
+    },
     "ground_truth": {
       "answerability": "answerable",
       "expected_action": "answer",
       "required_facts": ["The exact objective stated in the paper."],
       "supporting_evidence": [
-        {"source_id": "chunk:345", "quote": "Verbatim supporting text from the exported chunk."}
+        {
+          "source_id": "chunk:345",
+          "quote": "Verbatim text copied from the exported chunk."
+        }
       ]
     }
   }
 ]
 ```
 
-Use only evidence actually present in the exported corpus. Include answerable questions, questions with only partial support, unanswerable questions, hard negatives, conflicting evidence and ambiguous questions. For each case, an annotator must determine the expected action and source IDs. Do not infer labels from model outputs. For stronger reliability, double-annotate cases and adjudicate disagreements.
+Use the exact scenario/action mapping enforced by the validator. For every case, annotate labels and supporting quotes from the corpus, not from model output. Include answerable, partially answerable, unanswerable, hard-negative, conflicting, stale-evidence and ambiguous cases as appropriate. The validator's distribution check is disabled by the runner, so a small development set is allowed. Double-annotate and adjudicate disagreements when feasible.
 
-## 3. Run the production retrieval and generation path
+## 3. Run retrieval and generation
 
 ```bash
 python -m evaluation.run_rag_answerability \
   --dataset evaluation/datasets/your_annotated_cases.json \
-  --predictions artifacts/rag_predictions.json
+  --predictions artifacts/rag_predictions.json \
+  --evaluation-dataset artifacts/rag_evaluation_dataset.json
 ```
 
-The runner calls the same `SearchService.search`, evidence score filtering, `PromptService.build_prompt`, configured Groq model and citation validation used by chat. It does not create conversations or persist messages. It deliberately uses an empty conversation history so each case is independent.
+The runner calls production `SearchService.search`, production evidence filtering (including the selected-paper summary-query safeguard), `PromptService.build_prompt`, the configured Groq model and citation validation. It does not create conversations or persist messages. It uses empty conversation history, so this is single-turn evaluation only.
 
-The runner labels an output as `abstain` only when the production prompt's exact insufficient-information sentence appears; otherwise it records `answer`. This simple action classifier does not detect partial answers, clarification or escalation. Review and annotate those behaviors manually before relying on action metrics. Confidence, required-fact coverage and claim assessments are not fabricated.
+The runner writes two files:
+- `rag_predictions.json`: generated answers, predicted action heuristic, cited source IDs and retrieved evidence.
+- `rag_evaluation_dataset.json`: original annotated cases plus runtime-retrieved source excerpts. This lets the evaluator validate citations against the actual retrieved source registry.
+
+Runtime-retrieved sources are added only to `context.sources`; they are NOT added to `ground_truth.supporting_evidence`. Retrieval is not proof that an answer claim is supported.
+
+The action heuristic labels an answer as `abstain` only when the production insufficient-information sentence appears; otherwise it labels it `answer`. It does not identify partial answers, clarification or escalation. Treat this action output as a coarse operational signal, not a semantic judgment.
 
 ## 4. Evaluate
 
-The current evaluator expects one prediction per case and can consume the runner output after adding independent annotations for required-fact coverage and claim assessments where appropriate. Map runner outputs into the existing prediction contract; do not treat retrieved chunks as proof that answer claims are supported.
+Use the augmented dataset with the existing evaluator:
+
+```bash
+python -m evaluation.evaluate_answerability \
+  --dataset artifacts/rag_evaluation_dataset.json \
+  --predictions artifacts/rag_predictions.json
+```
+
+Required-fact coverage and claim assessments remain independent annotations. Do not fabricate them from retrieval results or model self-report. If the evaluator CLI in your checkout uses different arguments, inspect its `--help` output; do not assume the command above is valid without checking.
 
 ## Limitations
 
-- Results depend on the local database contents, user ID, embedding/reranker configuration, Groq model and model availability.
-- The runner exercises retrieval/reranking and generation, but not chat history rewriting, conversation selection flows, streaming transport or API authentication.
-- It uses the real production retrieval service, not a mock. Retrieval can therefore be slow and may invoke configured model providers.
-- The generated answer is not automatically judged for semantic correctness. Human/independent semantic annotation remains required.
+- Results depend on the local database, user ID, embeddings, reranker configuration, Groq model and provider availability.
+- The runner exercises retrieval/reranking and generation, but not chat history rewriting, conversation selection, streaming transport or API authentication.
+- The runner uses the real retrieval service and may invoke configured model providers.
+- No automatic semantic answer-quality judge is included. Human/independent annotation is required.
 - Keep corpus exports, predictions and reports out of version control if they contain private uploaded-document content.
