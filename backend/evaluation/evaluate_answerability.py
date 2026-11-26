@@ -136,6 +136,7 @@ def _calibration(confidence_pairs: list[tuple[float, bool]], bins: int = 10) -> 
 def evaluate_predictions(
     cases: list[dict[str, Any]],
     predictions: list[dict[str, Any]],
+    max_answer_risk: float | None = None,
 ) -> dict[str, Any]:
     dataset_errors = validate_cases(cases, enforce_distribution=False)
     if dataset_errors:
@@ -161,6 +162,7 @@ def evaluate_predictions(
     evidence_fp = 0
     evidence_fn = 0
     confidence_pairs: list[tuple[float, bool]] = []
+    answer_confidence_pairs: list[tuple[float, bool]] = []
     action_confusion: dict[str, Counter] = defaultdict(Counter)
     scenario_stats: dict[str, dict[str, int]] = defaultdict(lambda: {
         "cases": 0, "action_correct": 0, "false_answers": 0, "non_answer_cases": 0,
@@ -197,6 +199,8 @@ def evaluate_predictions(
         if predicted_action in ANSWER_ACTIONS:
             answer_attempts += 1
             answer_attempts_correct += int(action_is_correct)
+            if prediction.get("confidence") is not None:
+                answer_confidence_pairs.append((float(prediction["confidence"]), action_is_correct))
 
         required_facts = truth.get("required_facts", [])
         if required_facts and predicted_action in ANSWER_ACTIONS:
@@ -233,6 +237,9 @@ def evaluate_predictions(
                 2 * evidence_tp + evidence_fp + evidence_fn,
             ),
             "confidence_calibration": _calibration(confidence_pairs),
+            "answer_risk_coverage": _risk_coverage(
+                answer_confidence_pairs, total, max_answer_risk=max_answer_risk
+            ),
         },
         "counts": {
             "action_correct": action_correct,
@@ -268,6 +275,7 @@ def evaluate_predictions(
             "required_fact_coverage": "Coverage of required facts, based on externally supplied covered_required_fact_indices; this evaluator does not judge answer text semantically.",
             "evidence_source_metrics": "Source-ID overlap against annotated supporting_evidence; this is a provenance proxy, not claim-level entailment verification.",
             "confidence_calibration": "Confidence is evaluated against exact expected_action correctness, not answer truth probability. Brier score and equal-width-bin ECE are reported only for supplied confidence values.",
+            "answer_risk_coverage": "Confidence-threshold curve over answer/partial_answer attempts with supplied confidence. Coverage is accepted answer attempts divided by all cases; risk is the fraction of accepted attempts with an incorrect expected action. Missing-confidence attempts are excluded from this curve.",
         },
     }
 
@@ -279,6 +287,12 @@ def main() -> int:
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--predictions", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--max-answer-risk",
+        type=float,
+        default=None,
+        help="Optional empirical risk cap in [0, 1] for reporting a candidate confidence threshold.",
+    )
     args = parser.parse_args()
 
     with args.dataset.open("r", encoding="utf-8") as handle:
@@ -286,7 +300,7 @@ def main() -> int:
     with args.predictions.open("r", encoding="utf-8") as handle:
         predictions = json.load(handle)
 
-    report = evaluate_predictions(cases, predictions)
+    report = evaluate_predictions(cases, predictions, max_answer_risk=args.max_answer_risk)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("w", encoding="utf-8") as handle:
         json.dump(report, handle, indent=2)
@@ -297,6 +311,14 @@ def main() -> int:
     print(f"False answer rate (non-answer cases): {metrics['false_answer_rate_on_non_answer_cases']:.3f}")
     print(f"Correct non-answer action rate: {metrics['correct_non_answer_action_rate']:.3f}")
     print(f"Answer coverage: {metrics['answer_coverage']:.3f}")
+    risk_coverage = metrics["answer_risk_coverage"]
+    if risk_coverage["suggested_threshold"] is not None:
+        print(
+            "Empirical answer-confidence threshold: "
+            f"{risk_coverage['suggested_threshold']:.3f} "
+            f"(coverage={risk_coverage['suggested_coverage']:.3f}, "
+            f"risk={risk_coverage['suggested_empirical_risk']:.3f})"
+        )
     print(f"Report written to {args.output}")
     return 0
 
