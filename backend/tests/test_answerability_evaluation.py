@@ -69,6 +69,39 @@ class AnswerabilityEvaluationTests(unittest.TestCase):
         self.assertEqual(report["counts"]["evidence_false_positives"], 1)
         self.assertAlmostEqual(report["metrics"]["evidence_source_precision"], 0.5)
 
+    def test_answer_risk_coverage_and_empirical_threshold(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "confidence": 0.9},
+            {"case_id": "u1", "predicted_action": "answer", "confidence": 0.8},
+            {"case_id": "c1", "predicted_action": "escalate", "confidence": 0.95},
+        ]
+        report = evaluate_predictions(self.cases, predictions, max_answer_risk=0.1)
+        curve = report["metrics"]["answer_risk_coverage"]
+        self.assertEqual(curve["sample_count"], 2)
+        self.assertEqual(curve["suggested_threshold"], 0.9)
+        self.assertAlmostEqual(curve["suggested_coverage"], 1 / 3)
+        self.assertEqual(curve["suggested_empirical_risk"], 0.0)
+        self.assertAlmostEqual(curve["area_under_risk_coverage_curve"], 1 / 12)
+
+    def test_risk_coverage_is_unavailable_without_confident_answer_attempts(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer"},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        curve = evaluate_predictions(self.cases, predictions)["metrics"]["answer_risk_coverage"]
+        self.assertEqual(curve["sample_count"], 0)
+        self.assertIsNone(curve["area_under_risk_coverage_curve"])
+
+    def test_invalid_risk_target_is_rejected(self):
+        predictions = [
+            {"case_id": "a1", "predicted_action": "answer", "confidence": 0.9},
+            {"case_id": "u1", "predicted_action": "abstain"},
+            {"case_id": "c1", "predicted_action": "escalate"},
+        ]
+        with self.assertRaisesRegex(ValueError, "max_answer_risk"):
+            evaluate_predictions(self.cases, predictions, max_answer_risk=1.1)
+
     def test_invalid_confidence_is_rejected(self):
         predictions = [
             {"case_id": "a1", "predicted_action": "answer", "confidence": 1.5},
