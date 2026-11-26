@@ -74,6 +74,18 @@ Predictions are a JSON array. Every case must appear exactly once:
 | Unsupported / contradicted / insufficient-evidence claim rates | Count in each respective status / all assessed claims. These are separate failure categories. |
 | Claim evidence attribution precision / recall / F1 | Per-claim overlap between cited source IDs and independently annotated supporting source IDs. |
 
+## Robustness checks
+
+The test suite includes deterministic adversarial and metamorphic checks around the evaluator contract:
+
+- A paraphrased question with unchanged evidence and labels must preserve scoring.
+- A citation to a source that is not annotated as supporting evidence is counted as a false positive, even when the source belongs to the same case.
+- A claim with a correct core fact but an unsupported qualifier is assessed as unsupported when independently annotated that way.
+- Duplicate citation IDs and duplicate source IDs within a case are rejected.
+- Claim assessments with invalid support statuses or unknown source IDs are rejected.
+
+These are evaluator/annotation-contract tests, not model robustness scores. They do not demonstrate that a live RAG system is robust to paraphrases or adversarial web content; that requires running the target system on a dedicated, independently labelled challenge set.
+
 ## Interpretation and limits
 
 - A low false-answer rate is desirable, but it can be achieved by refusing everything. Always read it alongside answer coverage and action accuracy.
