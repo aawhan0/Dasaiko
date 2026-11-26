@@ -1,0 +1,2121 @@
+[
+  {
+    "id": "ans_01",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "What time does the showroom open on weekdays?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_01_s1",
+          "title": "Opening hours",
+          "url": "https://example.test/ans_01_s1",
+          "content": "The Harbor & Pine showroom is open Monday to Friday, 9:00 AM–6:00 PM."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "It opens at 9:00 AM on weekdays.",
+      "required_facts": [
+        "Weekday opening time is 9:00 AM."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_01_s0",
+          "quote": "open Monday to Friday, 9:00 AM–6:00 PM"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The exact weekday opening time is stated."
+    }
+  },
+  {
+    "id": "ans_02",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Does the company offer free initial consultations?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_02_s1",
+          "title": "Consultations",
+          "url": "https://example.test/ans_02_s1",
+          "content": "We offer a free 20-minute initial consultation for every new customer."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Yes. The initial consultation is free and lasts 20 minutes.",
+      "required_facts": [
+        "Initial consultation is free.",
+        "Initial consultation lasts 20 minutes."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_02_s0",
+          "quote": "free 20-minute initial consultation"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Both requested service terms are explicit."
+    }
+  },
+  {
+    "id": "ans_03",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "How much is the standard delivery fee?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_03_s1",
+          "title": "Delivery",
+          "url": "https://example.test/ans_03_s1",
+          "content": "Standard delivery within the service area costs $12 per order."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Standard delivery costs $12 per order within the service area.",
+      "required_facts": [
+        "Standard delivery fee is $12 per order.",
+        "Fee applies within the service area."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_03_s0",
+          "quote": "costs $12 per order"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The exact fee and scope are provided."
+    }
+  },
+  {
+    "id": "ans_04",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "What is the cancellation notice required for a booked installation?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_04_s1",
+          "title": "Booking policy",
+          "url": "https://example.test/ans_04_s1",
+          "content": "Customers may cancel or reschedule an installation without charge by giving at least 48 hours' notice."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Give at least 48 hours' notice to cancel or reschedule without charge.",
+      "required_facts": [
+        "48 hours' notice is required for no-fee cancellation or rescheduling."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_04_s0",
+          "quote": "at least 48 hours' notice"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The policy directly answers the question."
+    }
+  },
+  {
+    "id": "ans_05",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Which payment methods are accepted in store?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_05_s1",
+          "title": "Payments",
+          "url": "https://example.test/ans_05_s1",
+          "content": "Our showroom accepts Visa, Mastercard, American Express and cash."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Visa, Mastercard, American Express and cash are accepted.",
+      "required_facts": [
+        "Accepted methods are Visa, Mastercard, American Express and cash."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_05_s0",
+          "quote": "Visa, Mastercard, American Express and cash"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The accepted payment methods are enumerated."
+    }
+  },
+  {
+    "id": "ans_06",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "How long is the workmanship warranty?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_06_s1",
+          "title": "Warranty",
+          "url": "https://example.test/ans_06_s1",
+          "content": "All installation work is covered by a 24-month workmanship warranty from the completion date."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The workmanship warranty lasts 24 months from completion.",
+      "required_facts": [
+        "Workmanship warranty is 24 months.",
+        "Warranty starts on completion date."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_06_s0",
+          "quote": "24-month workmanship warranty from the completion date"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Duration and start point are explicit."
+    }
+  },
+  {
+    "id": "ans_07",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "What is the phone number for booking?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_07_s1",
+          "title": "Contact",
+          "url": "https://example.test/ans_07_s1",
+          "content": "For bookings, call +1 415 555 0148 during business hours."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Call +1 415 555 0148 to book.",
+      "required_facts": [
+        "Booking phone number is +1 415 555 0148."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_07_s0",
+          "quote": "call +1 415 555 0148"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The booking contact is directly stated."
+    }
+  },
+  {
+    "id": "ans_08",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Can customers collect orders from the showroom?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_08_s1",
+          "title": "Collection",
+          "url": "https://example.test/ans_08_s1",
+          "content": "Yes. Click-and-collect is available at our Harbor Street showroom once you receive a collection-ready email."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Yes. Collect from the Harbor Street showroom after receiving the collection-ready email.",
+      "required_facts": [
+        "Click-and-collect is available.",
+        "Collection location is Harbor Street showroom.",
+        "Wait for collection-ready email."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_08_s0",
+          "quote": "Click-and-collect is available at our Harbor Street showroom"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Availability and collection condition are provided."
+    }
+  },
+  {
+    "id": "ans_09",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "What is the standard appointment duration?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_09_s1",
+          "title": "Appointments",
+          "url": "https://example.test/ans_09_s1",
+          "content": "A standard home assessment appointment takes approximately 45 minutes."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "A standard home assessment takes about 45 minutes.",
+      "required_facts": [
+        "Standard home assessment duration is approximately 45 minutes."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_09_s0",
+          "quote": "takes approximately 45 minutes"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The appointment duration is explicit."
+    }
+  },
+  {
+    "id": "ans_10",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Is weekend installation available?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_10_s1",
+          "title": "Installation schedule",
+          "url": "https://example.test/ans_10_s1",
+          "content": "Installation appointments are available Tuesday through Saturday. Sunday and Monday installations are not offered."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Yes. Installations are available on Saturdays, but not Sundays.",
+      "required_facts": [
+        "Saturday installation is available.",
+        "Sunday installation is unavailable."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_10_s0",
+          "quote": "Tuesday through Saturday"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The schedule explicitly includes Saturday and excludes Sunday."
+    }
+  },
+  {
+    "id": "ans_11",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "What is the minimum order value for free delivery?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_11_s1",
+          "title": "Delivery thresholds",
+          "url": "https://example.test/ans_11_s1",
+          "content": "Orders of $250 or more qualify for free standard delivery within the service area."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The minimum order for free standard delivery is $250.",
+      "required_facts": [
+        "Free standard delivery threshold is $250."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_11_s0",
+          "quote": "$250 or more qualify for free standard delivery"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The threshold is explicitly stated."
+    }
+  },
+  {
+    "id": "ans_12",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Where is the showroom located?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_12_s1",
+          "title": "Visit us",
+          "url": "https://example.test/ans_12_s1",
+          "content": "Visit us at 18 Harbor Street, San Francisco, CA 94105."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "18 Harbor Street, San Francisco, CA 94105.",
+      "required_facts": [
+        "Showroom address is 18 Harbor Street, San Francisco, CA 94105."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_12_s0",
+          "quote": "18 Harbor Street, San Francisco, CA 94105"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The complete address is provided."
+    }
+  },
+  {
+    "id": "ans_13",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Can I change my appointment online?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_13_s1",
+          "title": "Manage booking",
+          "url": "https://example.test/ans_13_s1",
+          "content": "Customers can change or cancel an appointment using the Manage Booking link in their confirmation email."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Yes. Use the Manage Booking link in your confirmation email.",
+      "required_facts": [
+        "Appointment changes are available through Manage Booking link in confirmation email."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_13_s0",
+          "quote": "Manage Booking link in their confirmation email"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The method is directly described."
+    }
+  },
+  {
+    "id": "ans_14",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "Does the company install products purchased elsewhere?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_14_s1",
+          "title": "Installation eligibility",
+          "url": "https://example.test/ans_14_s1",
+          "content": "We install eligible products purchased from other retailers. A site assessment is required before confirming eligibility."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Yes, eligible products from other retailers can be installed, subject to a site assessment.",
+      "required_facts": [
+        "Third-party products may be eligible for installation.",
+        "Site assessment required before eligibility confirmation."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_14_s0",
+          "quote": "install eligible products purchased from other retailers"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The qualification is clearly stated."
+    }
+  },
+  {
+    "id": "ans_15",
+    "scenario_type": "answerable",
+    "difficulty": "medium",
+    "question": "When does the seasonal sale end?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "ans_15_s1",
+          "title": "Seasonal promotion",
+          "url": "https://example.test/ans_15_s1",
+          "content": "The Spring Refresh promotion ends on 30 June 2026 at 11:59 PM local time."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The Spring Refresh promotion ends on 30 June 2026 at 11:59 PM local time.",
+      "required_facts": [
+        "Promotion end is 30 June 2026 at 11:59 PM local time."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "ans_15_s0",
+          "quote": "ends on 30 June 2026 at 11:59 PM local time"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The promotion deadline is explicit."
+    }
+  },
+  {
+    "id": "par_01",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "What is the delivery fee and how long does delivery take?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_01_s1",
+          "title": "Delivery",
+          "url": "https://example.test/par_01_s1",
+          "content": "Standard delivery costs $12 per order within the service area."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Standard delivery costs $12 per order. The website does not state the delivery time.",
+      "required_facts": [
+        "Standard delivery costs $12 per order."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_01_s0",
+          "quote": "costs $12 per order"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Price is supported; delivery duration is absent."
+    }
+  },
+  {
+    "id": "par_02",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "What are the consultation hours and can I book one on Sunday?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_02_s1",
+          "title": "Consultations",
+          "url": "https://example.test/par_02_s1",
+          "content": "Consultations are available Monday to Saturday, 9 AM–5 PM."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Consultations run Monday to Saturday, 9 AM–5 PM. Sunday availability is not offered in the published schedule.",
+      "required_facts": [
+        "Consultation hours Monday-Saturday 9 AM-5 PM."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_02_s0",
+          "quote": "Monday to Saturday, 9 AM–5 PM"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "The schedule is explicit and excludes Sunday."
+    }
+  },
+  {
+    "id": "par_03",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "How long is installation and how many installers will attend?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_03_s1",
+          "title": "Installation",
+          "url": "https://example.test/par_03_s1",
+          "content": "A typical kitchen installation takes 1–2 days, depending on project scope."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "A typical kitchen installation takes 1–2 days, depending on scope. The number of installers is not specified.",
+      "required_facts": [
+        "Typical kitchen installation takes 1-2 days."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_03_s0",
+          "quote": "takes 1–2 days"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Duration is provided; crew size is not."
+    }
+  },
+  {
+    "id": "par_04",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "What is the warranty period and does it cover accidental damage?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_04_s1",
+          "title": "Warranty",
+          "url": "https://example.test/par_04_s1",
+          "content": "Cabinet hardware is covered by a 5-year manufacturer's warranty against manufacturing defects."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Cabinet hardware has a 5-year warranty for manufacturing defects. The page does not say whether accidental damage is covered.",
+      "required_facts": [
+        "Cabinet hardware warranty is 5 years.",
+        "Coverage is for manufacturing defects."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_04_s0",
+          "quote": "5-year manufacturer's warranty against manufacturing defects"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Duration and covered defect type are given, accidental damage is not."
+    }
+  },
+  {
+    "id": "par_05",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "Can I pay by bank transfer and is there a transfer fee?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_05_s1",
+          "title": "Payments",
+          "url": "https://example.test/par_05_s1",
+          "content": "Bank transfer is accepted for invoices over $500."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Bank transfer is accepted for invoices over $500. Any transfer fee is not stated.",
+      "required_facts": [
+        "Bank transfer accepted for invoices over $500."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_05_s0",
+          "quote": "accepted for invoices over $500"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Payment method and condition are given; fee is absent."
+    }
+  },
+  {
+    "id": "par_06",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "What is the return window and who pays return shipping?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_06_s1",
+          "title": "Returns",
+          "url": "https://example.test/par_06_s1",
+          "content": "Unused, unopened items may be returned within 30 days of delivery."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Unused, unopened items may be returned within 30 days of delivery. The website does not specify who pays return shipping.",
+      "required_facts": [
+        "Return window is 30 days from delivery.",
+        "Items must be unused and unopened."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_06_s0",
+          "quote": "returned within 30 days of delivery"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Eligibility and window are stated; shipping cost responsibility is missing."
+    }
+  },
+  {
+    "id": "par_07",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "Is same-day repair available and what does it cost?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_07_s1",
+          "title": "Repairs",
+          "url": "https://example.test/par_07_s1",
+          "content": "Same-day repair appointments may be available for urgent requests, subject to technician capacity."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Same-day repair may be available for urgent requests, depending on technician capacity. The price is not published.",
+      "required_facts": [
+        "Same-day repair may be available for urgent requests.",
+        "Availability depends on technician capacity."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_07_s0",
+          "quote": "may be available for urgent requests"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Conditional availability is supported; price is absent."
+    }
+  },
+  {
+    "id": "par_08",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "What is the service area and is there a travel surcharge?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_08_s1",
+          "title": "Service area",
+          "url": "https://example.test/par_08_s1",
+          "content": "We serve San Francisco, Daly City and South San Francisco."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "The service area includes San Francisco, Daly City and South San Francisco. The page does not state whether a travel surcharge applies.",
+      "required_facts": [
+        "Service locations are San Francisco, Daly City and South San Francisco."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_08_s0",
+          "quote": "San Francisco, Daly City and South San Francisco"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Locations are named; surcharge is not addressed."
+    }
+  },
+  {
+    "id": "par_09",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "How much is the deposit and when is the remaining balance due?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_09_s1",
+          "title": "Project payments",
+          "url": "https://example.test/par_09_s1",
+          "content": "A 20% deposit is required to confirm a project booking."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "A 20% deposit is required to confirm the booking. The due date for the remaining balance is not stated.",
+      "required_facts": [
+        "Booking deposit is 20%."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_09_s0",
+          "quote": "20% deposit is required"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Deposit is stated; remaining balance timing is absent."
+    }
+  },
+  {
+    "id": "par_10",
+    "scenario_type": "partially_answerable",
+    "difficulty": "medium",
+    "question": "Does the premium plan include priority support and what is its response time?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "par_10_s1",
+          "title": "Care plans",
+          "url": "https://example.test/par_10_s1",
+          "content": "The Premium Care plan includes priority email support."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "partially_answerable",
+      "expected_action": "partial_answer",
+      "expected_answer": "Premium Care includes priority email support. No response-time commitment is published.",
+      "required_facts": [
+        "Premium Care includes priority email support."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "par_10_s0",
+          "quote": "includes priority email support"
+        }
+      ],
+      "distracting_evidence": [],
+      "rationale": "Support channel and priority are stated; response time is missing."
+    }
+  },
+  {
+    "id": "una_01",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What is the exact price of the bespoke oak staircase?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_01_s1",
+          "title": "Custom staircases",
+          "url": "https://example.test/una_01_s1",
+          "content": "We design and install bespoke oak staircases tailored to each home. Contact our design team to discuss your project."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The page describes the service but provides no price."
+    }
+  },
+  {
+    "id": "una_02",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "How many employees does Harbor & Pine currently have?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_02_s1",
+          "title": "About us",
+          "url": "https://example.test/una_02_s1",
+          "content": "Harbor & Pine is an independent home-services company serving the Bay Area."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "No employee count appears in the supplied website content."
+    }
+  },
+  {
+    "id": "una_03",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What is the average customer satisfaction score this month?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_03_s1",
+          "title": "Customer feedback",
+          "url": "https://example.test/una_03_s1",
+          "content": "We value customer feedback and invite clients to leave a review after each project."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "No current satisfaction score or monthly data is provided."
+    }
+  },
+  {
+    "id": "una_04",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "Which brand of adhesive do your installers use?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_04_s1",
+          "title": "Installation standards",
+          "url": "https://example.test/una_04_s1",
+          "content": "Our installers follow manufacturer guidance and applicable building standards."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The specific adhesive brand is not named."
+    }
+  },
+  {
+    "id": "una_05",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What is the CEO's personal mobile number?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_05_s1",
+          "title": "Contact",
+          "url": "https://example.test/una_05_s1",
+          "content": "For all enquiries, contact our customer team using the published phone number or contact form."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The website does not publish a personal mobile number."
+    }
+  },
+  {
+    "id": "una_06",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "How many kitchens did you install in 2025?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_06_s1",
+          "title": "Our work",
+          "url": "https://example.test/una_06_s1",
+          "content": "Our team has completed projects across residential and commercial properties throughout the Bay Area."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "No annual installation count is stated."
+    }
+  },
+  {
+    "id": "una_07",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What is the exact carbon footprint per delivery?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_07_s1",
+          "title": "Sustainability",
+          "url": "https://example.test/una_07_s1",
+          "content": "We are working to reduce packaging waste and consolidate deliveries where possible."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "No quantified emissions figure is provided."
+    }
+  },
+  {
+    "id": "una_08",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "Which subcontractor will be assigned to my home?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_08_s1",
+          "title": "Our team",
+          "url": "https://example.test/una_08_s1",
+          "content": "Projects are coordinated by our operations team and completed by qualified installation professionals."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "No named subcontractor or assignment information is supplied."
+    }
+  },
+  {
+    "id": "una_09",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What discount can I get if I pay in cash?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_09_s1",
+          "title": "Payments",
+          "url": "https://example.test/una_09_s1",
+          "content": "We accept cash, major credit cards and bank transfer."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Accepted payment methods are listed, but no cash discount is mentioned."
+    }
+  },
+  {
+    "id": "una_10",
+    "scenario_type": "unanswerable",
+    "difficulty": "medium",
+    "question": "What will the weather be during my installation next Thursday?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "una_10_s1",
+          "title": "Scheduling",
+          "url": "https://example.test/una_10_s1",
+          "content": "Installation dates are confirmed by our scheduling team after the site assessment."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "unanswerable",
+      "expected_action": "abstain",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The website contains no weather forecast or customer-specific appointment date."
+    }
+  },
+  {
+    "id": "hard_01",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "What is the standard delivery fee?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_01_s1",
+          "title": "Delivery fees",
+          "url": "https://example.test/hard_01_s1",
+          "content": "Standard delivery costs $18 per order. Express delivery costs $35."
+        },
+        {
+          "source_id": "hard_01_s2",
+          "title": "Returns",
+          "url": "https://example.test/hard_01_s2",
+          "content": "Return shipping for eligible returns costs $12."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Standard delivery costs $18 per order.",
+      "required_facts": [
+        "Standard delivery fee is $18."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_01_s0",
+          "quote": "Standard delivery costs $18 per order"
+        }
+      ],
+      "distracting_evidence": [
+        "Return shipping is $12; it is not the delivery fee."
+      ],
+      "rationale": "A nearby return-shipping amount is a lexical hard negative."
+    }
+  },
+  {
+    "id": "hard_02",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "How long is the workmanship warranty?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_02_s1",
+          "title": "Warranty",
+          "url": "https://example.test/hard_02_s1",
+          "content": "Installation workmanship is covered for 24 months."
+        },
+        {
+          "source_id": "hard_02_s2",
+          "title": "Product information",
+          "url": "https://example.test/hard_02_s2",
+          "content": "Selected taps carry a 10-year manufacturer product warranty."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The workmanship warranty is 24 months.",
+      "required_facts": [
+        "Workmanship warranty is 24 months."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_02_s0",
+          "quote": "workmanship is covered for 24 months"
+        }
+      ],
+      "distracting_evidence": [
+        "The 10-year warranty applies to selected taps, not workmanship."
+      ],
+      "rationale": "A longer product warranty is a misleading but distinct fact."
+    }
+  },
+  {
+    "id": "hard_03",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "When does the showroom close on Saturdays?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_03_s1",
+          "title": "Showroom hours",
+          "url": "https://example.test/hard_03_s1",
+          "content": "Saturday hours are 10 AM–4 PM. Weekday hours are 9 AM–6 PM."
+        },
+        {
+          "source_id": "hard_03_s2",
+          "title": "Support hours",
+          "url": "https://example.test/hard_03_s2",
+          "content": "Phone support is available until 5 PM on Saturdays."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The showroom closes at 4 PM on Saturdays.",
+      "required_facts": [
+        "Saturday showroom closing time is 4 PM."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_03_s0",
+          "quote": "Saturday hours are 10 AM–4 PM"
+        }
+      ],
+      "distracting_evidence": [
+        "Phone support ending at 5 PM is a different service."
+      ],
+      "rationale": "Support hours are a plausible distractor for showroom hours."
+    }
+  },
+  {
+    "id": "hard_04",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "What is the minimum order for free delivery?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_04_s1",
+          "title": "Delivery threshold",
+          "url": "https://example.test/hard_04_s1",
+          "content": "Free standard delivery applies to orders of $250 or more."
+        },
+        {
+          "source_id": "hard_04_s2",
+          "title": "Promotion",
+          "url": "https://example.test/hard_04_s2",
+          "content": "Orders over $500 receive a free care kit."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The free-delivery threshold is $250.",
+      "required_facts": [
+        "Free delivery threshold is $250."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_04_s0",
+          "quote": "orders of $250 or more"
+        }
+      ],
+      "distracting_evidence": [
+        "The $500 threshold is for a free care kit, not delivery."
+      ],
+      "rationale": "Two monetary thresholds appear in nearby content."
+    }
+  },
+  {
+    "id": "hard_05",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "Which cards are accepted?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_05_s1",
+          "title": "Payments",
+          "url": "https://example.test/hard_05_s1",
+          "content": "We accept Visa and Mastercard."
+        },
+        {
+          "source_id": "hard_05_s2",
+          "title": "Promotions",
+          "url": "https://example.test/hard_05_s2",
+          "content": "American Express cardholders receive occasional promotional emails."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Visa and Mastercard are accepted.",
+      "required_facts": [
+        "Accepted cards are Visa and Mastercard."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_05_s0",
+          "quote": "accept Visa and Mastercard"
+        }
+      ],
+      "distracting_evidence": [
+        "Mention of American Express promotional emails does not establish payment acceptance."
+      ],
+      "rationale": "Brand mention in unrelated context is a hard negative."
+    }
+  },
+  {
+    "id": "hard_06",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "How much is the installation deposit?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_06_s1",
+          "title": "Booking deposit",
+          "url": "https://example.test/hard_06_s1",
+          "content": "A 20% deposit confirms an installation booking."
+        },
+        {
+          "source_id": "hard_06_s2",
+          "title": "Delivery",
+          "url": "https://example.test/hard_06_s2",
+          "content": "A $20 delivery booking fee applies to some remote postcodes."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "The installation deposit is 20%.",
+      "required_facts": [
+        "Installation booking deposit is 20%."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_06_s0",
+          "quote": "A 20% deposit confirms an installation booking"
+        }
+      ],
+      "distracting_evidence": [
+        "The $20 amount is a delivery fee, not the installation deposit."
+      ],
+      "rationale": "A monetary distractor uses the same booking vocabulary."
+    }
+  },
+  {
+    "id": "hard_07",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "What is the phone number for service appointments?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_07_s1",
+          "title": "Service bookings",
+          "url": "https://example.test/hard_07_s1",
+          "content": "Call +1 415 555 0177 to arrange a service appointment."
+        },
+        {
+          "source_id": "hard_07_s2",
+          "title": "Sales",
+          "url": "https://example.test/hard_07_s2",
+          "content": "For new sales enquiries call +1 415 555 0122."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Call +1 415 555 0177 for service appointments.",
+      "required_facts": [
+        "Service appointment phone is +1 415 555 0177."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_07_s0",
+          "quote": "Call +1 415 555 0177"
+        }
+      ],
+      "distracting_evidence": [
+        "The sales number is for new sales enquiries."
+      ],
+      "rationale": "Two phone numbers are present with different purposes."
+    }
+  },
+  {
+    "id": "hard_08",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "Does the company offer Sunday consultations?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_08_s1",
+          "title": "Consultations",
+          "url": "https://example.test/hard_08_s1",
+          "content": "Consultations are offered Tuesday to Saturday."
+        },
+        {
+          "source_id": "hard_08_s2",
+          "title": "Showroom",
+          "url": "https://example.test/hard_08_s2",
+          "content": "The showroom is open on selected Sundays during seasonal events."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "No. Regular consultations are Tuesday to Saturday; Sunday consultations are not listed.",
+      "required_facts": [
+        "Consultations offered Tuesday-Saturday."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_08_s0",
+          "quote": "offered Tuesday to Saturday"
+        }
+      ],
+      "distracting_evidence": [
+        "Seasonal Sunday showroom opening does not imply Sunday consultations."
+      ],
+      "rationale": "The Sunday showroom fact is topically adjacent but not service availability."
+    }
+  },
+  {
+    "id": "hard_09",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "What is the return period for unopened items?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_09_s1",
+          "title": "Returns",
+          "url": "https://example.test/hard_09_s1",
+          "content": "Unopened items may be returned within 30 days of delivery."
+        },
+        {
+          "source_id": "hard_09_s2",
+          "title": "Warranty",
+          "url": "https://example.test/hard_09_s2",
+          "content": "Manufacturing defects are covered for 24 months."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "Unopened items may be returned within 30 days of delivery.",
+      "required_facts": [
+        "Return period for unopened items is 30 days."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_09_s0",
+          "quote": "returned within 30 days of delivery"
+        }
+      ],
+      "distracting_evidence": [
+        "The 24-month period is a warranty, not the return window."
+      ],
+      "rationale": "A longer time period is a distractor."
+    }
+  },
+  {
+    "id": "hard_10",
+    "scenario_type": "hard_negative",
+    "difficulty": "medium",
+    "question": "How long does a standard home assessment take?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "hard_10_s1",
+          "title": "Assessments",
+          "url": "https://example.test/hard_10_s1",
+          "content": "A standard home assessment takes approximately 45 minutes."
+        },
+        {
+          "source_id": "hard_10_s2",
+          "title": "Installation",
+          "url": "https://example.test/hard_10_s2",
+          "content": "A standard installation usually takes 1–2 days."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "answerable",
+      "expected_action": "answer",
+      "expected_answer": "A standard home assessment takes about 45 minutes.",
+      "required_facts": [
+        "Assessment duration approximately 45 minutes."
+      ],
+      "supporting_evidence": [
+        {
+          "source_id": "hard_10_s0",
+          "quote": "takes approximately 45 minutes"
+        }
+      ],
+      "distracting_evidence": [
+        "The 1–2 day estimate is installation duration, not assessment duration."
+      ],
+      "rationale": "Two durations relate to different stages of the customer journey."
+    }
+  },
+  {
+    "id": "con_01",
+    "scenario_type": "conflicting",
+    "difficulty": "medium",
+    "question": "What is the current standard delivery fee?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "con_01_s1",
+          "title": "Delivery page",
+          "url": "https://example.test/con_01_s1",
+          "content": "Standard delivery costs $15 per order."
+        },
+        {
+          "source_id": "con_01_s2",
+          "title": "Checkout help",
+          "url": "https://example.test/con_01_s2",
+          "content": "Standard delivery costs $18 per order."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "conflicting",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Two apparently current first-party pages give different fees; do not choose one without resolving source authority."
+    }
+  },
+  {
+    "id": "con_02",
+    "scenario_type": "conflicting",
+    "difficulty": "medium",
+    "question": "How long is the workmanship warranty?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "con_02_s1",
+          "title": "Warranty overview",
+          "url": "https://example.test/con_02_s1",
+          "content": "Installation workmanship is covered for 24 months."
+        },
+        {
+          "source_id": "con_02_s2",
+          "title": "Installation FAQ",
+          "url": "https://example.test/con_02_s2",
+          "content": "All workmanship is guaranteed for 36 months."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "conflicting",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Conflicting warranty durations are published with no precedence metadata."
+    }
+  },
+  {
+    "id": "con_03",
+    "scenario_type": "conflicting",
+    "difficulty": "medium",
+    "question": "What time does the showroom close on weekdays?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "con_03_s1",
+          "title": "Visit page",
+          "url": "https://example.test/con_03_s1",
+          "content": "The showroom closes at 6 PM Monday to Friday."
+        },
+        {
+          "source_id": "con_03_s2",
+          "title": "Contact page",
+          "url": "https://example.test/con_03_s2",
+          "content": "Weekday showroom hours end at 5:30 PM."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "conflicting",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Conflicting weekday closing times require confirmation."
+    }
+  },
+  {
+    "id": "con_04",
+    "scenario_type": "conflicting",
+    "difficulty": "medium",
+    "question": "What is the deposit required to book an installation?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "con_04_s1",
+          "title": "Booking policy",
+          "url": "https://example.test/con_04_s1",
+          "content": "A 20% deposit is required to confirm an installation."
+        },
+        {
+          "source_id": "con_04_s2",
+          "title": "Project FAQ",
+          "url": "https://example.test/con_04_s2",
+          "content": "A 25% deposit is required before installation dates are reserved."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "conflicting",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Two different deposit percentages are presented without an effective date or scope distinction."
+    }
+  },
+  {
+    "id": "con_05",
+    "scenario_type": "conflicting",
+    "difficulty": "medium",
+    "question": "Can customers cancel within 24 hours without a fee?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "con_05_s1",
+          "title": "Cancellation policy",
+          "url": "https://example.test/con_05_s1",
+          "content": "Cancellations made less than 48 hours before the appointment incur a $50 fee."
+        },
+        {
+          "source_id": "con_05_s2",
+          "title": "Booking FAQ",
+          "url": "https://example.test/con_05_s2",
+          "content": "You may cancel any appointment free of charge up to 24 hours before it begins."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "conflicting",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The policies conflict on the fee-free cancellation cutoff."
+    }
+  },
+  {
+    "id": "stale_01",
+    "scenario_type": "stale_evidence",
+    "difficulty": "medium",
+    "question": "What is the current price of the Premium Care plan?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "stale_01_s1",
+          "title": "Archived pricing notice",
+          "url": "https://example.test/stale_01_s1",
+          "content": "Premium Care cost $19 per month. This price list was valid until 31 December 2024.",
+          "published_at": "2024-01-01",
+          "expires_at": "2024-12-31",
+          "status": "archived"
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "stale",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Only expired pricing is available; it must not be presented as current."
+    }
+  },
+  {
+    "id": "stale_02",
+    "scenario_type": "stale_evidence",
+    "difficulty": "medium",
+    "question": "Is the showroom currently open on Sundays?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "stale_02_s1",
+          "title": "Holiday hours 2023",
+          "url": "https://example.test/stale_02_s1",
+          "content": "During December 2023, the showroom opened Sundays from 11 AM to 3 PM.",
+          "published_at": "2023-11-15",
+          "expires_at": "2023-12-31",
+          "status": "expired"
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "stale",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "A temporary 2023 schedule cannot establish current Sunday hours."
+    }
+  },
+  {
+    "id": "stale_03",
+    "scenario_type": "stale_evidence",
+    "difficulty": "medium",
+    "question": "What is the current free-delivery threshold?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "stale_03_s1",
+          "title": "Old delivery promotion",
+          "url": "https://example.test/stale_03_s1",
+          "content": "Free delivery applied to orders over $150 during the 2024 summer promotion.",
+          "published_at": "2024-06-01",
+          "expires_at": "2024-08-31",
+          "status": "expired"
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "stale",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The only threshold is tied to an expired promotion."
+    }
+  },
+  {
+    "id": "stale_04",
+    "scenario_type": "stale_evidence",
+    "difficulty": "medium",
+    "question": "Does the company still install the Model X boiler?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "stale_04_s1",
+          "title": "Legacy service catalogue",
+          "url": "https://example.test/stale_04_s1",
+          "content": "Model X boiler installation was offered by our team in 2022.",
+          "published_at": "2022-02-01",
+          "status": "archived"
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "stale",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "An archived catalogue from 2022 does not prove current service availability."
+    }
+  },
+  {
+    "id": "stale_05",
+    "scenario_type": "stale_evidence",
+    "difficulty": "medium",
+    "question": "What is the current cancellation fee?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "stale_05_s1",
+          "title": "Previous booking terms",
+          "url": "https://example.test/stale_05_s1",
+          "content": "A $25 cancellation fee applied to appointments cancelled within 24 hours under terms effective through 30 September 2025.",
+          "published_at": "2025-01-01",
+          "expires_at": "2025-09-30",
+          "status": "expired"
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "stale",
+      "expected_action": "escalate",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The cited fee policy expired and no current policy is supplied."
+    }
+  },
+  {
+    "id": "amb_01",
+    "scenario_type": "ambiguous",
+    "difficulty": "medium",
+    "question": "How much does installation cost?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "amb_01_s1",
+          "title": "Services",
+          "url": "https://example.test/amb_01_s1",
+          "content": "We offer kitchen, bathroom and flooring installation. Prices depend on project scope and materials."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "ambiguous",
+      "expected_action": "clarify",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The requested installation type and project details are unspecified; no single price can be inferred."
+    }
+  },
+  {
+    "id": "amb_02",
+    "scenario_type": "ambiguous",
+    "difficulty": "medium",
+    "question": "Can I book it for tomorrow?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "amb_02_s1",
+          "title": "Appointments",
+          "url": "https://example.test/amb_02_s1",
+          "content": "Home assessments and installation appointments can be requested by phone. Availability varies by service and location."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "ambiguous",
+      "expected_action": "clarify",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The referent of 'it' is unknown and no service, location or availability context is provided."
+    }
+  },
+  {
+    "id": "amb_03",
+    "scenario_type": "ambiguous",
+    "difficulty": "medium",
+    "question": "Is the premium one worth it?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "amb_03_s1",
+          "title": "Care plans",
+          "url": "https://example.test/amb_03_s1",
+          "content": "Standard Care and Premium Care plans are available. Premium Care includes priority email support and an annual inspection."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "ambiguous",
+      "expected_action": "clarify",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The user has not specified which product or criterion 'worth it' refers to; clarify intent before recommending."
+    }
+  },
+  {
+    "id": "amb_04",
+    "scenario_type": "ambiguous",
+    "difficulty": "medium",
+    "question": "How long will it take?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "amb_04_s1",
+          "title": "Services",
+          "url": "https://example.test/amb_04_s1",
+          "content": "Home assessments take about 45 minutes. Kitchen installations take 1–2 days. Repairs vary by issue."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "ambiguous",
+      "expected_action": "clarify",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "Multiple possible tasks have different durations; the task is not identified."
+    }
+  },
+  {
+    "id": "amb_05",
+    "scenario_type": "ambiguous",
+    "difficulty": "medium",
+    "question": "Do you cover my area?",
+    "context": {
+      "business": {
+        "name": "Harbor & Pine Home Services",
+        "website": "https://example.test"
+      },
+      "sources": [
+        {
+          "source_id": "amb_05_s1",
+          "title": "Service area",
+          "url": "https://example.test/amb_05_s1",
+          "content": "We serve San Francisco, Daly City and South San Francisco."
+        }
+      ]
+    },
+    "ground_truth": {
+      "answerability": "ambiguous",
+      "expected_action": "clarify",
+      "expected_answer": null,
+      "required_facts": [],
+      "supporting_evidence": [],
+      "distracting_evidence": [],
+      "rationale": "The user has not provided a location, so coverage cannot be determined."
+    }
+  }
+]
