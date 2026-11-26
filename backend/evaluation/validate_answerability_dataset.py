@@ -74,12 +74,17 @@ def validate_cases(cases: list[dict], enforce_distribution: bool = True) -> list
             for source in sources
             if isinstance(source, dict)
         ]
-        source_ids = set(source_ids_list)
         if len(source_ids_list) != len(sources):
             errors.append(f"{prefix}: every source excerpt must be an object.")
-        if len(source_ids_list) != len(source_ids):
+        valid_source_ids = [
+            source_id
+            for source_id in source_ids_list
+            if isinstance(source_id, str) and source_id
+        ]
+        source_ids = set(valid_source_ids)
+        if len(valid_source_ids) != len(source_ids):
             errors.append(f"{prefix}: source_id values must be unique within a case.")
-        if any(not isinstance(source_id, str) or not source_id for source_id in source_ids_list):
+        if len(valid_source_ids) != len(source_ids_list):
             errors.append(f"{prefix}: every source must have a non-empty string source_id.")
         if not sources:
             errors.append(f"{prefix}: at least one source excerpt is required.")
