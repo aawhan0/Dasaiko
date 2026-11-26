@@ -94,7 +94,7 @@ def validate_cases(cases: list[dict], enforce_distribution: bool = True) -> list
             if evidence.get("source_id") not in source_ids:
                 errors.append(f"{prefix}: supporting evidence references an unknown source.")
                 continue
-            source = next(s for s in sources if s.get("source_id") == evidence["source_id"])
+            source = next(s for s in sources if isinstance(s, dict) and s.get("source_id") == evidence["source_id"])
             if evidence.get("quote", "") not in source.get("content", ""):
                 errors.append(f"{prefix}: supporting quote is not verbatim in its source.")
 
