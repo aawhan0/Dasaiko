@@ -123,6 +123,10 @@ def _validate_predictions(
                 errors.append(
                     f"{claim_prefix}: supporting_source_ids must be empty unless support_status is 'supported'."
                 )
+            if status == "supported" and not supporting:
+                errors.append(
+                    f"{claim_prefix}: supported claims must identify at least one supporting source."
+                )
 
     missing = set(case_by_id) - seen
     if missing:
